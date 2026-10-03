@@ -2,12 +2,12 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: S1**
+**Next stage: S2** (S1's Atlas check is still the owner's to run — see *Open questions*)
 
 | Stage | What | Status |
 | --- | --- | --- |
 | S0 | Repo scaffold | done |
-| S1 | Server foundation, models, test harness | not started |
+| S1 | Server foundation, models, test harness | done — Atlas check pending |
 | S2 | Auth, users, links, leave, ownership | not started |
 | S3 | Projects, tasks, holidays, calendar | not started |
 | S4 | Reports, days, submit, week reads | not started |
@@ -32,6 +32,24 @@
 - Bare Vite page: dev server served `index.html` and `/src/main.jsx` (200); `vite build` OK.
   **Unverified:** the page was not rendered in a browser (no browser tool used).
 
+### S1 checks (2026-10-03)
+- `npm run lint`: clean. `npm test`: green — server 54 tests in `tests/foundation/`, client 1
+  (placeholder parity test, unchanged until C1).
+- **Indexes:** `tests/foundation/indexes.test.js` asserts every index in `database_schema.md` §6
+  exists with its options (unique, sparse, partial `isOwner`, `en`/strength-2 collation), no
+  others, and exactly the seven collection names (`seenMarks` included).
+- **In memory:** tests run on a `mongodb-memory-server` replica set; `mongod` downloaded fine.
+- **Real server, local Mongo:** `node src/server.js` against a local in-memory replica set
+  printed "MongoDB connected", then `GET /api/health` → 200 `{ status: "ok" }`,
+  `GET /api/nowhere` and `GET /api/auth/me` (stub router) → 404 `ROUTE_NOT_FOUND` in the envelope.
+- Missing `MONGODB_URI` / `JWT_SECRET` → the process stops with the Zod error tree, exit 1.
+- `utils/weeks.js` tests pass with `TZ` set to Los Angeles, Colombo and Kiritimati.
+- **Atlas: not done.** The `MONGODB_URI` in this cloud environment is incomplete: it holds the
+  `mongodb+srv://` scheme and what looks like `user:password`, but no `@cluster…` host, so the
+  driver stops with "mongodb+srv URI cannot have port number". The value was never printed.
+  Whether this cloud session can reach Atlas at all once the value is fixed is also
+  unverified. Steps for the owner's machine are under *Open questions*.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -45,7 +63,61 @@
 - ESLint configs follow Vite's React template (`no-unused-vars` ignores `^[A-Z_]`, since there is
   no `eslint-plugin-react` to mark JSX usage). Touches `tech_stack.md` §1.3.
 
+- S1: the Mongo duplicate-key mapping lives in one table in `middleware/errorHandler.js`
+  (`MASTER_PROMPT` S1), not in each service as `api_specification.md` §1.9 words it. It maps
+  exactly the four §1.9 cases (`isOwner` → `SIGNUP_CLOSED`, `email` → `USER_EXISTS`,
+  `holidays.date` → `HOLIDAY_EXISTS`, `projects.name` → `PROJECT_NAME_TAKEN`); any other E11000
+  is a 500, so context-dependent ones (two first posts of a week, two submits) stay the
+  services' job. Reversible: services may still catch and rethrow.
+- S1: `timestamps: true` on the seven collection schemas. Subdocument schemas carry only the
+  dates the schema doc lists; thread `createdAt` is written by the service from its own clock,
+  because the 10-minute window (and its injected-clock test) is measured against it.
+- S1: subdocument `_id`s are kept on lines, blockers, achievements, threads and replies (the
+  docs reference or serve them) and turned off on days (keyed by weekday), `content.tasks`,
+  links, work and leave periods, plan, plan history, blocker resolutions and `latestComment`.
+- S1: Mongoose collection names are set explicitly; its default would have named the last one
+  `seenmarks`, not `seenMarks`.
+- S1: `users.linkTokenHash` must be cleared with `$unset`, never set to `null` — the unique
+  sparse index only skips documents where the field is absent. Commented in `userModel.js`.
+- S1: `authorize(minimumRole)` takes one role and admits it and everything above
+  (`api_specification.md` §1.2); `tech_stack.md` §3 writes `authorize(roles)`.
+- S1: `validate(schema)` takes one `z.object({ params, query, body })` per route; failures are
+  `422 VALIDATION_FAILED` with `fields` keyed by the path inside its part (`email`,
+  `days.0.lines.1.hours`). A body that isn't JSON is also `422 VALIDATION_FAILED` (§1.9 has
+  no 400).
+- S1: `AppError(status, message, code, extra)` — the optional fourth argument carries
+  `fields` / `status` / `reason` into `error`.
+- S1: `GET /api/health`'s handler is a one-liner inside `routes/index.js` (the tree has no
+  health controller). Every other router is an empty stub for its stage.
+- S1: `utils/weeks.js` converts each UTC calendar date to a local date with the same
+  year/month/day before calling date-fns, so week keys don't depend on the machine's zone.
+  It judges a `Date` by its UTC day; which zone defines "today" is for `calendarService` (S3).
+- S1: constants export frozen arrays `REPORT_STATUSES`, `ROLES`, `TASK_TYPES`,
+  `TASK_STATUSES`, `WEEKDAYS` — what C1's parity test reads.
+- S1: test env values live in `vitest.config.js` (`test.env`); its `MONGODB_URI` is a
+  placeholder nothing connects to, so tests never reach Atlas even when a real URI is set.
+  `testAuth.createUser` puts users on the team from 2026-01-05.
+
 ## Open questions for the owner
+- **S1 Atlas check — needs you.** Fix the cloud value: open the environment menu in this
+  session's title bar → **Edit** → environment variables → set `MONGODB_URI` to the *whole*
+  string from Atlas (it must contain `@` and the cluster host). Then run the check on Windows:
+  1. Atlas → **Database** → your cluster → **Connect** → **Drivers** → copy the string. Replace
+     `<db_password>` with the database user's password and put `/weeklyview` just before the `?`.
+  2. Atlas → **Network Access** → **Add IP Address** → **Add current IP address** (or
+     `0.0.0.0/0`, as the README explains for Render).
+  3. In a terminal in the repo: `git pull`, then `cd server`, then `copy .env.example .env`.
+  4. Open `server\.env` and set `MONGODB_URI=` to the string from step 1, and `JWT_SECRET=` to
+     the output of `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+  5. `npm install`, then `npm run dev`. Expect `MongoDB connected` and `API listening on :5000`.
+  6. Open http://localhost:5000/api/health — expect `{"success":true,"data":{"status":"ok"},…}`.
+     If it stops at step 5 instead, the error line names the cause (an IP not allowed, a wrong
+     password).
+  Starting the S1 server creates nothing on Atlas: no model is loaded until S2.
+- `npm ci` fails in `client/` on npm 10.9 ("lock file's ajv@6.15.0 does not satisfy
+  ajv@8.20.0"); `server/` is fine. This session used `npm install --no-save`, which left the
+  lockfile untouched. If `npm ci` also fails on your machine, C1 should regenerate
+  `client/package-lock.json` with `npm install`.
 - ~~Blocks S1's tests~~ **Resolved:** the owner allowed `fastdl.mongodb.org` in the
   environment's network settings, so `mongodb-memory-server` can download `mongod`. The
   owner's Atlas string goes in the environment variable `MONGODB_URI`, never in chat.
@@ -57,5 +129,6 @@
 ## Departures from `docs/project_structure.md`
 - Added `server/eslint.config.js`, `client/eslint.config.js`, `client/.prettierrc.json` (the trees
   had no lint/format configs; noted in §2.1 and §3.1).
-- Temporary: `server/tests/smoke.test.js` (bare app → 404), so `npm test` has a server test before
-  the harness exists. **Delete it in S1.** Not added to the tree because it does not outlive S1.
+- ~~Temporary: `server/tests/smoke.test.js`~~ — deleted in S1.
+- S1 added `server/tests/foundation/` (five test files proving the stage's *done* list);
+  noted in `project_structure.md` §2.1 and §6.
