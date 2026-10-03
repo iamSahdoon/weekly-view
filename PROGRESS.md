@@ -44,11 +44,13 @@
   `GET /api/nowhere` and `GET /api/auth/me` (stub router) → 404 `ROUTE_NOT_FOUND` in the envelope.
 - Missing `MONGODB_URI` / `JWT_SECRET` → the process stops with the Zod error tree, exit 1.
 - `utils/weeks.js` tests pass with `TZ` set to Los Angeles, Colombo and Kiritimati.
-- **Atlas: not done.** The `MONGODB_URI` in this cloud environment is incomplete: it holds the
-  `mongodb+srv://` scheme and what looks like `user:password`, but no `@cluster…` host, so the
-  driver stops with "mongodb+srv URI cannot have port number". The value was never printed.
-  Whether this cloud session can reach Atlas at all once the value is fixed is also
-  unverified. Steps for the owner's machine are under *Open questions*.
+- **Atlas: not done.** First run: the cloud `MONGODB_URI` had no `@cluster…` host. The owner
+  fixed it; second run (same day): the SRV lookup finds the cluster's 3 servers, but the TCP
+  connection to port 27017 times out, and the server stops with
+  `MongooseServerSelectionError` after 10 s. Either the Atlas IP access list doesn't admit
+  this cloud container, or the cloud environment doesn't let database traffic out (it routes
+  outbound HTTPS through a proxy). It can't be told apart from here. The value was never
+  printed. The check moves to the owner's machine (steps under *Open questions*).
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -99,9 +101,8 @@
   `testAuth.createUser` puts users on the team from 2026-01-05.
 
 ## Open questions for the owner
-- **S1 Atlas check — needs you.** Fix the cloud value: open the environment menu in this
-  session's title bar → **Edit** → environment variables → set `MONGODB_URI` to the *whole*
-  string from Atlas (it must contain `@` and the cluster host). Then run the check on Windows:
+- **S1 Atlas check — needs you.** The cloud value is now complete, but this cloud session
+  can't reach Atlas on port 27017. Run the check on Windows:
   1. Atlas → **Database** → your cluster → **Connect** → **Drivers** → copy the string. Replace
      `<db_password>` with the database user's password and put `/weeklyview` just before the `?`.
   2. Atlas → **Network Access** → **Add IP Address** → **Add current IP address** (or
