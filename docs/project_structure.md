@@ -273,6 +273,7 @@ server/
 │       ├── reportPolicy.test.js       # pure-function unit tests, no HTTP, no DB
 │       └── submitRules.test.js
 ├── vitest.config.js                   # setupFiles → tests/helpers/testDb.js
+├── eslint.config.js                   # added in S0: flat config, @eslint/js + globals.node + eslint-config-prettier (the lint script needs one)
 ├── .env.example
 └── package.json
 ```
@@ -654,6 +655,8 @@ client/
 │   │   └── index.css                  # @import "tailwindcss" → tokens.css → base.css, then @theme
 │   └── assets/                        # the glyph SVG and anything else shipped as a file
 ├── vite.config.js
+├── eslint.config.js                   # added in S0: flat config with react-hooks + react-refresh (the lint script needs one)
+├── .prettierrc.json                   # added in S0: loads prettier-plugin-tailwindcss, which only runs when configured
 ├── vercel.json
 ├── .env.example
 └── package.json
