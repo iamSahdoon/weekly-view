@@ -53,8 +53,9 @@
   printed. The check moves to the owner's machine (steps under *Open questions*).
 
 ### S2 checks (2026-10-03)
-- `npm run lint`: clean. `npm test`: green — server 129 (54 foundation, 20 in
-  `tests/rbac/auth.test.js`, 55 in `tests/rbac/adminRoutes.test.js`), client 1.
+- `npm run lint`: clean. `npm test`: green — server 131 (54 foundation, 20 in
+  `tests/rbac/auth.test.js`, 57 in `tests/rbac/adminRoutes.test.js`), client 1. The last two
+  are the owner decisions below; both fail against the code without the change.
 - Tests cover `api_specification.md` §6.6 items 33–40 for the S2 routes and §6.7 items 41–42;
   the bootstrap race is tested twice: two real concurrent signups, and a forced race where
   both requests pass the emptiness check so the `isOwner` index is what closes it. Also:
@@ -145,16 +146,15 @@
   self/owner rules: the target must be `invited`, and the owner never is.
 - S2: U1's name sort is case-insensitive (`en`, strength 2) with `_id` as the tie-break.
   Unknown body keys are stripped by Zod, not rejected (A5 ignores an `email` in its body).
+- S2, **owner decision (2026-10-03):** only the owner may invite someone at role `admin`
+  (U3), matching U5. A non-owner admin gets `403 OWNER_ONLY`, checked before anything else
+  in the invite, for a new address and for re-inviting a removed one. Noted in
+  `api_specification.md` U3.
+- S2, **owner decision (2026-10-03):** removing a person also ends any open leave period,
+  in the same write that closes their work period (`to: now` on both). Noted in
+  `database_schema.md` §3.3.
 
 ## Open questions for the owner
-- **S2 — a non-owner admin can invite at role `admin`.** U3 lists no owner rule, but U5
-  says only the owner may make someone an admin (`403 OWNER_ONLY`). Built as written (U3 has
-  no gate), so an admin can invite a new admin they couldn't promote. If U3 should match U5,
-  it is one check in `userService.invite` plus a test row; say which you want.
-- **S2 — removal doesn't close an open leave period.** `database_schema.md` §3.3's removal
-  writes status, work period, `tokenVersion` and link fields only. A person removed while on
-  leave keeps an open period, so their U1 item shows `onLeave: true` (U10 lists active people
-  only, so it is unaffected). Built as written; closing it on removal would be one `$set`.
 - **S1 Atlas check — needs you.** The cloud value is now complete, but this cloud session
   can't reach Atlas on port 27017. Run the check on Windows:
   1. Atlas → **Database** → your cluster → **Connect** → **Drivers** → copy the string. Replace

@@ -165,6 +165,32 @@ describe("35 · the owner is protected; other admins are the owner's", () => {
     expect(res.body.error).toEqual({ code: "OWNER_ONLY" });
   });
 
+  it("only the owner invites at role admin, a new address or a removed one", async () => {
+    const fresh = await api
+      .post("/api/users")
+      .set(as(admin))
+      .send({ email: "boss@example.com", role: "admin" });
+    expect(fresh.status).toBe(403);
+    expect(fresh.body.error).toEqual({ code: "OWNER_ONLY" });
+    expect(await User.exists({ email: "boss@example.com" })).toBeNull();
+
+    await User.updateOne({ _id: memberX._id }, { $set: { status: "removed" } });
+    const reinvite = await api
+      .post("/api/users")
+      .set(as(admin))
+      .send({ email: memberX.email, role: "admin" });
+    expect(reinvite.status).toBe(403);
+    expect(reinvite.body.error).toEqual({ code: "OWNER_ONLY" });
+    expect((await User.findById(memberX._id).lean()).status).toBe("removed");
+
+    const byOwner = await api
+      .post("/api/users")
+      .set(as(owner))
+      .send({ email: "boss@example.com", role: "admin" });
+    expect(byOwner.status).toBe(201);
+    expect(byOwner.body.data.user.role).toBe("admin");
+  });
+
   it("an admin manages members and managers", async () => {
     const role = await api
       .patch(`/api/users/${memberX._id}/role`)
@@ -205,6 +231,22 @@ describe("U5 role and U6 removal", () => {
       .send({ role: "member" });
     expect((await api.get("/api/auth/me").set(as(managerA))).status).toBe(401);
     expect((await fresh(managerA)).role).toBe("member");
+  });
+
+  it("removal ends an open leave period in the same write", async () => {
+    await api
+      .put(`/api/users/${memberX._id}/leave`)
+      .set(as(memberX))
+      .send({ onLeave: true });
+    const res = await call("U6", admin, memberX._id);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ onLeave: false, leaveSince: null });
+    const stored = await User.findById(memberX._id).lean();
+    expect(stored.leave).toHaveLength(1);
+    expect(stored.leave[0].to).toBeInstanceOf(Date);
+    expect(stored.leave[0].to.getTime()).toBe(
+      stored.workPeriods[0].to.getTime(),
+    );
   });
 
   it("removing twice → 409", async () => {

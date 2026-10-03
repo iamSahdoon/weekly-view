@@ -589,8 +589,9 @@ or admin. Any status.
 **Toggle leave** — on: `$push { from: now, to: null, setBy }` unless a period is open;
 off: `$set to: now` on the open period, conditioned on it still being open.
 
-**Remove a person** — `status: 'removed'`, `to: now` on the open work period, `$inc
-tokenVersion`, clear any link token.
+**Remove a person** — `status: 'removed'`, `to: now` on the open work period **and on any
+open leave period** (one write), `$inc tokenVersion`, clear any link token. *(Leave: owner
+decision, 2026-10-03.)*
 
 **Accept an invite** — conditioned on the token hash: set name and password, `status:
 'active'`, clear the link token, `$push workPeriods { from: now, to: null }`. A re-hired

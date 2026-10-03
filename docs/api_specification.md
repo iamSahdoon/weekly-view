@@ -539,6 +539,8 @@ Roles: `authorize('admin')`. Body `{ email, role, projects? }` — `projects` ar
 project ids. **No name**: it is set when the invite is accepted
 (`database_schema.md` §10, decision 16).
 
+- **The role is `admin` and the actor is not the owner** → `403 OWNER_ONLY`, as U5.
+  *(Owner decision, 2026-10-03.)*
 - **No user with that email** → insert `status: 'invited'`, the role, projects and an
   invite link (7 days). **201.**
 - **An `active` or `invited` user** → `409 USER_EXISTS`. A pending invite is re-issued
@@ -550,8 +552,8 @@ project ids. **No name**: it is set when the invite is accepted
 **201 / 200** `data: { user: U1 item, linkUrl: "https://…/invite/6hB…Qe", expiresAt }`.
 `linkUrl` appears only in this response and U4's.
 
-Errors: `403 FORBIDDEN`, `409 USER_EXISTS`, `422 VALIDATION_FAILED` (unknown or inactive
-project in `fields.projects`).
+Errors: `403 FORBIDDEN`, `403 OWNER_ONLY`, `409 USER_EXISTS`, `422 VALIDATION_FAILED`
+(unknown or inactive project in `fields.projects`).
 
 #### U4 · `POST /api/users/:userId/invite-link` — re-issue
 

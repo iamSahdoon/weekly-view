@@ -309,6 +309,8 @@ async function assertActiveProjects(ids) {
 
 /** U3 — invite a new person, or reactivate a removed one with the same `_id`. */
 export async function invite(actor, { email, role, projects = [] }) {
+  // Owner decision: inviting an admin is the owner's, as promoting one is (U5).
+  if (role === "admin" && !actor.isOwner) throw ownerOnly();
   const projectIds = await assertActiveProjects(projects);
   const existing = await User.findOne({ email }).lean();
   if (existing && existing.status !== "removed") throw userExists();
@@ -382,11 +384,16 @@ export async function removeUser(actor, userId) {
   const updated = await User.updateOne(
     { _id: target._id, status: { $ne: "removed" }, isOwner: { $ne: true } },
     {
-      $set: { status: "removed", "workPeriods.$[open].to": now },
+      // Closes the open work period and, by owner decision, any open leave period.
+      $set: {
+        status: "removed",
+        "workPeriods.$[open].to": now,
+        "leave.$[away].to": now,
+      },
       $unset: CLEAR_LINK,
       $inc: { tokenVersion: 1 },
     },
-    { arrayFilters: [{ "open.to": null }] },
+    { arrayFilters: [{ "open.to": null }, { "away.to": null }] },
   );
   if (updated.matchedCount === 0) throw stateChanged("removed");
   return loadUserItem(target._id);
