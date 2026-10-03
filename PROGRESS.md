@@ -2,13 +2,13 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: S2** (S1's Atlas check is still the owner's to run — see *Open questions*)
+**Next stage: S3** (S1's Atlas check is still the owner's to run — see *Open questions*)
 
 | Stage | What | Status |
 | --- | --- | --- |
 | S0 | Repo scaffold | done |
 | S1 | Server foundation, models, test harness | done — Atlas check pending |
-| S2 | Auth, users, links, leave, ownership | not started |
+| S2 | Auth, users, links, leave, ownership | done |
 | S3 | Projects, tasks, holidays, calendar | not started |
 | S4 | Reports, days, submit, week reads | not started |
 | S5 | Comments, review, "new" markers | not started |
@@ -51,6 +51,28 @@
   this cloud container, or the cloud environment doesn't let database traffic out (it routes
   outbound HTTPS through a proxy). It can't be told apart from here. The value was never
   printed. The check moves to the owner's machine (steps under *Open questions*).
+
+### S2 checks (2026-10-03)
+- `npm run lint`: clean. `npm test`: green — server 131 (54 foundation, 20 in
+  `tests/rbac/auth.test.js`, 57 in `tests/rbac/adminRoutes.test.js`), client 1. The last two
+  are the owner decisions below; both fail against the code without the change.
+- Tests cover `api_specification.md` §6.6 items 33–40 for the S2 routes and §6.7 items 41–42;
+  the bootstrap race is tested twice: two real concurrent signups, and a forced race where
+  both requests pass the emptiness check so the `isOwner` index is what closes it. Also:
+  concurrent link accepts (one wins), re-issue kills the previous link, expired / unknown /
+  used / wrong-purpose links give one identical `404 LINK_INVALID`, only the SHA-256 is stored.
+- §6.1 has no items for S2 (all are `reportPolicy`, S4). §6.6 item 33's rows for U7, P2–P5,
+  HD2–HD4 and D1–D8, and item 39's "weeks between periods are not expected (D1)", belong to
+  the stages that build those routes (S3, S4, S6); each adds its rows to `adminRoutes.test.js`.
+- **Walkthrough on the real server** (`node src/server.js` against a local in-memory replica
+  set, driven with curl): A1 `available: true` → A2 201 → second A2 `403 SIGNUP_CLOSED` →
+  A3 200 → U3 201 with `linkUrl` → A7 200 `{ purpose: "invite", email, role }` → A8 201 →
+  the same A8 again `404 LINK_INVALID` → the invitee logs in → U1 lists both. Wrong role
+  (member → U1) `403 FORBIDDEN`; bad signup / invite bodies `422` with per-field messages;
+  remove → the removed person's token `401`; the database rows matched the responses
+  (status, `tokenVersion`, work periods, leave, no link fields left after accept). The raw
+  link token never appeared in the server's morgan log.
+- Atlas still not exercised (see *Open questions*); nothing in S2 needs it.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -99,6 +121,38 @@
 - S1: test env values live in `vitest.config.js` (`test.env`); its `MONGODB_URI` is a
   placeholder nothing connects to, so tests never reach Atlas even when a real URI is set.
   `testAuth.createUser` puts users on the team from 2026-01-05.
+
+- S2: `reportsFiled` on a U1 item counts the person's reports with `revisionNumber > 0`
+  (submitted at least once, whatever the status now); `lastActivityAt` is the latest
+  `lastActivityAt` across their reports. The spec names both fields without a formula.
+- S2: `linkExpiresAt` is served for any unused invite link, past or not, so the client can
+  show `Invite expired` (`frontend_architecture.md` §9.12) — §2.2's "set only for a live
+  invite link" read as "an invite link that hasn't been used yet".
+- S2: link verification also requires the person's status to fit the purpose (an invite
+  link needs `invited`, a reset link `active`), on top of hash, purpose and expiry. A7 on a
+  reset link returns `{ purpose, email }` (no `role`, which §2.1 gives for invites only).
+- S2: A8 on an invite without `name` → `422 VALIDATION_FAILED` with `fields.name`; the
+  validator can't know the purpose, so the service checks it.
+- S2: signup maps **any** duplicate key to `SIGNUP_CLOSED` in the service, so a race between
+  two signups with the same email is also the 403, not `USER_EXISTS`.
+- S2: login validates shape only (non-empty strings); a malformed email is
+  `401 INVALID_CREDENTIALS`, not 422, so login has one failure answer. An unknown email still
+  costs one bcrypt comparison (against a fixed dummy hash). bcrypt cost is 10.
+- S2: U12 to the address the person already has is a 200 no-op (no `tokenVersion` bump),
+  like U5's same-role no-op.
+- S2: U9 checks the role gate (self, or a manager or admin) before loading the target, so a
+  member gets `403` for any id; a manager gets `404` for an unknown one.
+- S2: U5 and U6 accept an `invited` target (the spec rejects only `removed`). U4 has no
+  self/owner rules: the target must be `invited`, and the owner never is.
+- S2: U1's name sort is case-insensitive (`en`, strength 2) with `_id` as the tie-break.
+  Unknown body keys are stripped by Zod, not rejected (A5 ignores an `email` in its body).
+- S2, **owner decision (2026-10-03):** only the owner may invite someone at role `admin`
+  (U3), matching U5. A non-owner admin gets `403 OWNER_ONLY`, checked before anything else
+  in the invite, for a new address and for re-inviting a removed one. Noted in
+  `api_specification.md` U3.
+- S2, **owner decision (2026-10-03):** removing a person also ends any open leave period,
+  in the same write that closes their work period (`to: now` on both). Noted in
+  `database_schema.md` §3.3.
 
 ## Open questions for the owner
 - **S1 Atlas check — needs you.** The cloud value is now complete, but this cloud session
