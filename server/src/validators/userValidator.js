@@ -5,7 +5,7 @@ import { emailField } from "./authValidator.js";
 
 // U1–U6, U9–U13 — api_specification.md §2.2.
 
-const objectId = z.string().regex(/^[0-9a-f]{24}$/i, "Not a valid id");
+export const objectId = z.string().regex(/^[0-9a-f]{24}$/i, "Not a valid id");
 const userParams = z.object({ userId: objectId });
 
 // A comma list, each value checked against its enum (§1.7).
