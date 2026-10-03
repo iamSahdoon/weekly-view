@@ -46,10 +46,9 @@
   no `eslint-plugin-react` to mark JSX usage). Touches `tech_stack.md` §1.3.
 
 ## Open questions for the owner
-- **Blocks S1's tests in this cloud environment:** the environment's network policy denies
-  `fastdl.mongodb.org`, so `mongodb-memory-server` cannot download a `mongod` binary, and none is
-  installed. `npm install` still succeeds. Either allow that host in the environment's network
-  settings, or provide a binary via `MONGOMS_SYSTEM_BINARY`. On your own machine it should just work.
+- ~~Blocks S1's tests~~ **Resolved:** the owner allowed `fastdl.mongodb.org` in the
+  environment's network settings, so `mongodb-memory-server` can download `mongod`. The
+  owner's Atlas string goes in the environment variable `MONGODB_URI`, never in chat.
 - `npm audit` reports 2 moderate advisories in both projects, in dev-only `vitest`
   (`@vitest/mocker`, GHSA-82fw-gwwq-j7x9). The fix is vitest 5, a major outside
   `tech_stack.md` §9–§10 (`^3`). Left at `^3`; it never ships to Vercel or Render.

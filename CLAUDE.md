@@ -135,3 +135,10 @@ owner's Atlas string — ask for it; tests use an in-memory Mongo and never touc
 - Do not add dependencies outside `docs/tech_stack.md` §9–§10 without asking.
 - Prefer the plainest thing that satisfies the requirement. No speculative abstractions,
   no features outside `docs/requirments_doc.md`.
+- **Guide the owner.** When something needs the owner (an account, a secret, a setting, a
+  merge), give numbered click-by-click steps: where to click, and where each value goes.
+  Never ask for a secret in chat; secrets go in the environment's settings or a local `.env`.
+- **End every stage with "Your next steps"**: the PR to merge and the exact prompt for the
+  next session.
+- **Name the stage.** Commit messages and PR titles start with the stage id, e.g.
+  `S1: server foundation, models, test harness`. (Cloud sessions assign the branch name.)
