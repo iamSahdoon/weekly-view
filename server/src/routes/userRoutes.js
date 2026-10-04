@@ -1,12 +1,17 @@
 import { Router } from "express";
+import * as reports from "../controllers/reportController.js";
 import * as users from "../controllers/userController.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { validate } from "../middleware/validate.js";
+import {
+  userReportsSchema,
+  userWeekSchema,
+} from "../validators/reportValidator.js";
 import * as schemas from "../validators/userValidator.js";
 
-// U1–U6, U9–U13 (U7, U8 in S4). /on-leave is declared before /:userId. Guards attach
-// per route (api_specification.md §1.1).
+// U1–U13. /on-leave is declared before /:userId. U7 and U8 read reports, so their
+// handlers are reportController's. Guards attach per route (api_specification.md §1.1).
 const router = Router();
 
 const manager = [authenticate, authorize("manager")];
@@ -43,6 +48,18 @@ router.post(
   validate(schemas.userIdSchema),
   ...admin,
   users.remove,
+);
+router.get(
+  "/:userId/reports",
+  validate(userReportsSchema),
+  ...manager,
+  reports.userReports,
+);
+router.get(
+  "/:userId/reports/:weekKey",
+  validate(userWeekSchema),
+  authenticate,
+  reports.userWeek,
 );
 router.put(
   "/:userId/leave",

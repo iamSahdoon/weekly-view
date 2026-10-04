@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: S4**
+**Next stage: S5**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -10,7 +10,7 @@
 | S1 | Server foundation, models, test harness | done |
 | S2 | Auth, users, links, leave, ownership | done |
 | S3 | Projects, tasks, holidays, calendar | done |
-| S4 | Reports, days, submit, week reads | not started |
+| S4 | Reports, days, submit, week reads | done |
 | S5 | Comments, review, "new" markers | not started |
 | S6 | Dashboard, seed script | not started |
 | C1 | Client foundation: lib, apiClient, auth, base UI, `/design` | not started |
@@ -102,6 +102,47 @@
   matched (plan and history stored, membership on the member only, no holiday left).
 - `hoursLogged`, T1's `hoursTotal` and `lastWeekKey` are tested against reports inserted
   directly; nothing writes lines until R5 (S4).
+
+### S4 checks (2026-10-04)
+- `npm run lint`: clean. `npm test`: green — server 282 (54 foundation, 15 calendar,
+  20 `auth`, 74 `adminRoutes`, 29 `projects`, 32 in `tests/policy/reportPolicy.test.js`,
+  4 in `tests/policy/submitRules.test.js`, 21 in `tests/rbac/dailyUpdates.test.js`, 25 in
+  `tests/rbac/reportAccess.test.js`, 8 in `tests/rbac/scopeParity.test.js`), client 1.
+- **Once, not reproduced:** the first full run after writing the suites failed
+  `auth.test.js` at file level (its 20 tests skipped, no assertion failed) — a setup
+  failure, most likely one of the 14 parallel in-memory replica sets starting slowly. The
+  full runs after it (nine) were green. If it shows up again, cap Vitest's file parallelism.
+- **Tests per `api_specification.md` §6:** §6.1 items 1–8 (all ten policy functions,
+  plus `contentScope` and `buildReportScope`); §6.2 items 9–10 (R1 and U7 rows carrying
+  content = `canReadContent` = the Mongo `contentScope`, for member, manager and admin;
+  every read endpoint — R1, R4, R8, R9, R12, U7, U8 — searched for markers placed in each
+  private layer, as a teammate, a manager and an admin); §6.3 items 11–14 and 18; §6.4
+  items 19–25, including two concurrent R7 → one 200, one 409, one revision; §6.6 item 33's
+  U7 row. **Not yet:** §6.3 items 15–17 (comments, the 10-minute window) and §6.2 item 9's
+  V3 rows need C1–C5 and V3 — S5 adds them.
+- **Done list, as tests** (`reportAccess.test.js`, "S4 done list"): five days posted,
+  statuses set, submitted (revision 1 stored with content and days, no comments; the
+  task's `doneAt` set); a teammate gets the days and `content: null`; a manager reading a
+  Draft gets days only (`contentSource: "withheld"`); a manager reading a
+  `needs_correction` report gets the sent-back revision's content while the author gets
+  the live correction. Send-back is V2 (S5), so the tests and the walkthrough make that
+  transition with the send-back's own database writes (`tests/helpers/testWeeks.js`).
+- **Walkthrough on the real server** (`node src/server.js` against a local in-memory replica
+  set, driven with `fetch`; real clock, Sunday 4 Oct 2026 07:00 UTC): owner signs up,
+  invites a manager and two members (U3 → A8); their work periods were then backdated to
+  1 Sep in the database, since people who join on a Sunday have no writable week yet. R3 on
+  2026-W40 → `not_started`, `report: null`; R5 Monday (new task) → Draft created, Tue–Fri
+  → 200, `submitBlockers: ["One task has no status."]`; R5 on W41 → `422 WEEK_OUT_OF_RANGE`
+  (+14 h is still Sunday); R6 → `canSubmit: true`; teammate R12 and U8 → X's days, no
+  content (searched for the private marker); manager R4 on the Draft → withheld; teammate
+  R6 → `403 REPORT_FORBIDDEN`; two concurrent R7 → 200 and `409 REPORT_STATE_CHANGED`
+  (`status: submitted`), one revision in the database; manager R8 → one revision; teammate
+  R8 → 403; after a database send-back, the author's correction stayed hidden from the
+  manager (revision 1 served) and visible to the author; resubmit → revision 2,
+  `latestComment: null`, task `doneAt` set; R10 teammate → 403, manager → 200; R11 → 200;
+  R13 → one seen mark; U7 as the manager → W40 submitted and W36–W39 `not_started`; U7 as
+  a member → `403 FORBIDDEN`; R1 and R2 matched the database. No raw link token appeared in
+  the server's log.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -220,7 +261,80 @@
 - S3: CLAUDE.md's "Name the stage" rule now says every session works on
   `claude/<stage-id>-<short-stage-name>`, created from `main` (owner's instruction).
 
+- S4: **`dayStates` on the server's clock.** I2 makes the client's clock the judge of
+  "today", but R3, R4 and U8 take no date. An unposted expected day is `future` when its
+  date is after the UTC date of now + 14 h (exactly what R5 refuses), `today` from the
+  server's UTC date up to that bound, and `missing` before it — so for some hours of each
+  day two days can read `today`, erring towards allowing (O4). The client should still
+  judge today with its own clock. Reversible.
+- S4: R5's `WEEK_OUT_OF_RANGE` is a week after the week of now + 14 h, or a week no work
+  period covers (`calendarService.isOnTeamForWeek`, §5.0 stage 1).
+- S4: **`DAY_NOT_EXPECTED` has a fourth `reason`, `not_on_team`**, for a day of the join
+  week before the person joined (§5.0 owner decision, 2026-10-04). §1.9 and
+  `frontend_architecture.md` name only `future` · `holiday` · `leave`. See *Open questions*.
+  `dayStates` uses the same value, which §1.10 already lists.
+- S4: a holiday takes precedence over leave and over `not_on_team`, in R5's `reason`,
+  `dayStates` and R12's `state` (`calendarService.dayAvailability`).
+- S4: R3 / U8 on a week outside the person's work periods with no report → `state:
+  "not_started"` (`weekStateOf` alone would say `on_leave`, since nothing is expected).
+- S4: R5 accepts a task id that is the actor's and open — **or already named in this
+  week's lines**, so re-saving a day of a week sent back after the task was marked done
+  doesn't 404. A `newTask` on an unknown project → `404 PROJECT_NOT_FOUND` (§2.5 names only
+  `PROJECT_INACTIVE`). An existing task on a since-deactivated project stays usable.
+- S4: R5 keeps a line or blocker `_id` only if that day already has it; any other `_id` is
+  replaced by a fresh one. A kept blocker keeps its `isKey`; new blockers start unflagged.
+  `openToTeam` is required (the body is "the whole day"). Hours have no upper bound.
+- S4: R5's write is **one pipeline update** conditioned on the open status: replace or
+  append the day (comments and `postedAt` kept, `editedAt` set on an edit), sync
+  `content.tasks` (listed tasks keep their order, status and note; new ones append in order
+  of first appearance), prune orphaned resolutions. So two days saved at once can't lose
+  each other's tasks. If it matches nothing, the tasks it just created are deleted and the
+  answer is 409.
+- S4: R6 is a partial update: each field given replaces that field; `tasks` entries merge
+  `status` and/or `note` into rows already listed (a status can't be cleared back to null).
+  **Empty `nextWeek` strings and empty-text achievements are not stored** — the API allows
+  0–500 characters, but `contentSchema` requires achievement text and a revision copy would
+  fail; the form keeps its own empty rows (a refetch never resets it). An unknown
+  `keyBlockerId` → `422` `fields.keyBlockerId`, like an unknown task id.
+- S4: R7's atomic claim is also conditioned on "no task without a status", so a day saved
+  between the rule check and the claim (adding a task) can't slip into a revision; a
+  missed claim re-runs the rules (422) or answers 409. `doneAt` is set to now on `done`
+  tasks that had none and cleared on the others.
+- S4: `submitBlockers` copy: one line per missing day ("Thursday has no update.", the
+  spec's), then "One task has no status." / "N tasks have no status." — the task wording
+  is mine; the design system should confirm it. `canSubmit` and `submitBlockers` are `null`
+  for anyone but the author; for the author, `submitBlockers` is `[]` once the week is
+  frozen.
+- S4: the WeekView's `tasks` rows follow the **live** lines; `status` and `note` come from
+  the served content (the sent-back revision for a manager on Needs correction), `null`
+  where withheld or absent. `contentRevisionNumber` is `null` unless the revision is served.
+- S4: `isNew` is `false` on every row and thread until S5's `markerService` decorates them.
+  R13 writes seen marks now (in `markerService` / `markerController`, as the tree places
+  it; the route is declared in `reportRoutes.js`). Day threads carry `revisionNumber: null`
+  and `kind: null`; week threads default to `kind: "comment"`.
+- S4: `canOpenWeek` is true for any authenticated actor (authenticate admits only active
+  people). `reportPolicy.contentScope(actor)` is the Mongo face of `canReadContent`; both
+  derive from one status list, and `scopeParity.test.js` holds them together. R1 and U7
+  filter by author as the spec says; `buildReportScope` will serve V3 (S5).
+- S4: `ReportRow.tasksDone` counts `done` among the served content's tasks; `projects` are
+  sorted by name. U7's weeks are every week a work period covers (`isOnTeamForWeek`) up to
+  the current week, plus any week with a report; `sort=lastActivityAt` puts rows without
+  activity (drafts, then WeekRows) last in either direction. A WeekRow is exactly the
+  spec's example (no `approvalRequested`, `submittedAt` or `postedWeekdays`).
+- S4: R2 requires both `weekKey` and `month`; `weeksFiled` counts reports submitted at
+  least once (as U1's `reportsFiled`); `openBlockers` counts unresolved blockers.
+- S4: R12 lists active and removed people whose work period covers the week; someone who
+  joined later that week is left out of an earlier day unless they posted it.
+  `blockersOnly` keeps people whose posted day has any blocker, resolved or not; either
+  filter drops people with no posted day. `resolvedBy` (R10 and Day blockers) is a UserRef.
+
 ## Open questions for the owner
+- **S4, `DAY_NOT_EXPECTED` reason `not_on_team`:** R5 on a day of the join week before
+  the person joined has no listed `reason`. Built with `not_on_team` (the `dayStates`
+  value for it); the client's wording table (`frontend_architecture.md`) needs a line for
+  it in C4, or tell me to map it to another reason.
+- **S4, submit-blocker wording for tasks** ("One task has no status." / "N tasks have no
+  status.") isn't in the documents; confirm or give the copy before C5.
 - `npm ci` fails in `client/` on npm 10.9 ("lock file's ajv@6.15.0 does not satisfy
   ajv@8.20.0"); `server/` is fine. This session used `npm install --no-save`, which left the
   lockfile untouched. If `npm ci` also fails on your machine, C1 should regenerate
@@ -241,3 +355,5 @@
   noted in `project_structure.md` §2.1 and §6.
 - S3 added `server/tests/calendar/calendarService.test.js` and
   `server/tests/rbac/projects.test.js`; noted in `project_structure.md` §2.1 and §6.
+- S4 added `server/tests/helpers/testWeeks.js` (the week writes the three report suites
+  share); noted in `project_structure.md` §2.1 and §6.
