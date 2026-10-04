@@ -509,6 +509,7 @@ client/
 │   │   │   ├── Popover.jsx            # the shared Radix wrapper
 │   │   │   ├── ConfirmDialog.jsx      # destructive confirm: consequence text + Cancel / action
 │   │   │   ├── QueryView.jsx          # the four designed states around a query result (frontend_architecture §8.4)
+│   │   │   ├── __tests__/QueryView.test.jsx  # added in the C3 fix: a failed refetch keeps loaded data on screen
 │   │   │   ├── InlineError.jsx
 │   │   │   ├── Skeleton.jsx
 │   │   │   ├── EmptyState.jsx

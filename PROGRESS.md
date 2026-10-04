@@ -390,6 +390,15 @@
   markers it loaded with; that is C9's done item ("shows its markers once and not on reopening") and
   was not exercised here.
 
+- **C3 fix (2026-10-04, found by the owner):** with the API stopped, a failed toggle's
+  invalidation refetched the week, the refetch failed and the whole page became "This week didn't
+  load". Now the error state shows only when there is no data yet: `QueryView` and
+  `ReportDetailPage` (the week, the versions list and a chosen version) test
+  `isError && data === undefined`, so a failed background refetch keeps the loaded week on screen.
+  Tests: `ReportDetailPage.test.jsx` (a cached week plus a failed refetch renders exactly as before;
+  a week that never loaded still shows the error with `Try again` — the first fails without the fix)
+  and `components/ui/__tests__/QueryView.test.jsx` (2).
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds

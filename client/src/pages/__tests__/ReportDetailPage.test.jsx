@@ -21,7 +21,12 @@ const LAST = addWeeks(THIS, -1);
 const store = createDemoStore();
 const userOf = (key) => store.users.find((u) => u._id === PERSPECTIVES[key]);
 
-function render({ viewer, owner, weekKey, report: wanted }) {
+function render(options) {
+  const { client, markup } = setup(options);
+  return markup(client);
+}
+
+function setup({ viewer, owner, weekKey, report: wanted }) {
   const me = userOf(viewer);
   const person = userOf(owner);
   const report =
@@ -45,30 +50,32 @@ function render({ viewer, owner, weekKey, report: wanted }) {
     me._id === person._id
       ? `/reports/${weekKey}`
       : `/people/${person._id}/reports/${weekKey}`;
-  return renderToStaticMarkup(
-    <AuthContext.Provider
-      value={{
-        status: "authenticated",
-        user: me,
-        isDemo: false,
-        signInPath: "/signin",
-      }}
-    >
-      <QueryClientProvider client={client}>
-        <PageChromeProvider>
-          <MemoryRouter initialEntries={[path]}>
-            <Routes>
-              <Route path="/reports/:week" element={<ReportDetailPage />} />
-              <Route
-                path="/people/:userId/reports/:week"
-                element={<ReportDetailPage />}
-              />
-            </Routes>
-          </MemoryRouter>
-        </PageChromeProvider>
-      </QueryClientProvider>
-    </AuthContext.Provider>,
-  );
+  const markup = () =>
+    renderToStaticMarkup(
+      <AuthContext.Provider
+        value={{
+          status: "authenticated",
+          user: me,
+          isDemo: false,
+          signInPath: "/signin",
+        }}
+      >
+        <QueryClientProvider client={client}>
+          <PageChromeProvider>
+            <MemoryRouter initialEntries={[path]}>
+              <Routes>
+                <Route path="/reports/:week" element={<ReportDetailPage />} />
+                <Route
+                  path="/people/:userId/reports/:week"
+                  element={<ReportDetailPage />}
+                />
+              </Routes>
+            </MemoryRouter>
+          </PageChromeProvider>
+        </QueryClientProvider>
+      </AuthContext.Provider>,
+    );
+  return { client, key: qk.week(person._id, weekKey), markup };
 }
 
 const SECTIONS = [
@@ -172,5 +179,43 @@ describe("A week in full — frontend_architecture.md §9.4", () => {
     const html = render({ viewer: "member", owner: "manager", weekKey: LAST });
     expect(html).toContain("Design review slipped to next week");
     expect(html).not.toContain("Mark this blocker as resolved.");
+  });
+
+  it("a failed background refetch keeps the loaded week on screen", async () => {
+    const options = { viewer: "member", owner: "member", weekKey: LAST };
+    const { client, key, markup } = setup(options);
+    // What a toggle's invalidation does with the API stopped: the week is in the
+    // cache, and the refetch that follows fails.
+    await client
+      .fetchQuery({
+        queryKey: key,
+        queryFn: () => Promise.reject(new Error("NETWORK_ERROR")),
+        staleTime: 0,
+      })
+      .catch(() => {});
+    expect(client.getQueryState(key).status).toBe("error");
+    const html = markup();
+    expect(html).not.toContain("This week didn’t load.");
+    expect(html).toBe(render(options));
+  });
+
+  it("a week that never loaded shows the error with Try again", async () => {
+    const { client, key, markup } = setup({
+      viewer: "member",
+      owner: "member",
+      weekKey: LAST,
+    });
+    client.removeQueries({ queryKey: key });
+    // A static render can't run the retry that mounting would start.
+    client.setQueryDefaults(key, { retryOnMount: false });
+    await client
+      .fetchQuery({
+        queryKey: key,
+        queryFn: () => Promise.reject(new Error("NETWORK_ERROR")),
+      })
+      .catch(() => {});
+    const html = markup();
+    expect(html).toContain("This week didn’t load.");
+    expect(html).toContain("Try again");
   });
 });
