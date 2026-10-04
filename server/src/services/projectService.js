@@ -75,7 +75,7 @@ async function changersOf(projects) {
 }
 
 /** Progress for each planned project in `projects`, keyed by id. */
-async function progressFor(projects) {
+export async function progressFor(projects) {
   const planned = projects.filter((p) => p.plan);
   if (planned.length === 0) return new Map();
   const today = calendar.todayUtc();

@@ -271,10 +271,13 @@ server/
 │   │   ├── auth.test.js               # bootstrap race; password change never 401
 │   │   ├── projects.test.js           # added in S3: P1–P5 and T1 — item shapes per role, filters, plans, derived progress
 │   │   ├── markers.test.js            # added in S5: isNew on rows and threads, N1's dots; markers never reveal a private layer
+│   │   ├── dashboard.test.js          # added in S6: D1–D8 — role gate, users-first rows, filters (status on D2 only), I11/I13, D6 not week-scoped
 │   │   └── scopeParity.test.js        # buildReportScope ↔ canReadContent parity; no private layer leaks
 │   ├── policy/
 │   │   ├── reportPolicy.test.js       # pure-function unit tests, no HTTP, no DB
 │   │   └── submitRules.test.js
+│   ├── seed/                          # added in S6
+│   │   └── seed.test.js               # the dataset is deterministic, relative to the week, and holds every state — read through the API
 │   ├── calendar/                      # added in S3 (§6)
 │   │   └── calendarService.test.js    # working days, expected days, week state, project days used
 │   └── foundation/                    # added in S1: proves its "done" list (§6)

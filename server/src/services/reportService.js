@@ -408,7 +408,7 @@ async function reportOut(actor, report, { expectedDays }) {
 }
 
 /** `dayStates` (§1.10). Today and future are judged on the server's clock (I2). */
-function dayStatesOf(user, weekKey, holidays, report, now) {
+export function dayStatesOf(user, weekKey, holidays, report, now) {
   const posted = new Set((report?.days ?? []).map((d) => d.weekday));
   const today = toDateString(calendar.todayUtc(now));
   const bound = toDateString(boundDate(now));

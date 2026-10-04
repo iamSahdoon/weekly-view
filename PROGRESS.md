@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: S6**
+**Next stage: C1**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -12,7 +12,7 @@
 | S3 | Projects, tasks, holidays, calendar | done |
 | S4 | Reports, days, submit, week reads | done |
 | S5 | Comments, review, "new" markers | done |
-| S6 | Dashboard, seed script | not started |
+| S6 | Dashboard, seed script | done |
 | C1 | Client foundation: lib, apiClient, auth, base UI, `/design` | not started |
 | C2 | Shell, tables, filters, URL state | not started |
 | C3 | Reading a week; comment components | not started |
@@ -185,6 +185,47 @@
   (`status: submitted`); A and B approving rev 2 at once → 200 and 409; R8 and the database
   agree (rev 1 `changes_requested`, rev 2 `approved`, threads `send_back`, `comment`,
   `approval`, `latestComment: null`); V4 back to 0. No raw link token in the server log.
+
+### S6 checks (2026-10-04)
+- `npm run lint`: clean. `npm test`: green — server 381 (328 before S6, plus 32 in
+  `tests/rbac/dashboard.test.js` and 21 in `tests/seed/seed.test.js`), client 1.
+- **Tests:** `dashboard.test.js` — the role gate on all eight endpoints (401 signed out,
+  403 for a member, 200 for manager and admin); validation (`weekKey`, `weeks ∈ {4, 8, 12}`,
+  D2's `sort`, `status`, `limit`, a malformed D7 id); D1 built users-first (people who
+  filed nothing are expected, leave is not, an all-holiday week expects nobody and its rate
+  is `null`), the trailing rate, open blockers falling when one is resolved, `status` never
+  moving the headline numbers, the person filter, the project filter per row (I11); D2 rows
+  for Not started and On leave with `report: null`, a draft's `tasksDone: null`, no content
+  or task note anywhere in the body, a Needs-correction row read from the sent-back revision
+  (I13), sorts, paging, the comma `status` list; D3's window and per-person series,
+  Drafts not counted; D4's seven fixed types, D5's order; D6 capped at eight, newest first,
+  ignoring `weekKey`; D7's numbers over a work period with a holiday week; D8's plan-only,
+  active-only rows and this-week versus total hours. `seed.test.js` — see below.
+- **Seed** (`npm run seed`, also `seed:reset`): deterministic (the same week builds
+  byte-identical documents, ids and password hash included), relative to the week it runs in
+  (re-run across the 2026 → 2027 boundary in a test), and idempotent. 11 users (the 8-name cast,
+  an invited person with a live link, a removed person, a re-hired person with two periods and
+  a gap), 5 projects, 28 tasks, 50 reports, 50 revisions, 8 holidays, 5 seen marks.
+  The current week holds Approved (asked and not asked), Submitted (asked and not asked),
+  Needs correction, Draft, Not started and On leave, with a holiday on Wednesday; week −6 is a
+  Holiday week; the weeks before hold a leave week, a Not-started week, and the correction
+  cycle (three revisions, two sent back, the third approved, the comment on a specific one),
+  an approval with a comment and a reply, a day open to the team with a teammate's comment and
+  a reply, a resolved blocker, a carried-over blocker. Plans: Client A on track with planned
+  hours, R&D overdue, Marketing starting in the future, Internal Tooling extended (one
+  `planHistory` entry), Legacy Portal inactive but named by older tasks.
+  `seed.test.js` reads all of it back through D1, D2, D8, U7, R12 and N1 — no write.
+- **Manual backend checks on a real server** (`node src/server.js` and `npm run seed` against a
+  local `mongod` of the same version the tests download; real clock, Sunday 4 Oct 2026):
+  `seed` and `seed:reset` both wipe and refill; `NODE_ENV=production npm run seed` refuses.
+  Logging in as the seeded manager, admin and a member: every dashboard endpoint → 200 / 200 /
+  403, signed out → 401, a missing or invalid `weekKey`, `sort=bad` → 422, D7 for an unknown id →
+  404. D1 for W40: filed 5 of 8, 1 on leave, 1 needing correction, 3 open blockers raised by 3
+  people. `status=approved` on D1 returns the same numbers (the filter moves D2 only: it
+  lists Imali J. and Sanduni B.). `person=Imali,Tharindu` → 2 of 2; `project=R&D` → 2 of 2 and
+  62 of 186 hours; D3 with `trendPerson` returns both series; D8 lists four projects
+  (Client A on track, Internal Tooling 3 days left, Marketing 0 days used, R&D overdue by 7). The
+  server log holds no link token. **Unverified:** nothing on a screen — S6 has no UI.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -412,6 +453,52 @@
 - S5: `reportService` exports `weekViewOf`, `dayView`, `weekCommentsView` and
   `threadView` for `reviewService`'s answers, so serialization (and `isNew`) stays in one
   place. `EDIT_WINDOW_MS` is exported from `reportPolicy`.
+- S6: **The page filters apply uniformly, per row (I11)** to D1, D2, D4 and D5, and to D3
+  by report. A person kept by `project` keeps all of their hours that week — D4 and D5 do not
+  cut the lines down to the project, so D5 under a project filter can still show other
+  projects the same people worked on. D6 takes no filter (it is "across the team"); D8 takes
+  only `weekKey`. D3's `person` narrows the team series; `trendPerson` is its own series and
+  ignores `person`.
+- S6: **Rows are users first**, in plain code rather than one `$lookup` pipeline: one read of
+  the users, one of the week's reports (projected without `content`, `weekComments` and day
+  comments), one of the holidays — shared across the weeks of D1's trailing window. Task
+  statuses are read only to count Done: from live content for Submitted and Approved, from the
+  sent-back revision for Needs correction (I13); a Draft is never read. The Needs-correction
+  count and `oldestSentBackAt` (the earliest `reviewedAt` of the sent-back revisions) follow
+  the same rows.
+- S6: **D1 definitions the spec leaves open.** `complianceTrailing` pools filed and expected
+  over the eight weeks ending at `weekKey` (the week itself included), so a week with nobody
+  expected adds nothing, and the rate is `null` only when all eight are empty. D1's open
+  blockers read the rows' reports — people on the team that week — so a blocker raised by
+  someone removed mid-week is not counted.
+- S6: **D6's event field is `type`** (`submitted` · `approved` · `sent_back`); the spec names
+  the events but not the key. The feed reads the newest eight revisions by `submittedAt` and
+  the newest eight reviewed by `reviewedAt` (both indexed), merges and keeps eight — bounded
+  without a time window — then looks up users and reports for those eight only. An unreviewed
+  submission is one event.
+- S6: **D7 counts weeks up to and including the current one**, through the same derivation as
+  §5.0, so the current week lowers the rate until it is filed (as it does on D1). `compliance`
+  and `avgHoursPerWeek` are `null` when no week was expected; the average divides all hours of
+  those weeks, every report status, by the expected weeks.
+- S6: D8 returns every active project with a plan, sorted by name; a person appears if any
+  line anywhere names the project, ordered by total hours. `lastDay` is the date of the
+  latest day with a line on the project.
+- S6: dashboard services take no `actor` — every manager sees the same figures — so the
+  controllers build none. `reportService.dayStatesOf` and `projectService.progressFor` are
+  now exported so D2 and D8 reuse them instead of copying.
+- S6: **The seed's invite link.** The invited person has a live link, but the raw token is
+  generated and dropped inside `runSeed`: only its SHA-256 is stored and nothing prints it
+  (link tokens are never logged or cached). To get a usable link in development, reissue the
+  invite from the Users page (U4). The accounts' common password is `weekly-view-dev`, printed
+  by the script; it is a development password, and the seed refuses to run when
+  `NODE_ENV=production`.
+- S6: **The seed's calendar.** Everyone joined on the Monday of week −6, the Holiday week
+  (five holidays, "Year-end closure"), so every person's history has no empty weeks before
+  their first report. Holiday *names* are Sri Lankan-style, but the dates are relative to the
+  seeding week, so they only illustrate. Timestamps in the current week follow its working
+  days: on a Tuesday run, Friday's submissions are dated in the future. `seed` and `seed:reset`
+  do the same thing — the schema says `seed` already wipes — and `--reset` is the explicit
+  spelling.
 
 ## Open questions for the owner
 - `npm ci` fails in `client/` on npm 10.9 ("lock file's ajv@6.15.0 does not satisfy
@@ -438,3 +525,5 @@
   share); noted in `project_structure.md` §2.1 and §6.
 - S5 added `server/tests/rbac/markers.test.js` (the "new" markers, which no §6 item
   covers); noted in `project_structure.md` §2.1 and §6.
+- S6 added `server/tests/rbac/dashboard.test.js` and `server/tests/seed/seed.test.js`;
+  noted in `project_structure.md` §6.
