@@ -2,19 +2,12 @@
 // api_specification.md, never the server's route files. A handler gets
 // (store, { params, query, body }) and returns { status, data } or
 // { status, error: { code, message, extra? } } — the real codes and envelopes,
-// so the pages' error paths run in the demo too.
+// so the pages' error paths run in the demo too (demoResponses.js).
 
-const ok = (data, status = 200) => ({ status, data });
-const fail = (status, code, message, extra) => ({
-  status,
-  error: { code, message, extra },
-});
+import { fail, ok, withUser } from "./demoResponses.js";
+import { weekRoutes } from "./demoWeekRoutes.js";
 
 const NOT_IN_DEMO = "Accounts and links aren't part of the demo.";
-
-function currentUser(store) {
-  return store.users.find((u) => u._id === store.session.userId) ?? null;
-}
 
 function projectRef(store, id) {
   const project = store.projects.find((p) => p._id === id);
@@ -39,17 +32,6 @@ export function meOf(store, user) {
     isOwner: user.isOwner,
     onLeave: user.onLeave,
     owner: owner ? { name: owner.name, email: owner.email } : null,
-  };
-}
-
-// The demo has no sign-in: the chooser sets the session. With no one chosen, a
-// request that needs a person is refused as FORBIDDEN — the adapter never
-// answers 401, which would open the session-expiry modal.
-function withUser(handler) {
-  return (store, req) => {
-    const user = currentUser(store);
-    if (!user) return fail(403, "FORBIDDEN", "Choose a perspective first.");
-    return handler(store, req, user);
   };
 }
 
@@ -91,11 +73,13 @@ const authRoutes = [
   ["post", "/auth/links/accept", () => fail(404, "LINK_INVALID", NOT_IN_DEMO)],
 ];
 
-const ROUTES = [...authRoutes].map(([method, path, handler]) => ({
-  method,
-  handler,
-  ...compile(path),
-}));
+const ROUTES = [...authRoutes, ...weekRoutes].map(
+  ([method, path, handler]) => ({
+    method,
+    handler,
+    ...compile(path),
+  }),
+);
 
 function compile(path) {
   const names = [];

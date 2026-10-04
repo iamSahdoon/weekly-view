@@ -1,0 +1,176 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { describe, expect, it } from "vitest";
+import { AuthContext } from "../../context/AuthContext.jsx";
+import { PageChromeProvider } from "../../context/PageChromeContext.jsx";
+import { createDemoStore } from "../../demo/demoStore.js";
+import { revisionListOf, weekViewOf } from "../../demo/demoWeekView.js";
+import { PERSPECTIVES } from "../../demo/fixtures.js";
+import { addWeeks, currentWeekKey } from "../../lib/dates.js";
+import { qk } from "../../lib/queryKeys.js";
+import ReportDetailPage from "../ReportDetailPage.jsx";
+
+// The table in frontend_architecture.md §9.4, one test per row: what the page renders
+// is decided by the response, not by the role alone. The WeekView comes from the demo's
+// derivation of api_specification.md §1.10 (the same layers the server serves); the
+// walkthrough against the real API is recorded in PROGRESS.md.
+
+const THIS = currentWeekKey();
+const LAST = addWeeks(THIS, -1);
+const store = createDemoStore();
+const userOf = (key) => store.users.find((u) => u._id === PERSPECTIVES[key]);
+
+function render({ viewer, owner, weekKey, report: wanted }) {
+  const me = userOf(viewer);
+  const person = userOf(owner);
+  const report =
+    wanted === null
+      ? undefined
+      : store.reports.find(
+          (r) => r.author === person._id && r.weekKey === weekKey,
+        );
+  const client = new QueryClient({
+    defaultOptions: { queries: { staleTime: Infinity, retry: false } },
+  });
+  const view = weekViewOf(store, me, person, weekKey, report);
+  client.setQueryData(qk.week(person._id, weekKey), view);
+  if (report && view.report.contentSource !== "withheld") {
+    client.setQueryData(
+      qk.revisions(report._id),
+      revisionListOf(store, report),
+    );
+  }
+  const path =
+    me._id === person._id
+      ? `/reports/${weekKey}`
+      : `/people/${person._id}/reports/${weekKey}`;
+  return renderToStaticMarkup(
+    <AuthContext.Provider
+      value={{
+        status: "authenticated",
+        user: me,
+        isDemo: false,
+        signInPath: "/signin",
+      }}
+    >
+      <QueryClientProvider client={client}>
+        <PageChromeProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/reports/:week" element={<ReportDetailPage />} />
+              <Route
+                path="/people/:userId/reports/:week"
+                element={<ReportDetailPage />}
+              />
+            </Routes>
+          </MemoryRouter>
+        </PageChromeProvider>
+      </QueryClientProvider>
+    </AuthContext.Provider>,
+  );
+}
+
+const SECTIONS = [
+  "Planned for next week",
+  "Hours by task type",
+  "Notes &amp; links",
+];
+
+describe("A week in full — frontend_architecture.md §9.4", () => {
+  it("report null: 'No report for week N.' and a Back, for anyone", () => {
+    const week = addWeeks(THIS, -9);
+    const html = render({
+      viewer: "member",
+      owner: "member",
+      weekKey: week,
+      report: null,
+    });
+    expect(html).toContain(`No report for week ${Number(week.slice(6))}.`);
+    expect(html).toContain("Back");
+    expect(html).not.toContain("Daily updates");
+  });
+
+  it("a teammate: the days and the managers-only note — no document, no comments", () => {
+    const html = render({ viewer: "member", owner: "manager", weekKey: LAST });
+    expect(html).toContain("Daily updates");
+    expect(html).toContain("Scheduler prototype"); // the lines are served
+    expect(html).toContain("Weekly reports are shared with managers only.");
+    for (const heading of SECTIONS) expect(html).not.toContain(heading);
+    expect(html).not.toContain("Overall comments");
+    expect(html).not.toContain("Versions");
+    // A day closed to the team says so, and carries no Comment button.
+    expect(html).toContain(
+      "Comments on this update are limited to Nadia and managers.",
+    );
+  });
+
+  it("a manager on a Draft: the days, and 'not submitted yet' in place of the document", () => {
+    const html = render({ viewer: "manager", owner: "member", weekKey: THIS });
+    expect(html).toContain("Daily updates");
+    expect(html).toContain("Weekly report not submitted yet.");
+    expect(html).toContain("once Imali submits it");
+    for (const heading of SECTIONS) expect(html).not.toContain(heading);
+    expect(html).not.toContain("is correcting this report");
+  });
+
+  it("a manager on Needs correction: the sent-back version, under the correcting banner", () => {
+    const html = render({ viewer: "manager", owner: "member", weekKey: LAST });
+    expect(html).toContain("Imali is correcting this report.");
+    expect(html).toContain("You&#x27;re seeing the version sent back on");
+    // Revision 1's text, not the author's live correction.
+    expect(html).toContain("Test site works end to end");
+    expect(html).not.toContain("Thursday testing is in the notes");
+    expect(html).not.toContain("card, wallet and refund");
+    for (const heading of SECTIONS) expect(html).toContain(heading);
+    expect(html).toContain("Overall comments");
+    expect(html).toContain("Needs correction");
+  });
+
+  it("the author: the live document, her correction, the thread and the versions", () => {
+    const html = render({ viewer: "member", owner: "member", weekKey: LAST });
+    expect(html).toContain("Thursday testing is in the notes");
+    expect(html).toContain("card, wallet and refund");
+    expect(html).not.toContain("is correcting this report");
+    for (const heading of SECTIONS) expect(html).toContain(heading);
+    expect(html).toContain("Overall comments");
+    expect(html).toContain("sent back"); // the thread's version and kind
+    expect(html).toContain("rev 1");
+    // The author may resolve a blocker; the toggle carries its accessible name.
+    expect(html).toContain("Mark this blocker as resolved.");
+    // A thread she can reply to.
+    expect(html).toContain("Reply");
+  });
+
+  it("a manager can start an overall comment; the author cannot", () => {
+    const manager = render({
+      viewer: "manager",
+      owner: "member",
+      weekKey: LAST,
+    });
+    expect(manager).toMatch(/>Comment</);
+    const author = render({ viewer: "member", owner: "member", weekKey: LAST });
+    // The author has `Comment` buttons on her own days, but not in the rail.
+    const rail = author.slice(author.indexOf("Overall comments"));
+    expect(rail).not.toMatch(/>Comment</);
+  });
+
+  it("shows a 'new' marker on a thread the reader hasn't opened, and none on an opened week", () => {
+    const html = render({ viewer: "member", owner: "member", weekKey: LAST });
+    expect(html).toContain('aria-label="New"');
+    const older = render({
+      viewer: "member",
+      owner: "member",
+      weekKey: addWeeks(THIS, -2),
+    });
+    expect(older).not.toContain('aria-label="New"');
+    expect(older).toContain("rev 2");
+    expect(older).toContain("approved");
+  });
+
+  it("a teammate sees a resolved blocker but not the toggle", () => {
+    const html = render({ viewer: "member", owner: "manager", weekKey: LAST });
+    expect(html).toContain("Design review slipped to next week");
+    expect(html).not.toContain("Mark this blocker as resolved.");
+  });
+});

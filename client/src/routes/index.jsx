@@ -15,11 +15,12 @@ import SessionLayout from "./SessionLayout.jsx";
 // its guard. Routes that make no sense in the demo carry handle.realOnly.
 //
 // Pages that a later stage builds render PendingPage until then: C3 replaces the
-// report-reading routes, C4 "/", C5 the edit route, C6 history / updates / review,
+// report-reading routes (done in C3), C4 "/", C5 the edit route, C6 history / updates / review,
 // C7 /team, C8 the rest.
 
 const SignInPage = lazy(() => import("../pages/SignInPage.jsx"));
 const SignUpPage = lazy(() => import("../pages/SignUpPage.jsx"));
+const ReportDetailPage = lazy(() => import("../pages/ReportDetailPage.jsx"));
 const AcceptInvitePage = lazy(() => import("../pages/AcceptInvitePage.jsx"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage.jsx"));
 // Defined in development only, so a production build has no /design chunk.
@@ -68,7 +69,7 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
                 },
                 {
                   path: "/reports/:week",
-                  element: guarded(["week"], <PendingPage title="Week" />),
+                  element: guarded(["week"], <ReportDetailPage />),
                 },
                 {
                   path: "/reports/:week/edit",
@@ -83,10 +84,7 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
                 },
                 {
                   path: "/people/:userId/reports/:week",
-                  element: guarded(
-                    ["userId", "week"],
-                    <PendingPage title="Week" />,
-                  ),
+                  element: guarded(["userId", "week"], <ReportDetailPage />),
                 },
                 {
                   path: "/account",

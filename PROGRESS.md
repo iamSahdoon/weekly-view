@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C3**
+**Next stage: C4**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -15,7 +15,7 @@
 | S6 | Dashboard, seed script | done |
 | C1 | Client foundation: lib, apiClient, auth, base UI, `/design` | done |
 | C2 | Shell, tables, filters, URL state | done |
-| C3 | Reading a week; comment components | not started |
+| C3 | Reading a week; comment components | done |
 | C4 | Writing: day panel, This week | not started |
 | C5 | The weekly form | not started |
 | C6 | History, team updates, review desk, review page | not started |
@@ -339,6 +339,55 @@
   hit-test measured); keyboard use of the multi-select and the Tabs / SegmentedControl arrows
   beyond what is listed; screen-reader output; Safari and Firefox. Open
   `npm --prefix client run dev` → `/design` (the last two sections are new).
+
+### C3 checks (2026-10-04)
+- `npm run lint`: clean (client and server). `npm test`: green — server 381 (unchanged), client 95
+  (64 before C3, plus 31): `permissions.test.js` 9 (the week-thread gates of G1, the 10-minute
+  countdown arithmetic, version labels), `demoWeeks.test.js` 14 (the layers of a week through the
+  demo adapter, resolve and team-comment rules, week comments, the 10-minute window on a frozen clock
+  — 9 min 59 s edits, 10 min 1 s is `EDIT_WINDOW_CLOSED` for edit and delete —, comments with
+  replies, the "new" markers), `ReportDetailPage.test.jsx` 8, and 8 new cases in `demoCoverage.test.js`
+  (every function in `reportService`, `reviewService` and `userService`, 17 in all, is answered by
+  the demo). `vite build` OK.
+- **The table of `frontend_architecture.md` §9.4, against the real API** (Playwright's Chromium,
+  headless; the API on a local in-memory replica set seeded with `npm run seed`; Vite dev server).
+  Every line below was asserted by the script, which exited 0 on a freshly reseeded database:
+  - *Teammate* (a member on a Needs-correction week): the five days, the `--tint` note "Weekly
+    reports are shared with managers only.", none of sections 01–06, no *Overall comments* or
+    *Versions* in the rail, **no request to `/revisions`**, U8 used, no resolve toggle, no JS error.
+  - *Manager on a Draft*: the days, "Weekly report not submitted yet." naming the author, no
+    document, no revisions request, the breadcrumb `People / Ayesha C. / Week 40`.
+  - *Manager on Needs correction*: API `contentSource: "revision"`; the correcting banner with the
+    sent-back date; all six sections, showing revision 1's text and not the author's correction;
+    the rail's thread labelled `rev 1 · sent back`.
+  - *Author* on her Needs-correction week: R3 used, the live document, `Edit report` in the top bar
+    linking to `/reports/:week/edit`, the `Carried over` label, R13 sent **exactly once** (StrictMode
+    included), "new" markers on first open. Reply (C3) → shown with its `N min left` countdown →
+    Edit (C4) → `edited` → Delete (C5, through the confirm) → gone; no Delete on the manager's
+    send-back. The team-comments switch flips at once, R11 is sent, and the state survives a reload.
+  - *Manager on a Submitted week*: the live document; `Comment` opens a week thread (C2) that carries
+    `rev 1`, and is deleted inside the window; a blocker toggle flips at once, R10 is sent, and it
+    flips back; a resolved blocker reads `Resolved 2 Oct` for a manager.
+  - *Revisions rail* (a report with three versions, two sent back): `rev 3 current · rev 2 sent back ·
+    rev 1 sent back`; choosing rev 2 requests R9 and shows "Viewing rev 2 — sent back" over that
+    snapshot; `Back to current` returns.
+  - *Edges*: no report → "No report for week 20." and `Back`; an unknown person → the not-found page;
+    `/people/:me/reports/:week` replaces itself with `/reports/:week`; at 1400 px the rail is the
+    280 px right column, at 360 px it sits above the document with no horizontal overflow.
+- **Screenshots looked at** (1280 px and 360 px): teammate, manager on a Draft, manager on Needs
+  correction, author, manager on a Submitted week, a revision view, no report. **The container blocks
+  Google Fonts, so every screenshot used the fallback sans-serif and monospace.** Found and fixed by
+  looking: each day's table sized its columns on its own (now a fixed layout), and at 360 px the
+  table scrolled sideways and hid the hours (below 640 px each line now stacks).
+- **Not done / unverified:** the demo was exercised through its adapter in tests only — there is no
+  demo chooser until C10, so no page was driven in the browser at `/demo`. Hover, press and
+  focus-visible states, the confirm dialog's focus return, keyboard use of the versions list, the
+  countdown ticking in a real clock (the shared ticker is unit-checked by arithmetic only), screen
+  readers, the fonts' real metrics and Safari / Firefox are unverified. **"New" on reopening:** the
+  page follows §9.4 exactly (R13 invalidates `newMarks`, `reports`, `reviewDesk`, never `week` or
+  `report`), so a week reopened inside the 30 s `staleTime` is served from the cache with the
+  markers it loaded with; that is C9's done item ("shows its markers once and not on reopening") and
+  was not exercised here.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -740,7 +789,73 @@
   `FilterBar`, `MultiSelect`, `WeekPicker` and `SegmentedControl` choices, the 404 copy, the ESLint
   change, `useUrlFilters` and `ScrollRestoration`.
 
+- C3: **`userService.js` exists with `getUserWeek` (U8) only**, since §5.2 puts U8 there and
+  `useWeek` needs it; the other `userService` functions arrive with C6 and C8. `useMarkSeen` is in
+  `useReportQueries.js`, where §5.6's table puts it (`project_structure.md` lists `useNewMarks.js` as
+  "and marking a week seen"; `useNewMarks` itself is C9's).
+- C3: **Comment mutations invalidate every cached week**, not one. `CommentThread`'s props are
+  `thread, target, canReply` (§8.3) and `target` carries `{ reportId }` only, so a comment hook has
+  no `userId` / `weekKey` for §5.7's `invalidateWeek(queryClient, W)`. `lib/invalidateWeek.js` takes
+  the coordinates it has: with all three it is §5.7's helper; with `{ reportId }` it marks every
+  `["week"]` and that `["report", id]` stale, and only the weeks on screen refetch. The blocker and
+  team-comment hooks hold the week and use the targeted form.
+- C3: **`useResolveBlocker(week)` and `useTeamComments(week)` are the two optimistic toggles** of
+  §5.7: each edits the week cache at once, restores it on error, and invalidates in `onSettled`. Their
+  failure is not yet shown as the "error toast with `Retry`" of §5.7 — the restore is the only
+  feedback — because `Toaster` has no `Retry` wiring until a stage uses it.
+- C3: **Breadcrumb for a member.** Design §3.4 gives `People → Nadia F. → Week 31`, but People and a
+  person's profile are manager pages, so for a member (who reaches someone's week from Team
+  updates) the links would end in the 403 state. Managers and admins get the breadcrumb; a member
+  gets a back-link to `Team updates`. Reversible (`headerLinks` in `ReportDetailPage.jsx`).
+- C3: **The resolve toggle is on the daily-update rows only.** §3.4 says "every blocker row carries a
+  resolve toggle", but `ReportDocument` is pure rendering (§8.3), so section 03 shows each blocker's
+  Resolved state, Key and Carried over read-only; the toggle is in the day above it. A snapshot
+  (a past version) has no resolution state, so its blockers show text and Key only.
+- C3: **`ReportDocument` takes `week` and `revision?` — no `viewer`.** Nothing in §3.4 varies with
+  the reader once the response is decided, and an unused prop is dead code. The withheld cases (the
+  teammate note, the Draft panel, no report) are the page's, in `WeekNotices.jsx`; a withheld
+  response from a member is the teammate note, from a manager the Draft panel.
+- C3: **"Sent back on {date}" in the correcting banner** reads `latestComment.createdAt` from the
+  week, so the banner needs no revisions request (the manager already gets that field).
+- C3: **Extra props and files the contracts didn't list:** `Comment` takes `reply`, `canDelete`,
+  `onEdit`, `onDelete` and `error` (the contract lists `comment, isWriter, showKind?` and says it
+  shows the countdown — the buttons need handlers); `CommentComposer` adds `initialValue`, `onCancel`,
+  `rows`, `autoFocus`, `label` (editing reuses it); `StartThread` (the `Comment` button) is exported
+  from `CommentThread.jsx`; `WeekComments` (listed under `review/`, built here because the rail needs
+  it) takes `threads, canStart, canReply, reportId`; `ui/RoleChip.jsx`, `report/BlockerRow.jsx`,
+  `report/WeekNotices.jsx`, `lib/permissions.js` (the week-thread gates, G1) and
+  `lib/invalidateWeek.js`. `RevisionsRail` drops the contract's unused `reportId`.
+- C3: **Deleting a comment asks first** (the shared `ConfirmDialog`: "Delete this comment? It is
+  removed for everyone who can read this thread."). Design §6.23 only names the text button.
+- C3: **A day's comment count is a plain line** ("No comments" / "2 comments", with the `NewMarker` when
+  a thread is new) rather than a badge; every posted day shows `Comment` to anyone who may write
+  there, and a teammate on a closed day sees §6.23's "Comments on this update are limited to
+  {first name} and managers." once, after the threads.
+- C3: **`useNow(intervalMs)`** keeps one module-level timer running only while something subscribes,
+  at the shortest interval anyone asked for (default 15 s). It has a server snapshot so the page can
+  be rendered to a string in a test.
+- C3: **The sidebar's local dot is replaced by `NewMarker`** (the C2 note); the rest of C9's wiring
+  (`useNewMarks`, V4) is still C9.
+- C3: **The demo's weeks.** `fixtures.js` now holds two projects, six tasks and five reports on dates
+  relative to the demo's start: Imali (member) has this week as a Draft, last week sent back by
+  Nadia (live content already differing from the sent-back version, a thread with her reply, a
+  resolved blocker) and the week before approved on its second version; Nadia (manager) has last
+  week submitted. They give every row of §9.4 and a revisions list. The handlers (`demoWeekRoutes.js`)
+  apply the server's rules and error codes; `demoWeekView.js` derives `dayStates`, `tasks`,
+  `hoursByType`, `contentSource`, `canComment`, `editableUntil`, `isNew` and `submitBlockers` from
+  the store. Holidays, leave, `not_on_team` and a real submit are not modelled until C4–C8.
+  `isNew` follows `database_schema.md` §5.4 in a simplified form (an entry by someone else after the
+  reader's last visit, in a thread on their own report or one they wrote in).
+- C3: **Test layout.** The client has no jsdom or testing library, so the page test renders to a
+  string with a primed query cache (as the C2 route tests do) and cannot click; the click paths
+  (reply, edit, delete, toggles) are covered by the browser walkthrough and, for their rules, by
+  `demoWeeks.test.js`.
+
 ## Open questions for the owner
+- C3, to confirm or change (all recorded under *Decisions*): the member's back-link to Team updates
+  in place of the breadcrumb; the resolve toggle living on the daily-update rows only; comment
+  hooks invalidating every cached week; deleting a comment going through a confirm; the optimistic
+  toggles restoring silently where §5.7 says "error toast with `Retry`".
 - ~~C2: `server/tests/seed/seed.test.js` fails 3 tests in the cloud container~~ **Resolved
   (owner, 2026-10-04):** all 21 pass on `main` elsewhere, so the failures were this container,
   not S6. Server suite stands at 381 green.
@@ -752,6 +867,13 @@
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C3 added `components/ui/RoleChip.jsx`, `components/report/BlockerRow.jsx`,
+  `components/report/WeekNotices.jsx`, `lib/invalidateWeek.js`, `demo/demoResponses.js`,
+  `demo/demoWeekView.js`, `demo/demoWeekRoutes.js` and three test files (`lib/__tests__/permissions.test.js`,
+  `demo/__tests__/demoWeeks.test.js`, `pages/__tests__/ReportDetailPage.test.jsx`); `project_structure.md`
+  §3.1 and §6 are updated. `lib/permissions.js` (in the tree) and `userService.js` / `reviewService.js` /
+  `reportService.js` are started, not complete; `StartThread` and `WeekComments` share files and folders
+  as noted under *Decisions*.
 - Added `server/eslint.config.js`, `client/eslint.config.js`, `client/.prettierrc.json` (the trees
   had no lint/format configs; noted in §2.1 and §3.1).
 - ~~Temporary: `server/tests/smoke.test.js`~~ — deleted in S1.

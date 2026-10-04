@@ -518,6 +518,7 @@ client/
 │   │   │   ├── FilterBar.jsx
 │   │   │   ├── Meter.jsx
 │   │   │   ├── NewMarker.jsx          # the 6px square (§6.24)
+│   │   │   ├── RoleChip.jsx           # added in C3: the Manager / Admin label beside a name; a member carries none
 │   │   │   ├── inputClasses.js        # added in C1: the Input look shared by Input, Textarea, Select (keeps component files component-only)
 │   │   │   └── Toaster.jsx            # Sonner mount, constrained per tech_stack §6.7
 │   │   ├── shell/                     # AppShell parts (§1)
@@ -559,6 +560,8 @@ client/
 │   │   │   ├── AutosaveIndicator.jsx
 │   │   │   ├── StickyActionBar.jsx    # Submit, and the "Ask for approval" checkbox (§4.9)
 │   │   │   ├── ReportDocument.jsx     # the read-only rendering shared by §3.4 and §3.6
+│   │   │   ├── BlockerRow.jsx         # added in C3: a blocker as read — Key bar, Carried over, Resolved, the resolve toggle when given `onResolve`
+│   │   │   ├── WeekNotices.jsx        # added in C3: the strips and panels that stand where the document would be (teammate note, Draft note, correcting and version banners)
 │   │   │   ├── RevisionsRail.jsx
 │   │   │   └── ReportHistoryTable.jsx
 │   │   ├── comment/                   # §6.23 — used by report/, updates/ and review/
@@ -603,10 +606,14 @@ client/
 │   │   ├── bootDemo.js                # builds the store, installs the adapter — dynamically imported by main.jsx
 │   │   ├── demoAdapter.js             # the custom Axios adapter
 │   │   ├── demoRoutes.js              # method + path → handler, one per endpoint the pages call
+│   │   ├── demoResponses.js           # added in C3: ok / fail / withUser, shared by the route files
+│   │   ├── demoWeekView.js            # added in C3: the WeekView, Day, Thread and Revision the API computes, computed from the store
+│   │   ├── demoWeekRoutes.js          # added in C3: U8, R3, R4, R8–R11, R13 and C1–C5 for the demo
 │   │   ├── demoStore.js               # builds the in-memory store; rebuilt on refresh or Start over
 │   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates
 │   │   └── __tests__/
-│   │       └── demoCoverage.test.js   # every services/ function answered by the adapter
+│   │       ├── demoCoverage.test.js   # every services/ function answered by the adapter
+│   │       └── demoWeeks.test.js      # added in C3: the demo's layers, comment rules, ten-minute window and "new" markers
 │   ├── hooks/
 │   │   ├── useAuth.js                 # reads AuthContext
 │   │   ├── useAuthQueries.js          # bootstrap status, link preview, login, signup, accept
@@ -672,6 +679,7 @@ client/
 │   │   ├── tokenStore.js              # wv_token get / set / clear, try/catch around storage
 │   │   ├── authEvents.js              # the tiny emitter behind "session-expired"
 │   │   ├── permissions.js             # UX gates derived from role and ownership — never the authority
+│   │   ├── invalidateWeek.js          # added in C3: the one invalidation helper for a week and its report (frontend_architecture §5.7)
 │   │   ├── submitChecklist.js         # the submit checklist from dayStates + task statuses
 │   │   ├── weekActions.js             # the top-bar primary action for a week
 │   │   ├── format.js                  # hours, dates, relative times
@@ -681,7 +689,8 @@ client/
 │   │       ├── dates.test.js          # added in C1
 │   │       ├── urlParams.test.js      # added in C1
 │   │       ├── normalizeError.test.js # added in C1
-│   │       └── routeParams.test.js    # added in C2
+│   │       ├── routeParams.test.js    # added in C2
+│   │       └── permissions.test.js    # added in C3: the week-thread gates (G1), comment window, version labels
 │   ├── styles/
 │   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]
@@ -921,8 +930,9 @@ for the "new" markers (`isNew`, N1), which no §6 item covers.
 The client's two required tests are `lib/__tests__/constants.parity.test.js` (§7.1)
 and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones beside the
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
-tests are static renders (`react-dom/server`) with no new dependency. E2E testing stays
-deferred per `tech_stack.md` §8.
+tests are static renders (`react-dom/server`) with no new dependency. C3 adds
+`pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
+renders. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

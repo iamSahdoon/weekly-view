@@ -3,6 +3,17 @@
 // views share a cache entry.
 
 export const qk = {
+  // Prefixes for invalidating a family at once (tech_stack.md §6.3): `["reports"]`
+  // reaches history, someone's history and the personal strip, and so on.
+  all: {
+    week: () => ["week"],
+    report: () => ["report"],
+    reports: () => ["reports"],
+    teamUpdates: () => ["teamUpdates"],
+    reviewDesk: () => ["reviewDesk"],
+    dashboard: () => ["dashboard"],
+  },
+
   bootstrap: () => ["auth", "bootstrap"],
   // Never carries the link token (rule 7): the token lives in component state.
   linkPreview: () => ["auth", "link-preview"],

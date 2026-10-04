@@ -68,3 +68,24 @@ export function initialsOf(name = "") {
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
+
+/**
+ * Whole minutes left in a 10-minute comment window, rounded up so the label never
+ * reads "0 min" while the buttons are still there; 0 once `editableUntil` has passed.
+ */
+export function minutesLeft(editableUntil, nowMs) {
+  const left = toDate(editableUntil).getTime() - nowMs;
+  return left > 0 ? Math.ceil(left / 60_000) : 0;
+}
+
+/** "Imali J." → "Imali". */
+export function firstNameOf(name = "") {
+  return name.trim().split(/\s+/)[0] ?? "";
+}
+
+const OUTCOMES = { changes_requested: "sent back", approved: "approved" };
+
+/** The word for a version's outcome; one nobody has reviewed is "submitted". */
+export function revisionOutcome(revision) {
+  return OUTCOMES[revision.action] ?? "submitted";
+}
