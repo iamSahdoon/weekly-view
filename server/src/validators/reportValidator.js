@@ -8,7 +8,7 @@ import { isWeekKey } from "../utils/weeks.js";
 import { booleanQuery } from "./projectValidator.js";
 import { objectId } from "./userValidator.js";
 
-// R1–R13, U7, U8 — api_specification.md §2.5, §2.2.
+// R1–R13, U7, U8 and N1 — api_specification.md §2.5, §2.2, §2.10.
 
 export const weekKey = z
   .string()
@@ -205,3 +205,7 @@ export const teamCommentsSchema = z.object({
   params: reportParams.extend({ weekday }),
   body: z.object({ open: z.boolean() }),
 });
+
+// ---------------------------------------------------------------- N1
+
+export const newMarksSchema = z.object({});

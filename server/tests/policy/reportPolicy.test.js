@@ -11,6 +11,7 @@ import {
   canReviewReport,
   canToggleTeamComments,
   contentSourceFor,
+  reviewDeskScope,
 } from "../../src/policies/reportPolicy.js";
 
 // api_specification.md §6.1 (1–8) — pure functions, no HTTP, no database.
@@ -200,5 +201,24 @@ describe("buildReportScope", () => {
     expect(buildReportScope(managerA, { status: "submitted" })).toEqual({
       status: "submitted",
     });
+  });
+});
+
+describe("reviewDeskScope", () => {
+  it("submitted, asked for approval unless all, never the actor's own", () => {
+    expect(reviewDeskScope(managerA)).toEqual({
+      $and: [
+        {},
+        { status: "submitted" },
+        { approvalRequested: true },
+        { author: { $ne: "a" } },
+      ],
+    });
+    expect(reviewDeskScope(admin, { approval: "all" }).$and).toEqual([
+      {},
+      { status: "submitted" },
+      {},
+      { author: { $ne: "d" } },
+    ]);
   });
 });

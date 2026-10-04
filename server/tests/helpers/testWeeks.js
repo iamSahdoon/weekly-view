@@ -2,11 +2,10 @@ import { expect, vi } from "vitest";
 import request from "supertest";
 import app from "../../src/app.js";
 import { Report } from "../../src/models/reportModel.js";
-import { Revision } from "../../src/models/revisionModel.js";
 import { bearer } from "./testAuth.js";
 
-// Shared by the S4 report suites: a frozen clock, day bodies, and the week's writes as
-// the author makes them. Week 2026-W40 runs Mon 28 Sep – Fri 2 Oct 2026.
+// Shared by the report suites: a frozen clock, day bodies, the week's writes as the
+// author makes them, and (S5) the review and comment calls. Week 2026-W40 runs Mon 28 Sep – Fri 2 Oct 2026.
 
 export const api = request(app);
 export const WEEK = "2026-W40";
@@ -66,9 +65,9 @@ export const submit = (user, reportId, requestApproval = false) =>
 export async function filedWeek(
   user,
   project,
-  { status = "done", note = "" } = {},
+  { status = "done", note = "", week = WEEK, requestApproval = false } = {},
 ) {
-  const view = await postWeek(user, project);
+  const view = await postWeek(user, project, DAYS, week);
   const reportId = view.report._id;
   const tasks = view.report.tasks.map((t) => ({
     task: t.task._id,
@@ -78,56 +77,67 @@ export async function filedWeek(
   expect(
     (await autosave(user, reportId, { tasks, notes: "Week notes" })).status,
   ).toBe(200);
-  const res = await submit(user, reportId);
+  const res = await submit(user, reportId, requestApproval);
   expect(res.status).toBe(200);
   return res.body.data;
 }
 
-/**
- * The send-back's writes (database_schema.md §3.3), straight to the database until V2
- * exists (S5): claim the current revision, then the report.
- */
+/** V2 as `reviewer`, pinned to the report's current revision. Returns the response. */
 export async function sendBack(
   reportId,
   reviewer,
   comment = "Hours by type look off.",
 ) {
   const report = await Report.findById(reportId).lean();
-  const now = new Date();
-  await Revision.updateOne(
-    { report: report._id, revisionNumber: report.revisionNumber, action: null },
-    {
-      $set: {
-        action: "changes_requested",
-        comment,
-        reviewedBy: reviewer._id,
-        reviewedAt: now,
-      },
-    },
-  );
-  await Report.updateOne(
-    { _id: report._id },
-    {
-      $set: {
-        status: "needs_correction",
-        lastActivityAt: now,
-        interactionAt: now,
-        latestComment: {
-          text: comment,
-          author: reviewer._id,
-          revisionNumber: report.revisionNumber,
-          createdAt: now,
-        },
-      },
-      $push: {
-        weekComments: {
-          author: reviewer._id,
-          text: comment,
-          createdAt: now,
-          revisionNumber: report.revisionNumber,
-          kind: "send_back",
-        },
-      },
-    },
-  );
+  const res = await api
+    .post(`/api/reports/${reportId}/review/send-back`)
+    .set(as(reviewer))
+    .send({ revisionNumber: report.revisionNumber, comment });
+  expect(res.status).toBe(200);
+  return res;
 }
+
+/** V1 as `reviewer`; `revisionNumber` defaults to the report's current one. */
+export async function approve(reportId, reviewer, body = {}) {
+  const report = await Report.findById(reportId).lean();
+  return api
+    .post(`/api/reports/${reportId}/review/approve`)
+    .set(as(reviewer))
+    .send({ revisionNumber: report.revisionNumber, ...body });
+}
+
+// ---------------------------------------------------------------- comments (C1–C5)
+
+export const commentOnDay = (user, reportId, weekday, text) =>
+  api
+    .post(`/api/reports/${reportId}/days/${weekday}/comments`)
+    .set(as(user))
+    .send({ text });
+
+export const commentOnWeek = (user, reportId, text) =>
+  api
+    .post(`/api/reports/${reportId}/week-comments`)
+    .set(as(user))
+    .send({ text });
+
+export const reply = (user, reportId, threadId, text) =>
+  api
+    .post(`/api/reports/${reportId}/threads/${threadId}/replies`)
+    .set(as(user))
+    .send({ text });
+
+const commentPath = (reportId, threadId, replyId) =>
+  `/api/reports/${reportId}/threads/${threadId}` +
+  (replyId ? `/replies/${replyId}` : "");
+
+export const editComment = (user, reportId, threadId, text, replyId) =>
+  api
+    .patch(commentPath(reportId, threadId, replyId))
+    .set(as(user))
+    .send({ text });
+
+export const deleteComment = (user, reportId, threadId, replyId) =>
+  api.delete(commentPath(reportId, threadId, replyId)).set(as(user));
+
+export const markSeen = (user, reportId) =>
+  api.post(`/api/reports/${reportId}/seen`).set(as(user));

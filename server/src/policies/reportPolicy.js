@@ -15,7 +15,7 @@ const STAFF_CONTENT_STATUSES = Object.freeze([
   "approved",
 ]);
 
-const EDIT_WINDOW_MS = 10 * 60 * 1000;
+export const EDIT_WINDOW_MS = 10 * 60 * 1000;
 
 const idOf = (ref) => String(ref?._id ?? ref);
 
@@ -31,6 +31,22 @@ export const isAuthor = (actor, report) =>
  */
 export function buildReportScope(actor, filters = {}) {
   return isStaff(actor) ? { ...filters } : { ...filters, author: actor.id };
+}
+
+/**
+ * The review desk's base filter, shared by V3, V4 and N1 (api_specification.md §2.7):
+ * submitted reports in the actor's scope, asked for approval unless `approval` is `all`,
+ * and never the actor's own — whatever other filter is added beside it.
+ */
+export function reviewDeskScope(actor, { approval = "requested" } = {}) {
+  return {
+    $and: [
+      buildReportScope(actor),
+      { status: "submitted" },
+      approval === "all" ? {} : { approvalRequested: true },
+      { author: { $ne: actor.id } },
+    ],
+  };
 }
 
 /** The Mongo face of canReadContent: the reports whose content `actor` may read. */

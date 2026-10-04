@@ -7,6 +7,7 @@ import { Revision } from "../models/revisionModel.js";
 import { Task } from "../models/taskModel.js";
 import { User } from "../models/userModel.js";
 import {
+  EDIT_WINDOW_MS,
   OPEN_STATUSES,
   canOpenWeek,
   canReadContent,
@@ -28,6 +29,7 @@ import {
   weekdayDate,
 } from "../utils/weeks.js";
 import * as calendar from "./calendarService.js";
+import * as markerService from "./markerService.js";
 import * as taskService from "./taskService.js";
 import { userRef } from "./userService.js";
 
@@ -36,7 +38,6 @@ import { userRef } from "./userService.js";
 // team-comment switch (project_structure.md §2.5). Load, then authorize (tech_stack.md
 // §3.1). Nothing withheld is ever serialized: a withheld layer is null.
 
-const EDIT_WINDOW_MS = 10 * 60 * 1000;
 const BOUND_MS = 14 * 60 * 60 * 1000;
 const NAME_ORDER = { sensitivity: "base" };
 
@@ -193,7 +194,7 @@ async function previousBlockerTexts(reports) {
 
 // ---------------------------------------------------------------- shapes (§1.10)
 
-function threadOut(thread, users, { weekThread }) {
+function threadOut(thread, users, { weekThread, isNew }) {
   const reply = (r) => ({
     _id: r._id,
     author: users.get(String(r.author)) ?? null,
@@ -207,7 +208,7 @@ function threadOut(thread, users, { weekThread }) {
     revisionNumber: weekThread ? (thread.revisionNumber ?? null) : null,
     kind: weekThread ? (thread.kind ?? "comment") : null,
     replies: (thread.replies ?? []).map(reply),
-    isNew: false, // S5: markerService decorates "new"
+    isNew,
   };
 }
 
@@ -215,10 +216,12 @@ const threadAuthors = (threads = []) =>
   threads.flatMap((t) => [t.author, ...(t.replies ?? []).map((r) => r.author)]);
 
 /**
- * What serializing days needs, for any number of reports in one round of queries:
- * people, tasks, and each report's previous-week blocker texts.
+ * What serializing days for `actor` needs, for any number of reports in one round of
+ * queries: people, tasks, each report's previous-week blocker texts, and the actor's
+ * seen marks (for `isNew`).
  */
 async function dayContext(
+  actor,
   reports,
   { extraUserIds = [], extraTaskIds = [] } = {},
 ) {
@@ -230,12 +233,29 @@ async function dayContext(
     for (const res of r.blockerResolutions ?? []) userIds.push(res.resolvedBy);
     taskIds.push(...linesOf(r).map((l) => l.task));
   }
-  const [users, tasks, carried] = await Promise.all([
+  const [users, tasks, carried, seen] = await Promise.all([
     usersById(userIds),
     taskRefsById(taskIds),
     previousBlockerTexts(reports),
+    markerService.seenAtByReport(
+      actor,
+      reports.map((r) => r._id),
+    ),
   ]);
-  return { users, tasks, carried };
+  return { users, tasks, carried, seen };
+}
+
+/** A thread of `report` as `actor` reads it, with its "new" marker. */
+function threadFor(actor, report, thread, ctx, { weekThread }) {
+  return threadOut(thread, ctx.users, {
+    weekThread,
+    isNew: markerService.isThreadNew(
+      actor,
+      report,
+      thread,
+      ctx.seen.get(String(report._id)),
+    ),
+  });
 }
 
 function lineOut(line, tasks) {
@@ -275,7 +295,7 @@ function dayOut(actor, report, day, ctx) {
     editedAt: day.editedAt ?? null,
     hours: sumHours(day.lines ?? []),
     comments: (day.comments ?? []).map((t) =>
-      threadOut(t, ctx.users, { weekThread: false }),
+      threadFor(actor, report, t, ctx, { weekThread: false }),
     ),
     canComment: canCommentOnDay(actor, report, day),
   };
@@ -324,7 +344,7 @@ async function reportOut(actor, report, { expectedDays }) {
     (served.content?.tasks ?? []).map((t) => [String(t.task), t]),
   );
   const liveTasks = report.content?.tasks ?? [];
-  const ctx = await dayContext([report], {
+  const ctx = await dayContext(actor, [report], {
     extraUserIds: readable
       ? [...threadAuthors(report.weekComments), report.latestComment?.author]
       : [],
@@ -370,7 +390,7 @@ async function reportOut(actor, report, { expectedDays }) {
     content: served.content ? contentBody(served.content) : null,
     weekComments: readable
       ? (report.weekComments ?? []).map((t) =>
-          threadOut(t, ctx.users, { weekThread: true }),
+          threadFor(actor, report, t, ctx, { weekThread: true }),
         )
       : null,
     latestComment:
@@ -431,7 +451,8 @@ async function weekView(actor, user, weekKey, report, now = new Date()) {
   };
 }
 
-async function weekViewOf(actor, report) {
+/** The WeekView of `report`'s week for `actor` — also V1 and V2's answer. */
+export async function weekViewOf(actor, report) {
   const user = await User.findById(report.author).select(USER_FIELDS).lean();
   return weekView(actor, user, report.weekKey, report);
 }
@@ -459,11 +480,15 @@ async function revisionTasksFor(actor, reports) {
 
 async function reportRows(actor, reports) {
   const projectIds = reports.flatMap((r) => linesOf(r).map((l) => l.project));
-  const [projects, revisionTasks] = await Promise.all([
+  const [projects, revisionTasks, fresh] = await Promise.all([
     Project.find({ _id: { $in: [...new Set(projectIds.map(String))] } })
       .select("name status")
       .lean(),
     revisionTasksFor(actor, reports),
+    markerService.newReportIds(
+      actor,
+      reports.map((r) => r._id),
+    ),
   ]);
   const projectById = new Map(
     projects.map((p) => [String(p._id), projectRef(p)]),
@@ -498,7 +523,7 @@ async function reportRows(actor, reports) {
       submittedAt: r.submittedAt ?? null,
       lastActivityAt: r.lastActivityAt ?? null,
       postedWeekdays: sortedDays(r.days).map((d) => d.weekday),
-      isNew: false, // S5: markerService decorates "new"
+      isNew: fresh.has(String(r._id)),
     };
   });
 }
@@ -698,7 +723,7 @@ export async function listUserReports(actor, userId, filters) {
           tasksDone: null,
           revisionNumber: 0,
           lastActivityAt: null,
-          isNew: false,
+          isNew: false, // nothing to see in a week with no report
         },
   );
   return paginated(items, { ...filters, total: rows.length });
@@ -834,6 +859,7 @@ export async function teamUpdates(
   });
 
   const ctx = await dayContext(
+    actor,
     entries.filter((e) => e.day).map((e) => e.report),
   );
   return {
@@ -1310,12 +1336,47 @@ export async function setTeamComments(actor, reportId, weekday, open) {
     { $set: { "days.$.openToTeam": open } },
   );
   if (result.matchedCount === 0) throw reportNotFound();
-  const saved = await loadReport(report._id);
-  const ctx = await dayContext([saved]);
+  return dayView(actor, await loadReport(report._id), weekday);
+}
+
+// ---------------------------------------------------------------- views for reviewService
+
+/** The `Day` of `report` on `weekday`, as `actor` reads it (C1, C5). */
+export async function dayView(actor, report, weekday) {
+  const ctx = await dayContext(actor, [report]);
   return dayOut(
     actor,
-    saved,
-    saved.days.find((d) => d.weekday === weekday),
+    report,
+    report.days.find((d) => d.weekday === weekday),
     ctx,
   );
+}
+
+/** `{ weekComments }` as `actor` reads them (C2, C5); null when withheld. */
+export async function weekCommentsView(actor, report) {
+  if (!canReadContent(actor, report)) return { weekComments: null };
+  const ctx = await dayContext(actor, [report], {
+    extraUserIds: threadAuthors(report.weekComments),
+  });
+  return {
+    weekComments: (report.weekComments ?? []).map((t) =>
+      threadFor(actor, report, t, ctx, { weekThread: true }),
+    ),
+  };
+}
+
+/** One thread of `report` — a day's or the week's — as `actor` reads it (C3, C4). */
+export async function threadView(actor, report, threadId) {
+  const weekThread = (report.weekComments ?? []).find((t) =>
+    sameId(t._id, threadId),
+  );
+  const thread =
+    weekThread ??
+    (report.days ?? [])
+      .flatMap((d) => d.comments ?? [])
+      .find((t) => sameId(t._id, threadId));
+  const ctx = await dayContext(actor, [report], {
+    extraUserIds: threadAuthors(weekThread ? [weekThread] : []),
+  });
+  return threadFor(actor, report, thread, ctx, { weekThread: !!weekThread });
 }
