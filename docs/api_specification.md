@@ -204,10 +204,13 @@ Paginated endpoints: U1, U7, R1, V3, D2.
 | `COMMENT_HAS_REPLIES`        | 409    | Deleting a comment that has replies, or a send-back comment                                                   | —           |
 | `REPORT_STATE_CHANGED`       | 409    | **Every** illegal report state: a lost review race, a stale revision pin, a disallowed transition, a write on a frozen week | `status` |
 | `WEEK_OUT_OF_RANGE`          | 422    | The weekKey is outside the person's work periods or after the current-week bound                              | —           |
-| `DAY_NOT_EXPECTED`           | 422    | A daily update for a day that is in the future, a holiday, or a day the person is on leave                    | `reason`    |
+| `DAY_NOT_EXPECTED`           | 422    | A daily update for a day that is in the future, a holiday, a day the person is on leave, or a day before they joined; `reason` is `future` · `holiday` · `leave` · `not_on_team` | `reason`    |
 | `PROJECT_INACTIVE`           | 422    | Starting a task on an inactive project                                                                        | —           |
 | `CURRENT_PASSWORD_INCORRECT` | 422    | Password change with a wrong current password; a field error on `currentPassword`                             | `fields`    |
 | `INTERNAL_ERROR`             | 500    | Anything unhandled. The stack is logged in development only                                                   | —           |
+
+**`DAY_NOT_EXPECTED` reason `not_on_team`** — a day of the join week before the person's
+work period starts. *(Owner decision, 2026-10-04.)*
 
 **Mongo duplicate-key errors** are mapped in the service, never passed through: an
 `E11000` on `{ isOwner: 1 }` becomes `SIGNUP_CLOSED`; on `{ email: 1 }`, `USER_EXISTS`; on

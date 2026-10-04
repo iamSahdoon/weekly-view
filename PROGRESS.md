@@ -269,10 +269,11 @@
   judge today with its own clock. Reversible.
 - S4: R5's `WEEK_OUT_OF_RANGE` is a week after the week of now + 14 h, or a week no work
   period covers (`calendarService.isOnTeamForWeek`, §5.0 stage 1).
-- S4: **`DAY_NOT_EXPECTED` has a fourth `reason`, `not_on_team`**, for a day of the join
-  week before the person joined (§5.0 owner decision, 2026-10-04). §1.9 and
-  `frontend_architecture.md` name only `future` · `holiday` · `leave`. See *Open questions*.
-  `dayStates` uses the same value, which §1.10 already lists.
+- S4, **owner decision (2026-10-04):** `DAY_NOT_EXPECTED` has a fourth `reason`,
+  `not_on_team`, for a day of the join week before the person joined. Added to
+  `api_specification.md` §1.9 with a note naming the decision. `dayStates` uses the same
+  value, which §1.10 already lists. `frontend_architecture.md`'s wording table names only
+  `future` · `holiday` · `leave`; C4 adds a line for it.
 - S4: a holiday takes precedence over leave and over `not_on_team`, in R5's `reason`,
   `dayStates` and R12's `state` (`calendarService.dayAvailability`).
 - S4: R3 / U8 on a week outside the person's work periods with no report → `state:
@@ -300,9 +301,9 @@
   between the rule check and the claim (adding a task) can't slip into a revision; a
   missed claim re-runs the rules (422) or answers 409. `doneAt` is set to now on `done`
   tasks that had none and cleared on the others.
-- S4: `submitBlockers` copy: one line per missing day ("Thursday has no update.", the
-  spec's), then "One task has no status." / "N tasks have no status." — the task wording
-  is mine; the design system should confirm it. `canSubmit` and `submitBlockers` are `null`
+- S4, **owner decision (2026-10-04):** `submitBlockers` copy is one line per missing day
+  ("Thursday has no update.", the spec's), then "One task has no status." / "N tasks have
+  no status." — kept as written. `canSubmit` and `submitBlockers` are `null`
   for anyone but the author; for the author, `submitBlockers` is `[]` once the week is
   frozen.
 - S4: the WeekView's `tasks` rows follow the **live** lines; `status` and `note` come from
@@ -329,12 +330,6 @@
   filter drops people with no posted day. `resolvedBy` (R10 and Day blockers) is a UserRef.
 
 ## Open questions for the owner
-- **S4, `DAY_NOT_EXPECTED` reason `not_on_team`:** R5 on a day of the join week before
-  the person joined has no listed `reason`. Built with `not_on_team` (the `dayStates`
-  value for it); the client's wording table (`frontend_architecture.md`) needs a line for
-  it in C4, or tell me to map it to another reason.
-- **S4, submit-blocker wording for tasks** ("One task has no status." / "N tasks have no
-  status.") isn't in the documents; confirm or give the copy before C5.
 - `npm ci` fails in `client/` on npm 10.9 ("lock file's ajv@6.15.0 does not satisfy
   ajv@8.20.0"); `server/` is fine. This session used `npm install --no-save`, which left the
   lockfile untouched. If `npm ci` also fails on your machine, C1 should regenerate
