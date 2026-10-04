@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: S5**
+**Next stage: S6**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -11,7 +11,7 @@
 | S2 | Auth, users, links, leave, ownership | done |
 | S3 | Projects, tasks, holidays, calendar | done |
 | S4 | Reports, days, submit, week reads | done |
-| S5 | Comments, review, "new" markers | not started |
+| S5 | Comments, review, "new" markers | done |
 | S6 | Dashboard, seed script | not started |
 | C1 | Client foundation: lib, apiClient, auth, base UI, `/design` | not started |
 | C2 | Shell, tables, filters, URL state | not started |
@@ -143,6 +143,48 @@
   R13 → one seen mark; U7 as the manager → W40 submitted and W36–W39 `not_started`; U7 as
   a member → `403 FORBIDDEN`; R1 and R2 matched the database. No raw link token appeared in
   the server's log.
+
+### S5 checks (2026-10-04)
+- `npm run lint`: clean. `npm test`: green — server 328 (54 foundation, 15 calendar,
+  20 `auth`, 74 `adminRoutes`, 29 `projects`, 33 `reportPolicy`, 4 `submitRules`,
+  33 `dailyUpdates`, 25 `reportAccess`, 8 `scopeParity`, 18 in
+  `tests/rbac/reviewAccess.test.js`, 15 in `tests/rbac/markers.test.js`), client 1.
+- **Tests per `api_specification.md` §6:** §6.5 items 26–32 (`reviewAccess.test.js`),
+  including two concurrent approvals → one 200, one 409, the winner's `reviewedBy`
+  standing, and an approve racing a send-back → exactly one outcome; §6.3 items 15–17
+  (`dailyUpdates.test.js`), the 10-minute window on an injected clock (`vi.setSystemTime`:
+  9 min 59 s → 200, 10 min 1 s → 403 for both edit and delete, a reply's own window);
+  §6.2 item 9's V3 rows and item 10's V3, V4 and N1 reads (`scopeParity.test.js`). Also the
+  week-comment rules, V3's filters, sort and paging, V4, and the `isNew` / N1 rules
+  (`markers.test.js`, including that week threads a reader can't read never make a row new).
+- **Done list, as a test** (`reviewAccess.test.js`, "S5 done list"): the full correction
+  cycle of `database_schema.md` §3.4 — five days, submit asking for approval (rev 1),
+  manager A sends back (rev 1 `changes_requested` with its comment, `latestComment`, a
+  `send_back` week thread), the author replies and corrects content and Friday's day, a
+  manager reads revision 1 while the author reads the live correction, resubmit (rev 2,
+  `latestComment: null`), manager B approves rev 2; rev 1 keeps C1 and D1, rev 2 holds C2
+  and D2, R8 lists both with their outcomes, `lastActivityAt` follows submit and review.
+- `testWeeks.sendBack` now calls V2 instead of writing to the database, so the S4 suites
+  run their send-backs through the real endpoint (all still green).
+- One S4 assertion changed: `dailyUpdates.test.js` expected `isNew: false` on a manager's
+  comment on the author's day; with markers built it is `true` (the author hasn't opened
+  the week since), which is the specified behaviour.
+- **Walkthrough on the real server** (`node src/server.js` against a local in-memory replica
+  set, driven with `fetch`; real clock, Sunday 4 Oct 2026 13:39 UTC; work periods
+  backdated to 1 Sep as in S4): X posts W40 and submits asking for approval → V3 as A
+  lists X `isNew: true`, as a member `403 FORBIDDEN`; `?sort=bogus` → 422; V4 `{count: 1}`
+  = N1 `reviewRequests`; V1 by a member → 403; V2 with 9 characters → 422
+  `fields.comment`, without `revisionNumber` → 422; valid V2 → `needs_correction` and a
+  `send_back` thread, the database revision carrying the action, comment and reviewer;
+  X's N1 `thisWeek: true` (Sunday counts W40, see decisions) and R1 `isNew: true` → R13 →
+  false; C1 by Y on a closed day → 403, after R11 → 201; C3 by X → 201; C4 by X on Y's
+  comment → `403 EDIT_WINDOW_CLOSED`, by Y → 200 with `editedAt`; C5 on a comment with a
+  reply → 409, on the send-back → 409; C2 by B → 201 (`kind: comment`, rev 1); C3 by Y on
+  a week thread → 403; R4 as Y → `weekComments: null`, `content: null`; R4 as B → revision
+  1's content; resubmit → rev 2; B approving with pin 1 → `409 REPORT_STATE_CHANGED`
+  (`status: submitted`); A and B approving rev 2 at once → 200 and 409; R8 and the database
+  agree (rev 1 `changes_requested`, rev 2 `approved`, threads `send_back`, `comment`,
+  `approval`, `latestComment: null`); V4 back to 0. No raw link token in the server log.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -329,6 +371,45 @@
   `blockersOnly` keeps people whose posted day has any blocker, resolved or not; either
   filter drops people with no posted day. `resolvedBy` (R10 and Day blockers) is a UserRef.
 
+- S5: **C2 on a Draft → `409 REPORT_STATE_CHANGED`** (with `status: "draft"`). C2 names
+  `COMMENT_NOT_ALLOWED` only for the author; §3's table accepts "every status except
+  draft" and says every other state returns 409. The UI never offers it. Reversible.
+- S5: C2 is conditioned on the `revisionNumber` it read, so a resubmit landing between the
+  read and the write is a 409, not a comment tagged with the wrong version.
+- S5: C3 on a week thread by a teammate → `403 COMMENT_NOT_ALLOWED` (C3's wording), with
+  nothing of the thread in the body. C4/C5 by anyone but the writer →
+  `403 EDIT_WINDOW_CLOSED` (§1.9: "or someone else's"). C5 checks in the order 404 →
+  403 → 409. C1 and C3 by a teammate are conditioned on `openToTeam` at write time, so a
+  day closed meanwhile is a 403. Edits don't move `interactionAt` and are never "new".
+- S5: V1/V2 check the status and the pin against the report first (409 with its status),
+  then claim the revision (`action: null`), then update the report conditioned on
+  `submitted` and the same `revisionNumber`. An approval comment that is empty after
+  trimming counts as none (no thread). A given approval comment is also stored on the
+  revision's `comment`, as the send-back's is.
+- S5: the review desk's base filter is `reportPolicy.reviewDeskScope(actor, { approval })`
+  — `buildReportScope`, `status: submitted`, `approvalRequested` unless `all`, and
+  `author: { $ne: actor }` — shared by V3, V4 and N1 ("one query builder", §2.7). V3's own
+  filters go beside it in an `$and`, so `person=<self>` can't undo the guard. It lives in
+  the policy so `markerService` (N1) needn't import `reviewService`. V3's `role` filter is
+  the author's current role; `project` means any line on that project; ties sort by
+  `weekKey`, then `_id`.
+- S5: **"new" rules** (`database_schema.md` §5.4), with "no seen mark" meaning everything
+  that concerns the reader is new: for the author, their report approved or sent back
+  (status `approved` / `needs_correction` and `lastActivityAt` after `seenAt` — only a
+  review sets those), or a comment or reply by someone else on their days or week; for
+  anyone, an entry by someone else in a thread they wrote in; for a manager or admin, a
+  requested `submitted` report (not their own) submitted after `seenAt`. Week threads
+  count only where `canReadContent` allows. A row is checked first against
+  `interactionAt > seenAt`. V4 = the desk's requested reports whose `submittedAt` is after
+  the reader's `seenAt`.
+- S5: **N1's "this week" on the server's clock.** The server has no client date (I2), so
+  `nav.thisWeek` covers any week that is current somewhere (the weeks of now − 12 h and
+  now + 14 h; on a Sunday that is both last week and the next), and `nav.myReports`
+  covers the actor's earlier reports of the 12 weeks. Errs towards showing a dot. Reversible.
+- S5: `reportService` exports `weekViewOf`, `dayView`, `weekCommentsView` and
+  `threadView` for `reviewService`'s answers, so serialization (and `isNew`) stays in one
+  place. `EDIT_WINDOW_MS` is exported from `reportPolicy`.
+
 ## Open questions for the owner
 - `npm ci` fails in `client/` on npm 10.9 ("lock file's ajv@6.15.0 does not satisfy
   ajv@8.20.0"); `server/` is fine. This session used `npm install --no-save`, which left the
@@ -352,3 +433,5 @@
   `server/tests/rbac/projects.test.js`; noted in `project_structure.md` §2.1 and §6.
 - S4 added `server/tests/helpers/testWeeks.js` (the week writes the three report suites
   share); noted in `project_structure.md` §2.1 and §6.
+- S5 added `server/tests/rbac/markers.test.js` (the "new" markers, which no §6 item
+  covers); noted in `project_structure.md` §2.1 and §6.

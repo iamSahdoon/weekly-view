@@ -11,16 +11,21 @@ import {
   api,
   as,
   autosave,
+  commentOnDay,
   dayBody,
+  deleteComment,
+  editComment,
+  filedWeek,
   freezeAt,
   postWeek,
   putDay,
+  reply,
   submit,
 } from "../helpers/testWeeks.js";
 
-// api_specification.md §6.3 — items 11–14 and 18. Items 15–17 (day comments, the
-// 10-minute window, deleting a comment with replies) need C1–C5 and ship with S5.
-// Also R5's details, R11 and R12.
+// api_specification.md §6.3 — items 11–18 (15–17, day comments and the 10-minute window
+// on an injected clock, shipped with S5). Also R5's details, R11, R12, and the C1–C5 rules
+// for day threads.
 
 let admin, managerA, memberX, memberY, project, inactive;
 
@@ -334,7 +339,7 @@ describe("R5 — editing a posted day", () => {
       revisionNumber: null,
       kind: null,
       replies: [],
-      isNew: false,
+      isNew: true, // the author hasn't opened the week since the manager wrote
     });
   });
 
@@ -623,5 +628,237 @@ describe("R11 — the team-comment switch", () => {
     res = await api.put(url("tue")).set(as(memberX)).send({ open: true });
     expect(res.status).toBe(404);
     expect(res.body.error).toEqual({ code: "REPORT_NOT_FOUND" });
+  });
+});
+
+// ---------------------------------------------------------------- S5: day comments
+
+const openDay = (user, reportId, weekday, open = true) =>
+  api
+    .put(`/api/reports/${reportId}/days/${weekday}/team-comments`)
+    .set(as(user))
+    .send({ open });
+
+describe("15 · teammates comment only on an opened day", () => {
+  it("member Y → C1 on X's closed day → 403; after X opens it → 201", async () => {
+    const view = await postWeek(memberX, project, ["mon"]);
+    const id = view.report._id;
+
+    let res = await commentOnDay(memberY, id, "mon", "Can I help?");
+    expect(res.status).toBe(403);
+    expect(res.body.error).toEqual({ code: "COMMENT_NOT_ALLOWED" });
+    expect((await Report.findById(id).lean()).days[0].comments).toHaveLength(0);
+
+    expect((await openDay(memberX, id, "mon")).status).toBe(200);
+    res = await commentOnDay(memberY, id, "mon", "Can I help?");
+    expect(res.status).toBe(201);
+    expect(res.body.data).toMatchObject({ weekday: "mon", canComment: true });
+    expect(res.body.data.comments).toHaveLength(1);
+    expect(res.body.data.comments[0]).toMatchObject({
+      text: "Can I help?",
+      author: { _id: String(memberY._id), name: "Member Y." },
+      editedAt: null,
+      editableUntil: "2026-10-02T12:10:00.000Z",
+      revisionNumber: null,
+      kind: null,
+      replies: [],
+      isNew: false, // the writer's own
+    });
+  });
+
+  it("after a manager opens it → 201; closed again → 403 for comments and replies", async () => {
+    const view = await postWeek(memberX, project, ["mon"]);
+    const id = view.report._id;
+    await openDay(managerA, id, "mon");
+    let res = await commentOnDay(memberY, id, "mon", "On it.");
+    expect(res.status).toBe(201);
+    const threadId = res.body.data.comments[0]._id;
+
+    res = await reply(memberX, id, threadId, "Thanks.");
+    expect(res.status).toBe(201);
+    expect(res.body.data.replies).toHaveLength(1);
+
+    await openDay(memberX, id, "mon", false);
+    res = await commentOnDay(memberY, id, "mon", "Again");
+    expect(res.status).toBe(403);
+    expect(res.body.error).toEqual({ code: "COMMENT_NOT_ALLOWED" });
+    res = await reply(memberY, id, threadId, "Again");
+    expect(res.status).toBe(403);
+    expect(res.body.error).toEqual({ code: "COMMENT_NOT_ALLOWED" });
+    // The author and managers still write there.
+    expect((await reply(memberX, id, threadId, "Closed now.")).status).toBe(
+      201,
+    );
+    expect((await reply(admin, id, threadId, "Noted.")).status).toBe(201);
+  });
+
+  it("the author comments on their own day; a comment marks interactionAt", async () => {
+    const view = await postWeek(memberX, project, ["mon"]);
+    const res = await commentOnDay(
+      memberX,
+      view.report._id,
+      "mon",
+      "Forgot: QA",
+    );
+    expect(res.status).toBe(201);
+    const report = await Report.findById(view.report._id).lean();
+    expect(report.interactionAt.toISOString()).toBe("2026-10-02T12:00:00.000Z");
+    expect(report.lastActivityAt).toBeUndefined(); // comments never move it
+  });
+});
+
+describe("16 · managers comment on their own update", () => {
+  it("manager A → C1 on A's own update → 201", async () => {
+    const view = await postWeek(managerA, project, ["mon"]);
+    const res = await commentOnDay(
+      managerA,
+      view.report._id,
+      "mon",
+      "Also: 1:1s",
+    );
+    expect(res.status).toBe(201);
+    expect(res.body.data.comments[0].author._id).toBe(String(managerA._id));
+  });
+});
+
+describe("17 · the 10-minute window, on the server's clock", () => {
+  async function aComment() {
+    const view = await postWeek(memberX, project, ["mon"]);
+    const res = await commentOnDay(managerA, view.report._id, "mon", "First");
+    expect(res.status).toBe(201);
+    return { id: view.report._id, threadId: res.body.data.comments[0]._id };
+  }
+
+  it("edited at 9 min 59 s → 200; at 10 min 1 s → 403 EDIT_WINDOW_CLOSED", async () => {
+    const { id, threadId } = await aComment();
+    vi.setSystemTime(new Date("2026-10-02T12:09:59.000Z"));
+    let res = await editComment(managerA, id, threadId, "First, edited");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      _id: threadId,
+      text: "First, edited",
+      editedAt: "2026-10-02T12:09:59.000Z",
+      editableUntil: "2026-10-02T12:10:00.000Z",
+    });
+
+    vi.setSystemTime(new Date("2026-10-02T12:10:01.000Z"));
+    res = await editComment(managerA, id, threadId, "Too late");
+    expect(res.status).toBe(403);
+    expect(res.body.error).toEqual({ code: "EDIT_WINDOW_CLOSED" });
+    res = await deleteComment(managerA, id, threadId);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toEqual({ code: "EDIT_WINDOW_CLOSED" });
+    const stored = (await Report.findById(id).lean()).days[0].comments[0];
+    expect(stored.text).toBe("First, edited");
+  });
+
+  it("deleting a comment with a reply → 409 COMMENT_HAS_REPLIES; editing it still works", async () => {
+    const { id, threadId } = await aComment();
+    expect((await reply(memberX, id, threadId, "Ok")).status).toBe(201);
+    let res = await deleteComment(managerA, id, threadId);
+    expect(res.status).toBe(409);
+    expect(res.body.error).toEqual({ code: "COMMENT_HAS_REPLIES" });
+    res = await editComment(managerA, id, threadId, "First (edited)");
+    expect(res.status).toBe(200);
+  });
+
+  it("someone else can't edit or delete it, even inside the window", async () => {
+    const { id, threadId } = await aComment();
+    for (const user of [memberX, admin]) {
+      let res = await editComment(user, id, threadId, "Not mine");
+      expect(res.status).toBe(403);
+      expect(res.body.error).toEqual({ code: "EDIT_WINDOW_CLOSED" });
+      res = await deleteComment(user, id, threadId);
+      expect(res.status).toBe(403);
+    }
+  });
+
+  it("a reply has its own window; deleting a reply or a bare comment answers the day", async () => {
+    const { id, threadId } = await aComment();
+    vi.setSystemTime(new Date("2026-10-02T12:05:00.000Z"));
+    let res = await reply(memberX, id, threadId, "Reply");
+    const replyId = res.body.data.replies[0]._id;
+    expect(res.body.data.replies[0].editableUntil).toBe(
+      "2026-10-02T12:15:00.000Z",
+    );
+
+    vi.setSystemTime(new Date("2026-10-02T12:14:00.000Z"));
+    res = await editComment(memberX, id, threadId, "Reply, edited", replyId);
+    expect(res.status).toBe(200);
+    expect(res.body.data.replies[0]).toMatchObject({
+      text: "Reply, edited",
+      editedAt: "2026-10-02T12:14:00.000Z",
+    });
+    // The comment's own window has closed; the reply's hasn't.
+    expect((await editComment(managerA, id, threadId, "x")).status).toBe(403);
+
+    res = await deleteComment(memberX, id, threadId, replyId);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ weekday: "mon" });
+    expect(res.body.data.comments[0].replies).toEqual([]);
+
+    vi.setSystemTime(new Date("2026-10-02T12:20:00.000Z"));
+    res = await commentOnDay(managerA, id, "mon", "Second");
+    const second = res.body.data.comments[1]._id;
+    res = await deleteComment(managerA, id, second);
+    expect(res.status).toBe(200);
+    expect(res.body.data.comments.map((c) => c._id)).toEqual([threadId]);
+  });
+});
+
+describe("C1–C5 on day threads", () => {
+  it("any status: a comment on a submitted week's day → 201", async () => {
+    const view = await filedWeek(memberX, project);
+    expect(view.report.status).toBe("submitted");
+    const res = await commentOnDay(managerA, view.report._id, "tue", "Nice");
+    expect(res.status).toBe(201);
+  });
+
+  it("no posted day → 404 REPORT_NOT_FOUND; an unknown thread → 404 THREAD_NOT_FOUND", async () => {
+    const view = await postWeek(memberX, project, ["mon"]);
+    const id = view.report._id;
+    let res = await commentOnDay(managerA, id, "tue", "Hello");
+    expect(res.status).toBe(404);
+    expect(res.body.error).toEqual({ code: "REPORT_NOT_FOUND" });
+    const ghost = "0123456789abcdef01234567";
+    res = await commentOnDay(managerA, ghost, "mon", "Hello");
+    expect(res.body.error).toEqual({ code: "REPORT_NOT_FOUND" });
+    for (const call of [
+      () => reply(managerA, id, ghost, "Hi"),
+      () => editComment(managerA, id, ghost, "Hi"),
+      () => deleteComment(managerA, id, ghost),
+    ]) {
+      res = await call();
+      expect(res.status).toBe(404);
+      expect(res.body.error).toEqual({ code: "THREAD_NOT_FOUND" });
+    }
+  });
+
+  it("validates the text: empty or over 2000 characters → 422", async () => {
+    const view = await postWeek(memberX, project, ["mon"]);
+    for (const text of ["   ", "x".repeat(2001)]) {
+      const res = await commentOnDay(memberX, view.report._id, "mon", text);
+      expect(res.status).toBe(422);
+      expect(res.body.error.fields).toHaveProperty("text");
+    }
+    const res = await commentOnDay(memberX, view.report._id, "mon", "  ok  ");
+    expect(res.body.data.comments[0].text).toBe("ok");
+  });
+
+  it("the thread shows on every read of the day", async () => {
+    const view = await postWeek(memberX, project, ["mon"]);
+    const res = await commentOnDay(managerA, view.report._id, "mon", "Seen");
+    const threadId = res.body.data.comments[0]._id;
+    const week = await api
+      .get(`/api/users/${memberX._id}/reports/${WEEK}`)
+      .set(as(memberY));
+    expect(week.body.data.report.days[0].comments[0]._id).toBe(threadId);
+    const feed = await api
+      .get(`/api/updates?weekKey=${WEEK}&weekday=mon`)
+      .set(as(memberY));
+    const x = feed.body.data.items.find(
+      (i) => i.user._id === String(memberX._id),
+    );
+    expect(x.day.comments[0]).toMatchObject({ _id: threadId, isNew: false });
   });
 });

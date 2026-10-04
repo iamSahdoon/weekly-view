@@ -16,7 +16,8 @@ import { api, as, freezeAt } from "../helpers/testWeeks.js";
 // api_specification.md §6.2 — 9: the list scope and canReadContent agree; 10: no private
 // layer leaks. Every author has one report in each status; every private field carries a
 // marker naming its layer, so a leak is a substring search. Daily updates are shared and
-// carry no marker. V3 joins item 9 in S5.
+// carry no marker. V3 (S5) joins both: its rows carry no content field at all, and every
+// report it lists is one canReadContent allows.
 
 const WEEKS = {
   draft: "2026-W37",
@@ -159,6 +160,20 @@ describe("9 · list scope ↔ canReadContent", () => {
       const allowed = all.filter((r) => canReadContent(actor, r));
       expect(idsOf(withContent)).toEqual(idsOf(allowed));
 
+      // V3 — the review desk lists only reports whose content the reader may read.
+      res = await api
+        .get("/api/review-desk?approval=all&limit=100")
+        .set(as(reader));
+      const desk = res.body.data.items;
+      expect(desk.length).toBeGreaterThan(0);
+      for (const row of desk) {
+        const report = all.find((x) => String(x._id) === row._id);
+        expect(canReadContent(actor, report)).toBe(true);
+        expect(String(report.author)).not.toBe(String(reader._id));
+        expect(row).not.toHaveProperty("content");
+        expect(row).not.toHaveProperty("tasksDone");
+      }
+
       // The Mongo face says the same thing as the predicate.
       const scoped = await Report.find({
         $and: [buildReportScope(actor), contentScope(actor)],
@@ -194,6 +209,9 @@ describe("10 · no private layer leaks", () => {
       await read(`/api/updates?weekKey=${report.weekKey}&weekday=mon`); // R12
     }
     await read(`/api/users/${author._id}/reports?limit=100`); // U7
+    await read(`/api/review-desk?approval=all&person=${author._id}`); // V3
+    await read("/api/review-desk/count"); // V4
+    await read("/api/me/new"); // N1
     return bodies;
   }
 

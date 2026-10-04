@@ -262,7 +262,7 @@ server/
 │   ├── helpers/
 │   │   ├── testDb.js                  # mongodb-memory-server start/stop
 │   │   ├── testAuth.js                # signs a token for a seeded actor
-│   │   └── testWeeks.js               # added in S4: a frozen clock, day bodies, posting and filing a week
+│   │   └── testWeeks.js               # added in S4: a frozen clock, day bodies, posting and filing a week; S5: review and comment calls
 │   ├── rbac/                          # api_specification.md §6
 │   │   ├── reportAccess.test.js       # days served, content withheld; 404 for a fabricated id; submit rules
 │   │   ├── dailyUpdates.test.js       # posting days; teammates read; team-comment switch; the 10-minute window
@@ -270,6 +270,7 @@ server/
 │   │   ├── adminRoutes.test.js        # user management, owner protection, email and reset links, holidays
 │   │   ├── auth.test.js               # bootstrap race; password change never 401
 │   │   ├── projects.test.js           # added in S3: P1–P5 and T1 — item shapes per role, filters, plans, derived progress
+│   │   ├── markers.test.js            # added in S5: isNew on rows and threads, N1's dots; markers never reveal a private layer
 │   │   └── scopeParity.test.js        # buildReportScope ↔ canReadContent parity; no private layer leaks
 │   ├── policy/
 │   │   ├── reportPolicy.test.js       # pure-function unit tests, no HTTP, no DB
@@ -890,8 +891,9 @@ Co-locating these beside the code would scatter the RBAC suite across many folde
 and the suite is the deliverable that requirements §12's access-control line is
 verified by. `tests/helpers/` holds the in-memory database lifecycle and a token
 factory so no test builds a JWT by hand, and (added in S4) `testWeeks.js`, the week
-writes the three report suites share — a frozen clock, day bodies, posting and filing a
-week, and the send-back's database writes until V2 exists.
+writes the report suites share — a frozen clock, day bodies, posting and filing a
+week, and (S5) the review and comment calls. `tests/rbac/markers.test.js` was added in S5
+for the "new" markers (`isNew`, N1), which no §6 item covers.
 
 The client carries exactly two tests: `lib/__tests__/constants.parity.test.js` (§7.1)
 and `demo/__tests__/demoCoverage.test.js` (§3.4). Component and E2E testing stays
