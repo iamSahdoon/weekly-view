@@ -453,7 +453,7 @@
 - S5: `reportService` exports `weekViewOf`, `dayView`, `weekCommentsView` and
   `threadView` for `reviewService`'s answers, so serialization (and `isNew`) stays in one
   place. `EDIT_WINDOW_MS` is exported from `reportPolicy`.
-- S6: **The page filters apply uniformly, per row (I11)** to D1, D2, D4 and D5, and to D3
+- S6, **owner decision (2026-10-04, accepted as built):** **The page filters apply uniformly, per row (I11)** to D1, D2, D4 and D5, and to D3
   by report. A person kept by `project` keeps all of their hours that week — D4 and D5 do not
   cut the lines down to the project, so D5 under a project filter can still show other
   projects the same people worked on. D6 takes no filter (it is "across the team"); D8 takes
@@ -466,17 +466,17 @@
   sent-back revision for Needs correction (I13); a Draft is never read. The Needs-correction
   count and `oldestSentBackAt` (the earliest `reviewedAt` of the sent-back revisions) follow
   the same rows.
-- S6: **D1 definitions the spec leaves open.** `complianceTrailing` pools filed and expected
+- S6, **owner decision (2026-10-04, accepted as built):** **D1 definitions the spec leaves open.** `complianceTrailing` pools filed and expected
   over the eight weeks ending at `weekKey` (the week itself included), so a week with nobody
   expected adds nothing, and the rate is `null` only when all eight are empty. D1's open
   blockers read the rows' reports — people on the team that week — so a blocker raised by
   someone removed mid-week is not counted.
-- S6: **D6's event field is `type`** (`submitted` · `approved` · `sent_back`); the spec names
+- S6, **owner decision (2026-10-04, accepted as built):** **D6's event field is `type`** (`submitted` · `approved` · `sent_back`); the spec names
   the events but not the key. The feed reads the newest eight revisions by `submittedAt` and
   the newest eight reviewed by `reviewedAt` (both indexed), merges and keeps eight — bounded
   without a time window — then looks up users and reports for those eight only. An unreviewed
   submission is one event.
-- S6: **D7 counts weeks up to and including the current one**, through the same derivation as
+- S6, **owner decision (2026-10-04, accepted as built):** **D7 counts weeks up to and including the current one**, through the same derivation as
   §5.0, so the current week lowers the rate until it is filed (as it does on D1). `compliance`
   and `avgHoursPerWeek` are `null` when no week was expected; the average divides all hours of
   those weeks, every report status, by the expected weeks.
@@ -486,7 +486,7 @@
 - S6: dashboard services take no `actor` — every manager sees the same figures — so the
   controllers build none. `reportService.dayStatesOf` and `projectService.progressFor` are
   now exported so D2 and D8 reuse them instead of copying.
-- S6: **The seed's invite link.** The invited person has a live link, but the raw token is
+- S6, **owner decision (2026-10-04, accepted as built):** **The seed's invite link.** The invited person has a live link, but the raw token is
   generated and dropped inside `runSeed`: only its SHA-256 is stored and nothing prints it
   (link tokens are never logged or cached). To get a usable link in development, reissue the
   invite from the Users page (U4). The accounts' common password is `weekly-view-dev`, printed
