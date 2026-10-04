@@ -117,6 +117,23 @@ export function expectedDaysOf(user, weekKey, workingDays) {
 }
 
 /**
+ * Why a weekday is or isn't one of the person's expected days: `expected`, `holiday`,
+ * `not_on_team` (no work period covers it) or `leave`, checked in that order — the same
+ * rule as expectedDaysOf. Pure.
+ */
+export function dayAvailability(user, weekKey, weekday, holidays) {
+  const key = toDateString(weekdayDate(weekKey, weekday));
+  if (holidays.has(key)) return "holiday";
+  if (
+    !isOnTeamForWeek(user, weekKey) ||
+    !(user.workPeriods ?? []).some((p) => covers(p, key))
+  )
+    return "not_on_team";
+  if ((user.leave ?? []).some((p) => covers(p, key))) return "leave";
+  return "expected";
+}
+
+/**
  * The derived week state (database_schema.md §5.0): a report submitted at least once
  * keeps its status; then `holiday_week`, `on_leave`, `draft` and `not_started`. `report`
  * is `{ status }` or null. Pure.

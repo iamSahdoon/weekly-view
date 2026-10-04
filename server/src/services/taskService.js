@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
+import { Project } from "../models/projectModel.js";
 import { Report } from "../models/reportModel.js";
 import { Task } from "../models/taskModel.js";
+import { AppError } from "../utils/appError.js";
 
-// The task picker; creating a task when a day names a new one arrives with R5 in S4
-// (project_structure.md §2.5).
+// The task picker, and the tasks a day names or starts (project_structure.md §2.5).
+// reportService calls these inside the day write; it never writes `tasks` itself.
 
 /** T1 — always the actor's own tasks, open ones unless `includeDone`. Bounded. */
 export async function listTasks(actor, { includeDone }) {
@@ -48,4 +50,81 @@ export async function listTasks(actor, { includeDone }) {
       };
     }),
   };
+}
+
+const taskNotFound = () =>
+  new AppError(404, "That task doesn't exist.", "TASK_NOT_FOUND");
+
+/**
+ * R5 step 3: every task id must be the actor's own, and open — or already named in this
+ * week, so a day naming a task closed since can still be saved. Every `newTask` project
+ * must exist and be active. Returns the named tasks keyed by id. Writes nothing.
+ */
+export async function checkLineTasks(
+  actor,
+  { taskIds, newTasks, weekTaskIds },
+) {
+  const unique = [...new Set(taskIds.map((id) => id.toLowerCase()))];
+  const tasks = await Task.find({ _id: { $in: unique }, owner: actor.id })
+    .select("project doneAt")
+    .lean();
+  const byId = new Map(tasks.map((t) => [String(t._id), t]));
+  const inWeek = new Set(weekTaskIds.map(String));
+  for (const id of unique) {
+    const task = byId.get(id);
+    if (!task || (task.doneAt && !inWeek.has(id))) throw taskNotFound();
+  }
+
+  const projectIds = [...new Set(newTasks.map((t) => t.project.toLowerCase()))];
+  if (projectIds.length === 0) return byId;
+  const projects = await Project.find({ _id: { $in: projectIds } })
+    .select("status")
+    .lean();
+  if (projects.length !== projectIds.length)
+    throw new AppError(404, "That project doesn't exist.", "PROJECT_NOT_FOUND");
+  if (projects.some((p) => p.status !== "active"))
+    throw new AppError(
+      422,
+      "That project is no longer active.",
+      "PROJECT_INACTIVE",
+    );
+  return byId;
+}
+
+/** Inserts the tasks a day starts, in order, owned by the actor. */
+export async function createTasks(actor, newTasks) {
+  if (newTasks.length === 0) return [];
+  return Task.insertMany(
+    newTasks.map((t) => ({
+      owner: actor.id,
+      name: t.name,
+      project: t.project,
+    })),
+    { ordered: true },
+  );
+}
+
+/** Removes tasks created for a day write that then lost to a status change. */
+export async function discardTasks(tasks) {
+  if (tasks.length === 0) return;
+  await Task.deleteMany({ _id: { $in: tasks.map((t) => t._id) } });
+}
+
+/** R7 step 4: `doneAt` follows the submitted statuses. */
+export async function syncDoneAt(contentTasks, now) {
+  const done = contentTasks
+    .filter((t) => t.status === "done")
+    .map((t) => t.task);
+  const open = contentTasks
+    .filter((t) => t.status !== "done")
+    .map((t) => t.task);
+  await Promise.all([
+    done.length > 0 &&
+      Task.updateMany(
+        { _id: { $in: done }, doneAt: null },
+        { $set: { doneAt: now } },
+      ),
+    open.length > 0 &&
+      Task.updateMany({ _id: { $in: open } }, { $set: { doneAt: null } }),
+  ]);
 }

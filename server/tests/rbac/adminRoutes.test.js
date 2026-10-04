@@ -9,8 +9,8 @@ import { User } from "../../src/models/userModel.js";
 import { bearer, createUser } from "../helpers/testAuth.js";
 import { clearDb } from "../helpers/testDb.js";
 
-// api_specification.md §6.6 (33–40) for the S2 and S3 routes, plus U1, U2, U9, U10 and
-// the holidays (HD1–HD4). Later stages add their rows to 33: U7 (S4), D1–D8 (S6).
+// api_specification.md §6.6 (33–40) for the S2–S4 routes, plus U1, U2, U9, U10 and
+// the holidays (HD1–HD4). S6 adds its rows to 33: D1–D8.
 
 const api = request(app);
 const PASSWORD = "correct horse battery";
@@ -64,6 +64,7 @@ const routes = {
   U4: (id) => ["post", `/api/users/${id}/invite-link`],
   U5: (id) => ["patch", `/api/users/${id}/role`, { role: "manager" }],
   U6: (id) => ["post", `/api/users/${id}/remove`],
+  U7: (id) => ["get", `/api/users/${id}/reports`],
   U11: (id) => ["post", `/api/users/${id}/transfer-ownership`],
   U12: (id) => [
     "patch",
@@ -100,11 +101,14 @@ describe("33 · wrong role → 403 FORBIDDEN", () => {
     },
   );
 
-  it.each(["U1", "U2", "U3", "U5", "U6"])("member → %s", async (route) => {
-    const res = await call(route, memberX, memberY._id);
-    expect(res.status).toBe(403);
-    expect(res.body.error).toEqual({ code: "FORBIDDEN" });
-  });
+  it.each(["U1", "U2", "U3", "U5", "U6", "U7"])(
+    "member → %s",
+    async (route) => {
+      const res = await call(route, memberX, memberY._id);
+      expect(res.status).toBe(403);
+      expect(res.body.error).toEqual({ code: "FORBIDDEN" });
+    },
+  );
 
   it.each(["P2", "P3", "P4", "P5"])("member → %s", async (route) => {
     const project = await Project.create({ name: "Existing" });
