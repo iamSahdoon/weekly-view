@@ -371,9 +371,10 @@
   `blockersOnly` keeps people whose posted day has any blocker, resolved or not; either
   filter drops people with no posted day. `resolvedBy` (R10 and Day blockers) is a UserRef.
 
-- S5: **C2 on a Draft → `409 REPORT_STATE_CHANGED`** (with `status: "draft"`). C2 names
+- S5, **owner decision (2026-10-04, accepted as built):** **C2 on a Draft →
+  `409 REPORT_STATE_CHANGED`** (with `status: "draft"`). C2 names
   `COMMENT_NOT_ALLOWED` only for the author; §3's table accepts "every status except
-  draft" and says every other state returns 409. The UI never offers it. Reversible.
+  draft" and says every other state returns 409. The UI never offers it.
 - S5: C2 is conditioned on the `revisionNumber` it read, so a resubmit landing between the
   read and the write is a 409, not a comment tagged with the wrong version.
 - S5: C3 on a week thread by a teammate → `403 COMMENT_NOT_ALLOWED` (C3's wording), with
@@ -393,7 +394,8 @@
   the policy so `markerService` (N1) needn't import `reviewService`. V3's `role` filter is
   the author's current role; `project` means any line on that project; ties sort by
   `weekKey`, then `_id`.
-- S5: **"new" rules** (`database_schema.md` §5.4), with "no seen mark" meaning everything
+- S5, **owner decision (2026-10-04, accepted as built):** **"new" rules**
+  (`database_schema.md` §5.4), with "no seen mark" meaning everything
   that concerns the reader is new: for the author, their report approved or sent back
   (status `approved` / `needs_correction` and `lastActivityAt` after `seenAt` — only a
   review sets those), or a comment or reply by someone else on their days or week; for
@@ -402,10 +404,11 @@
   count only where `canReadContent` allows. A row is checked first against
   `interactionAt > seenAt`. V4 = the desk's requested reports whose `submittedAt` is after
   the reader's `seenAt`.
-- S5: **N1's "this week" on the server's clock.** The server has no client date (I2), so
+- S5, **owner decision (2026-10-04, accepted as built):** **N1's "this week" on the
+  server's clock.** The server has no client date (I2), so
   `nav.thisWeek` covers any week that is current somewhere (the weeks of now − 12 h and
   now + 14 h; on a Sunday that is both last week and the next), and `nav.myReports`
-  covers the actor's earlier reports of the 12 weeks. Errs towards showing a dot. Reversible.
+  covers the actor's earlier reports of the 12 weeks. Errs towards showing a dot.
 - S5: `reportService` exports `weekViewOf`, `dayView`, `weekCommentsView` and
   `threadView` for `reviewService`'s answers, so serialization (and `isNew`) stays in one
   place. `EDIT_WINDOW_MS` is exported from `reportPolicy`.
