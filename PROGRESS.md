@@ -553,7 +553,10 @@
 - C1: `UnsavedChangesContext` is the registry only (`setDirty`, `hasUnsavedChanges`) plus
   `useUnsavedGuard`; the session-expiry modal asks before `Sign out` / dismiss when anything
   is dirty. The navigation and tab-close guards on it come with the forms in C4.
-- C1: **Toasts and tooltips use `--d-panel`, not `--ink`.** Design §6.12/§6.13 and
+- C1, **owner decision (2026-10-04):** `rounded-lg` stays as built — it compiles to a zero
+  radius because design §9.4 sets `--radius-lg: 0px`; no design-system change. The C1 done
+  item "`rounded-lg` fails to compile" is read as "never rounds".
+- C1, **owner decision (2026-10-04, accepted as built):** **Toasts and tooltips use `--d-panel`, not `--ink`.** Design §6.12/§6.13 and
   `tech_stack.md` §6.7 say `--ink` with `--d-text` text; in the dark theme `--ink` is
   `#eef1f4`, the same as `--d-text`, so the text would vanish. `tokens.css` itself labels
   `--d-panel` "dark-band surfaces (demo bar, toasts, tooltips)", and it is theme-independent.
@@ -595,24 +598,6 @@
 ## Open questions for the owner
 - ~~`npm ci` fails in `client/`~~ **Resolved in C1:** `client/package-lock.json` regenerated
   with `npm install`; `npm ci` now succeeds.
-- **C1 — `rounded-lg` does not fail to compile.** MASTER_PROMPT's C1 done list says
-  `bg-indigo-500` / `rounded-lg` fail; design §9.4 (copied verbatim) declares
-  `--radius-lg: 0px` (and `sm`, `md`, `xl`), so `rounded-lg` compiles to a zero radius. The
-  effect is still no rounding anywhere. To make it fail, delete those four lines from
-  `@theme` (keeping `--radius-none`) — a change to design §9.4, so it is your call. Built as
-  documented.
-- **C1 — dark toasts and tooltips.** The documents put toasts and tooltips on `--ink`, which
-  is near-white in the dark theme, under `--d-text`, also near-white. Built on `--d-panel`
-  instead (see *Decisions*). In the dark theme that surface is close to `--card`, so a toast
-  separates from the page by its shadow and left bar only — look at `/design` → Dark → *Error
-  (stays)* and decide whether dark needs its own floating-layer token.
-- ~~Blocks S1's tests~~ **Resolved:** the owner allowed `fastdl.mongodb.org` in the
-  environment's network settings, so `mongodb-memory-server` can download `mongod`. The
-  owner's Atlas string goes in the environment variable `MONGODB_URI`, never in chat.
-- `npm audit` reports 2 moderate advisories in both projects, in dev-only `vitest`
-  (`@vitest/mocker`, GHSA-82fw-gwwq-j7x9). The fix is vitest 5, a major outside
-  `tech_stack.md` §9–§10 (`^3`). Left at `^3`; it never ships to Vercel or Render.
-- `npm` warns that `eslint@9` is no longer supported upstream. `tech_stack.md` pins `^9`; left as is.
 
 ## Departures from `docs/project_structure.md`
 - Added `server/eslint.config.js`, `client/eslint.config.js`, `client/.prettierrc.json` (the trees
