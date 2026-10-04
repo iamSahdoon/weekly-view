@@ -267,6 +267,9 @@
   stopped at boot), and Safari/Firefox. Open `npm --prefix client run dev` → `/design`.
 
 ### C2 checks (2026-10-04)
+- **Owner note (2026-10-04):** the three seed failures below do not reproduce elsewhere — all 21
+  `seed.test.js` tests pass on `main` on the owner's machine. They were this cloud container
+  (Mongo connection timeouts), not the code.
 - `npm run lint`: clean (client and server). `npm test`: **client green, server not fully green in
   this container** — client 48 (30 from C1, plus 18); server 378 of 381. The three that fail are the
   last three of `server/tests/seed/seed.test.js` ("has seen marks…", "every report's revisions
@@ -731,11 +734,17 @@
 - C2: **`ScrollRestoration`** is mounted in `RootLayout`, so a new page opens at the top and Back
   restores the scroll.
 
+- C2, **owner decision (2026-10-04): every C2 decision above is accepted as built** — `PendingPage`
+  stand-ins, the `<h1>` top-bar title, `OfflineStrip` in `AppShell`, the `marks` wiring, `--demo-h`,
+  CSS popovers, drawer below 1024 px, the overflow `⋯` menu and week picker placement, the `Table`,
+  `FilterBar`, `MultiSelect`, `WeekPicker` and `SegmentedControl` choices, the 404 copy, the ESLint
+  change, `useUrlFilters` and `ScrollRestoration`.
+
 ## Open questions for the owner
-- C2: `server/tests/seed/seed.test.js` fails 3 tests in this cloud container on unmodified
-  `origin/main` (see *C2 checks*). Does it pass on your machine? If it does, it's the
-  container; if not, S6's tests need a look before the server stages are called done.
-- C2, to confirm or change (all reversible, all recorded under *Decisions*): the signed-out 404's
+- ~~C2: `server/tests/seed/seed.test.js` fails 3 tests in the cloud container~~ **Resolved
+  (owner, 2026-10-04):** all 21 pass on `main` elsewhere, so the failures were this container,
+  not S6. Server suite stands at 381 green.
+- ~~C2, to confirm or change~~ **Resolved (owner, 2026-10-04): all C2 decisions accepted as built** (all recorded under *Decisions*): the signed-out 404's
   button reads `Go to the start page`; the week picker stays in the top bar between 768 and
   1023 px where design §10 says "page title only"; the top-bar title is the page's `<h1>`; the
   `FilterBar` sheet is the shared `Modal`.
