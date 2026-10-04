@@ -3,13 +3,20 @@ import { createBrowserRouter } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout.jsx";
 import RootLayout from "../layouts/RootLayout.jsx";
 import DevOnlyRoute from "./DevOnlyRoute.jsx";
+import NotFoundPage from "../pages/NotFoundPage.jsx";
+import PendingPage from "../pages/PendingPage.jsx";
 import IndexRoute from "./IndexRoute.jsx";
+import ParamGuard from "./ParamGuard.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnly from "./PublicOnly.jsx";
 import SessionLayout from "./SessionLayout.jsx";
 
-// The route table (frontend_architecture.md §4.1). C1 holds the auth screens,
-// "/" and /design; C2 adds the shell, guards by role, and every other path.
-// Routes that make no sense in the demo carry handle.realOnly.
+// The route table (frontend_architecture.md §4.1): every path in the product, with
+// its guard. Routes that make no sense in the demo carry handle.realOnly.
+//
+// Pages that a later stage builds render PendingPage until then: C3 replaces the
+// report-reading routes, C4 "/", C5 the edit route, C6 history / updates / review,
+// C7 /team, C8 the rest.
 
 const SignInPage = lazy(() => import("../pages/SignInPage.jsx"));
 const SignUpPage = lazy(() => import("../pages/SignUpPage.jsx"));
@@ -21,6 +28,11 @@ const DesignPage = import.meta.env.DEV
   : null;
 
 const page = (element) => <Suspense fallback={null}>{element}</Suspense>;
+
+// A route with parameters: a malformed one is the not-found page, with no request.
+const guarded = (names, element) => (
+  <ParamGuard names={names}>{page(element)}</ParamGuard>
+);
 
 export function buildRoutes({ withoutRealOnly = false } = {}) {
   const routes = [
@@ -45,7 +57,85 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
         },
         {
           element: <SessionLayout />,
-          children: [{ index: true, element: <IndexRoute /> }],
+          children: [
+            { index: true, element: <IndexRoute /> },
+            {
+              element: <ProtectedRoute />,
+              children: [
+                {
+                  path: "/reports",
+                  element: <PendingPage title="My reports" />,
+                },
+                {
+                  path: "/reports/:week",
+                  element: guarded(["week"], <PendingPage title="Week" />),
+                },
+                {
+                  path: "/reports/:week/edit",
+                  element: guarded(
+                    ["week"],
+                    <PendingPage title="Weekly report" />,
+                  ),
+                },
+                {
+                  path: "/updates",
+                  element: <PendingPage title="Team updates" />,
+                },
+                {
+                  path: "/people/:userId/reports/:week",
+                  element: guarded(
+                    ["userId", "week"],
+                    <PendingPage title="Week" />,
+                  ),
+                },
+                {
+                  path: "/account",
+                  element: <PendingPage title="Account" />,
+                },
+              ],
+            },
+            {
+              element: <ProtectedRoute allow={["manager", "admin"]} />,
+              children: [
+                {
+                  path: "/review",
+                  element: <PendingPage title="Review desk" />,
+                },
+                {
+                  path: "/review/:reportId",
+                  element: guarded(
+                    ["reportId"],
+                    <PendingPage title="Review" />,
+                  ),
+                },
+                {
+                  path: "/team",
+                  element: <PendingPage title="Team dashboard" />,
+                },
+                { path: "/people", element: <PendingPage title="People" /> },
+                {
+                  path: "/people/:userId",
+                  element: guarded(["userId"], <PendingPage title="Person" />),
+                },
+                {
+                  path: "/projects",
+                  element: <PendingPage title="Projects" />,
+                },
+              ],
+            },
+            {
+              element: <ProtectedRoute allow={["admin"]} />,
+              children: [
+                { path: "/users", element: <PendingPage title="Users" /> },
+                {
+                  path: "/holidays",
+                  element: <PendingPage title="Holidays" />,
+                },
+              ],
+            },
+            // Inside the shell if signed in, standalone if not.
+            { path: "*", element: <NotFoundPage /> },
+          ],
         },
         import.meta.env.DEV && {
           path: "/design",

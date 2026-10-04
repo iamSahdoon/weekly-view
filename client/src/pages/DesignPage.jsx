@@ -18,7 +18,31 @@ import { StatusChip } from "../components/ui/StatusChip.jsx";
 import { Switch } from "../components/ui/Switch.jsx";
 import { Textarea } from "../components/ui/Textarea.jsx";
 import { Tooltip } from "../components/ui/Tooltip.jsx";
+import { Breadcrumb } from "../components/ui/Breadcrumb.jsx";
+import { FilterBar } from "../components/ui/FilterBar.jsx";
+import { MultiSelect } from "../components/ui/MultiSelect.jsx";
+import { Pagination } from "../components/ui/Pagination.jsx";
+import { QueryView } from "../components/ui/QueryView.jsx";
+import { SegmentedControl } from "../components/ui/SegmentedControl.jsx";
+import { Table } from "../components/ui/Table.jsx";
+import { Tabs } from "../components/ui/Tabs.jsx";
+import { WeekPicker } from "../components/ui/WeekPicker.jsx";
 import { useTheme } from "../hooks/useTheme.js";
+import { useUrlFilters } from "../hooks/useUrlFilters.js";
+import {
+  enumParam,
+  limitParam,
+  listParam,
+  pageParam,
+  textParam,
+} from "../lib/urlParams.js";
+import {
+  addWeeks,
+  currentWeekKey,
+  toCalendarDate,
+  weekStartOf,
+} from "../lib/dates.js";
+import { addDays } from "date-fns";
 import {
   REPORT_STATUSES,
   TASK_STATUSES,
@@ -83,6 +107,8 @@ export default function DesignPage() {
         <Panels />
         <Overlays />
         <Feedback />
+        <Navigation />
+        <Lists />
       </div>
     </main>
   );
@@ -525,6 +551,329 @@ function Feedback() {
       <InlineError title="This link can't be used." code="LINK_INVALID">
         The code shows only when it is actionable.
       </InlineError>
+    </Section>
+  );
+}
+
+// ── Navigation controls (C2) ────────────────────────────────────────────────
+
+function Navigation() {
+  const [tab, setTab] = useState("week");
+  const [unit, setUnit] = useState("days");
+  const [week, setWeek] = useState(currentWeekKey());
+  const [people, setPeople] = useState([]);
+  const [projects, setProjects] = useState(["a"]);
+  const current = currentWeekKey();
+  return (
+    <Section title="Navigation controls">
+      <Row label="Tabs (underline, sliding bar)">
+        <Tabs
+          ariaLabel="Example"
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "week", label: "This week" },
+            { value: "history", label: "History" },
+            { value: "locked", label: "Locked", disabled: true },
+          ]}
+          className="w-full"
+        />
+      </Row>
+      <Row label="Segmented control">
+        <SegmentedControl
+          ariaLabel="Unit"
+          value={unit}
+          onChange={setUnit}
+          options={[
+            { value: "days", label: "Days" },
+            { value: "hours", label: "Hours" },
+          ]}
+        />
+      </Row>
+      <Row label="Breadcrumb (the one three-level route)">
+        <Breadcrumb
+          items={[
+            { label: "People", to: "/design" },
+            { label: "Nadia F.", to: "/design" },
+            { label: "Week 31" },
+          ]}
+        />
+      </Row>
+      <Row label="Week picker — reported weeks, a holiday, joined four weeks ago">
+        <WeekPicker
+          value={week}
+          onChange={setWeek}
+          min={addWeeks(current, -4)}
+          holidays={{ [holidayOf(current)]: "Sample holiday" }}
+          reportedWeeks={{
+            [addWeeks(current, -1)]: "approved",
+            [addWeeks(current, -2)]: "submitted",
+          }}
+        />
+        <WeekPicker value={current} onChange={() => {}} disabled />
+      </Row>
+      <Row label="Multi-select — unset, set (1), set (n), with search above 8 options">
+        <MultiSelect
+          label="Person"
+          value={[]}
+          onChange={() => {}}
+          options={PEOPLE_OPTIONS.slice(0, 4)}
+        />
+        <MultiSelect
+          label="Project"
+          value={projects}
+          onChange={setProjects}
+          options={PROJECT_OPTIONS}
+        />
+        <MultiSelect
+          label="Person"
+          value={people}
+          onChange={setPeople}
+          options={PEOPLE_OPTIONS}
+        />
+        <MultiSelect
+          label="Person"
+          value={["p1", "p2", "p3"]}
+          onChange={() => {}}
+          options={PEOPLE_OPTIONS}
+        />
+      </Row>
+    </Section>
+  );
+}
+
+function holidayOf(weekKey) {
+  // Wednesday of the given week, as YYYY-MM-DD.
+  return toCalendarDate(addDays(weekStartOf(weekKey), 2));
+}
+
+// ── Table, filters, pagination, URL state (C2) ──────────────────────────────
+
+const PROJECT_OPTIONS = [
+  { value: "a", label: "Client A" },
+  { value: "b", label: "R&D" },
+  { value: "c", label: "Internal Tooling" },
+];
+const FIRST = [
+  "Imali",
+  "Nadia",
+  "Sanduni",
+  "Tharindu",
+  "Kasun",
+  "Dilani",
+  "Ruwan",
+  "Piyumi",
+  "Chamod",
+  "Anushka",
+  "Malsha",
+  "Yasiru",
+];
+const PEOPLE_OPTIONS = FIRST.map((name, i) => ({
+  value: `p${i + 1}`,
+  label: `${name} J.`,
+}));
+const SAMPLE_ROWS = Array.from({ length: 47 }, (_, i) => ({
+  _id: `row${i}`,
+  person: PEOPLE_OPTIONS[i % PEOPLE_OPTIONS.length],
+  project: PROJECT_OPTIONS[(i * 7) % 3],
+  week: `2026-W${String(30 + (i % 10)).padStart(2, "0")}`,
+  hours: 20 + ((i * 13) % 21),
+  status: REPORT_STATUSES[i % 4],
+}));
+// Declared once, at module level: useUrlFilters keys on the spec's identity.
+const LIST_SPEC = {
+  q: textParam(),
+  person: listParam(),
+  project: listParam(),
+  sort: enumParam(["person", "week", "hours"], "week"),
+  dir: enumParam(["asc", "desc"], "desc"),
+  page: pageParam(),
+  limit: limitParam(),
+};
+
+function Lists() {
+  const { filters, setFilter, setFilters, clear, activeCount } =
+    useUrlFilters(LIST_SPEC);
+  const [mode, setMode] = useState("data");
+
+  const matching = SAMPLE_ROWS.filter(
+    (row) =>
+      (!filters.q ||
+        row.person.label.toLowerCase().includes(filters.q.toLowerCase())) &&
+      (!filters.person.length || filters.person.includes(row.person.value)) &&
+      (!filters.project.length || filters.project.includes(row.project.value)),
+  ).sort((a, b) => {
+    const key = {
+      person: (r) => r.person.label,
+      week: (r) => r.week,
+      hours: (r) => r.hours,
+    }[filters.sort];
+    const order = key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0;
+    return filters.dir === "asc" ? order : -order;
+  });
+  const totalPages = Math.max(1, Math.ceil(matching.length / filters.limit));
+  const page = Math.min(filters.page, totalPages);
+  const rows = matching.slice((page - 1) * filters.limit, page * filters.limit);
+
+  const columns = [
+    {
+      id: "person",
+      header: "Person",
+      sortable: true,
+      cell: (r) => r.person.label,
+    },
+    { id: "project", header: "Project", cell: (r) => r.project.label },
+    {
+      id: "week",
+      header: "Week",
+      sortable: true,
+      defaultDir: "desc",
+      mono: true,
+      cell: (r) => r.week,
+    },
+    {
+      id: "hours",
+      header: "Hours",
+      sortable: true,
+      align: "right",
+      cell: (r) => r.hours,
+    },
+    {
+      id: "status",
+      header: "Status",
+      align: "right",
+      mobile: "status",
+      cell: (r) => <StatusChip value={r.status} />,
+    },
+  ];
+  const sortOptions = [
+    { value: "person", label: "Person" },
+    { value: "week", label: "Week" },
+    { value: "hours", label: "Hours" },
+  ];
+
+  const states = {
+    data: { isPending: false, isError: false, data: rows },
+    loading: { isPending: true },
+    error: { isPending: false, isError: true, refetch: () => setMode("data") },
+    "empty-new": { isPending: false, isError: false, data: [] },
+  };
+  const empty =
+    activeCount || filters.q ? (
+      <EmptyState
+        title="Nothing matches these filters."
+        action={
+          <Button variant="secondary" onClick={clear}>
+            Clear filters
+          </Button>
+        }
+      >
+        Try fewer filters or a different search.
+      </EmptyState>
+    ) : (
+      <EmptyState title="Nothing here yet.">
+        Reports appear once the week is filed.
+      </EmptyState>
+    );
+
+  return (
+    <Section title="Table, filter bar, pagination — state lives in the URL">
+      <Row label="The four states of a list (QueryView)">
+        <SegmentedControl
+          ariaLabel="State"
+          value={mode}
+          onChange={setMode}
+          options={[
+            { value: "data", label: "Data" },
+            { value: "loading", label: "Skeleton" },
+            { value: "empty-new", label: "Empty" },
+            { value: "error", label: "Error" },
+          ]}
+        />
+      </Row>
+      <p className="text-dense text-mut">
+        Search, sort, filters, page and rows per page below are in the address
+        bar: reload, or press Back. Narrow the window under 900px for the
+        Filters sheet and under 768px for stacked cards.
+      </p>
+      <div className="border border-hair">
+        <FilterBar
+          search={filters.q}
+          onSearch={(q) => setFilter("q", q, { replace: true })}
+          searchPlaceholder="Search people"
+          activeCount={activeCount}
+          onClear={clear}
+          sort={{
+            options: sortOptions,
+            value: { id: filters.sort, dir: filters.dir },
+            onChange: ({ id, dir }) => setFilters({ sort: id, dir }),
+          }}
+        >
+          <MultiSelect
+            label="Person"
+            options={PEOPLE_OPTIONS}
+            value={filters.person}
+            onChange={(v) => setFilter("person", v)}
+          />
+          <MultiSelect
+            label="Project"
+            options={PROJECT_OPTIONS}
+            value={filters.project}
+            onChange={(v) => setFilter("project", v)}
+          />
+        </FilterBar>
+      </div>
+      <div>
+        <QueryView
+          query={states[mode]}
+          skeleton={
+            <Table columns={columns} rows={[]} isLoading skeletonRows={6} />
+          }
+          isEmpty={(data) => data.length === 0}
+          empty={
+            <div className="border border-hair bg-card">
+              {mode === "empty-new" ? (
+                <EmptyState title="Nothing here yet.">
+                  Reports appear once the week is filed.
+                </EmptyState>
+              ) : (
+                empty
+              )}
+            </div>
+          }
+          error={
+            <InlineError
+              title="This didn’t load."
+              onRetry={() => setMode("data")}
+            >
+              The sample list is set to fail.
+            </InlineError>
+          }
+        >
+          {(data) => (
+            <Table
+              columns={columns}
+              rows={data}
+              sort={{ id: filters.sort, dir: filters.dir }}
+              onSortChange={({ id, dir }) => setFilters({ sort: id, dir })}
+              getRowHref={(row) => `/design#${row._id}`}
+              caption="Sample reports"
+            />
+          )}
+        </QueryView>
+        {mode === "data" && (
+          <Pagination
+            meta={{
+              page,
+              limit: filters.limit,
+              total: matching.length,
+              totalPages,
+            }}
+            onPage={(n) => setFilter("page", n)}
+            onLimit={(n) => setFilter("limit", n)}
+          />
+        )}
+      </div>
     </Section>
   );
 }
