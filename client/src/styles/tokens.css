@@ -1,0 +1,196 @@
+/* product_design_system.md §9.3, verbatim. The source of truth for every colour,
+   font stack, component dimension and easing; @theme in index.css maps onto it. */
+:root {
+  color-scheme: light;
+
+  /* ── Surfaces ─────────────────────────────────────────── */
+  --paper: #f6f8f8;
+  --paper-a: rgba(246, 248, 248, 0.9);
+  --card: #ffffff;
+  --tint: #edf1f2;
+  --tint2: #e4eaeb;
+
+  /* ── Text ─────────────────────────────────────────────── */
+  --ink: #0d0f12;
+  --body: #464c53;
+  --mut: #7c838a;
+
+  /* ── Lines ────────────────────────────────────────────── */
+  --hair: #e0e5e6;
+  --hair2: #d0d6d8;
+  --rule: #cbd1d3;
+
+  /* ── Accent ───────────────────────────────────────────── */
+  --acc: #1c39bb;
+  --acc-d: #152c94;
+  --acc-l: #e8ecfb;
+  --acc-txt: #1c39bb;
+  --on-acc: #ffffff;
+
+  /* ── Dark-band surfaces (demo bar, toasts, tooltips) ──── */
+  --d-panel: #14171b;
+  --d-panel2: #191d22;
+  --d-line: #242a31;
+  --d-hover: #1b2027; /* brand §3.3 — row hover on a dark surface */
+  --d-text: #eef1f4;
+  --d-body: #a4acb5;
+  --d-mut: #727a83;
+  --acc-on-d: #8aa0f2;
+
+  /* ── Status ───────────────────────────────────────────── */
+  --st-draft-fg: #4a463e;
+  --st-draft-bg: #efefea;
+  --st-draft-bd: #dbdbd3;
+  --st-subm-fg: #204760;
+  --st-subm-bg: #e7edf2;
+  --st-subm-bd: #c3d3de;
+  --st-corr-fg: #7c211c;
+  --st-corr-bg: #f6e9e7;
+  --st-corr-bd: #e6c7c3;
+  --st-appr-fg: #26502f;
+  --st-appr-bg: #e8efe9;
+  --st-appr-bd: #c7d8ca;
+  --st-none-fg: #7c838a;
+  --st-none-bg: transparent;
+  --st-none-bd: #cbd1d3;
+  /* Five statuses, and there is no sixth. No --late token: the product
+     has no deadline, so lateness is not computable (§0.4). */
+
+  /* ── Chart sequence (fixed by category) ───────────────── */
+  --c1: #1c39bb; /* Development   */
+  --c2: #6fa3c7; /* Testing       */
+  --c3: #35603f; /* Meetings      */
+  --c4: #8a8d86; /* Documentation */
+  --c5: #9e2b25; /* Review        */
+  --c6: #6b4e77; /* Other         */
+  --c7: #9a7b2f; /* Research & study — needs sign-off (§0.3) */
+
+  /* ── Elevation (floating layers only) ─────────────────── */
+  --shadow-pop:
+    0 10px 24px -12px rgba(13, 15, 18, 0.22),
+    0 2px 6px -3px rgba(13, 15, 18, 0.14);
+  --backdrop: rgba(13, 15, 18, 0.44);
+
+  /* ── Type ─────────────────────────────────────────────── */
+  --f-display: "Chivo", "Helvetica Neue", Arial, sans-serif;
+  --f-ui: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+
+  /* ── Component dimensions (not spacing — see §0.3) ────── */
+  --nav-w: 240px;
+  --nav-w-min: 62px;
+  --nav-drawer: 280px;
+  --bar-h: 62px;
+  --rail-w: 200px;
+  --row-h: 40px;
+  --row-h-dense: 36px;
+  --head-h: 36px;
+  --ctrl-h: 38px;
+  --ctrl-h-sm: 30px;
+  --ctrl-h-lg: 44px;
+  --doc-max: 860px;
+  --form-max: 1080px;
+  --field-max: 560px;
+  --page-max: 1240px;
+  --data-max: 1560px;
+  --rail-r: 280px; /* detail rail  */
+  --rail-r-lg: 320px; /* review rail  */
+
+  /* ── Motion ───────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper: #0e1013;
+  --paper-a: rgba(14, 16, 19, 0.9);
+  --card: #14171b;
+  --tint: #191d22;
+  --tint2: #1b2027;
+
+  --ink: #eef1f4;
+  --body: #a4acb5;
+  --mut: #727a83;
+
+  --hair: #242a31;
+  --hair2: #2e353d; /* §0.3 extension */
+  --rule: #39414a; /* §0.3 extension */
+
+  --acc: #3552d6; /* §0.3 extension — 6.2:1 with --on-acc */
+  --acc-d: #2942b8; /* §0.3 extension */
+  --acc-l: rgba(138, 160, 242, 0.14);
+  --acc-txt: #8aa0f2;
+  --on-acc: #ffffff;
+
+  --st-draft-fg: #b6b2a8;
+  --st-draft-bg: rgba(255, 255, 255, 0.05);
+  --st-draft-bd: rgba(255, 255, 255, 0.14);
+  --st-subm-fg: #9cc3e0;
+  --st-subm-bg: rgba(44, 93, 124, 0.18);
+  --st-subm-bd: rgba(120, 175, 210, 0.3);
+  --st-corr-fg: #ec9188;
+  --st-corr-bg: rgba(158, 43, 37, 0.2);
+  --st-corr-bd: rgba(220, 120, 110, 0.32);
+  --st-appr-fg: #9fd3a8;
+  --st-appr-bg: rgba(53, 96, 63, 0.22);
+  --st-appr-bd: rgba(120, 190, 135, 0.3);
+  --st-none-fg: #727a83;
+  --st-none-bg: transparent;
+  --st-none-bd: #242a31;
+
+  --c1: #6e86ee; /* §0.3 extension */
+  --c2: #6fa3c7;
+  --c3: #7fb889; /* brand alternate */
+  --c4: #9a9d96; /* §0.3 extension */
+  --c5: #e0685e; /* brand alternate */
+  --c6: #9e82ab; /* §0.3 extension */
+  --c7: #d1ae63; /* §0.3 extension — needs sign-off */
+
+  --shadow-pop:
+    0 12px 28px -14px rgba(0, 0, 0, 0.68), 0 2px 8px -4px rgba(0, 0, 0, 0.5);
+  --backdrop: rgba(0, 0, 0, 0.58);
+}
+
+/* Base */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  background: var(--paper);
+  color: var(--body);
+  font-family: var(--f-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+h1,
+h2,
+h3,
+.metric {
+  font-family: var(--f-display);
+  font-weight: 700;
+}
+.tnum,
+td.num,
+.metric {
+  font-variant-numeric: tabular-nums;
+}
+*,
+*::before,
+*::after {
+  border-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

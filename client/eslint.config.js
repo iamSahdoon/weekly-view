@@ -29,6 +29,11 @@ export default [
     },
   },
   {
+    // project_structure.md §3.1 keeps each context and its provider in one file.
+    files: ["src/context/*Context.jsx"],
+    rules: { "react-refresh/only-export-components": "off" },
+  },
+  {
     files: ["*.config.js", "src/**/__tests__/**"],
     languageOptions: { globals: globals.node },
   },

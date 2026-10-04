@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C1**
+**Next stage: C2**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -13,7 +13,7 @@
 | S4 | Reports, days, submit, week reads | done |
 | S5 | Comments, review, "new" markers | done |
 | S6 | Dashboard, seed script | done |
-| C1 | Client foundation: lib, apiClient, auth, base UI, `/design` | not started |
+| C1 | Client foundation: lib, apiClient, auth, base UI, `/design` | done |
 | C2 | Shell, tables, filters, URL state | not started |
 | C3 | Reading a week; comment components | not started |
 | C4 | Writing: day panel, This week | not started |
@@ -226,6 +226,45 @@
   62 of 186 hours; D3 with `trendPerson` returns both series; D8 lists four projects
   (Client A on track, Internal Tooling 3 days left, Marketing 0 days used, R&D overdue by 7). The
   server log holds no link token. **Unverified:** nothing on a screen — S6 has no UI.
+
+### C1 checks (2026-10-04)
+- `npm run lint`: clean (client and server). `npm test`: green — server 381 (unchanged), client 30:
+  `constants.parity.test.js` 5 (the five enums, read from `server/src/constants/`; a renamed
+  task type was tried and fails it), `demoCoverage.test.js` 10 (every `authService` function
+  answered by the demo adapter, plus "an unknown route is the 404 envelope"), `dates` 6,
+  `urlParams` 3, `normalizeError` 3, `authReducer` 3. `vite build` OK; a production build has
+  no `/design` chunk.
+- `npm ci` now works in `client/`: `client/package-lock.json` was regenerated with
+  `npm install` (the S0 open question). No dependency was added or changed in `package.json`.
+- **Off-system classes:** `@apply bg-indigo-500`, `text-sm` and `p-18` each stop the build
+  ("Cannot apply unknown utility class"). **`rounded-lg` compiles** — to
+  `border-radius: var(--radius-lg)`, which `@theme` sets to `0px`. See *Open questions*.
+- **Walkthrough in a real browser** (Playwright's Chromium, headless; the API on a local
+  in-memory replica set, Vite dev server, an empty database): sign up the first account →
+  "/" signed in as owner, token stored; sign out → `/signin`, token gone; `/signup` now shows
+  the closed state; a wrong password shows the strip, no dialog; sign in → "/"; `/signin`
+  while signed in → "/". **Mid-page expiry:** the password was changed from outside
+  (`tokenVersion` + 1), then a request from the open page → the token is cleared and the
+  session-expiry modal opens over the page, which stays at "/"; a wrong password shows the
+  strip inside the modal; the right one closes it, same page, same person. **Stale token at
+  boot:** a junk `wv_token` and a reload → `/signin`, and a MutationObserver counted **zero**
+  dialogs on that load. Invite (U3) → `/invite/:token` shows email and role read-only →
+  accept → signed in as the invitee; the same link again → the one expired state. Reset link
+  (U13) → `/reset/:token` → mismatched confirm shows the field error → save → signed in.
+  `/demo` boots the adapter chunk and makes no request to the API. No JavaScript errors; the
+  only console errors were the expected 401/404 responses. The server log holds no link token.
+- **Visual checks — rendered and looked at** (screenshots, 1280px and 360px): the four auth
+  screens and their error, closed and expired states; the modal; `/design` in light and dark,
+  after a reload (the theme persisted, no flash path exercised beyond the inline script);
+  the toast and tooltip in dark. Fonts loaded (Chivo, Instrument Sans, JetBrains Mono) —
+  served to the headless browser through Node's verified fetch, since it doesn't read the
+  container's proxy trust store. No horizontal overflow at 360px.
+- **Still unverified, for the owner to look at** in a real browser: hover and press states
+  (the screenshots are static), the 120–200ms enter/exit animations, keyboard use of every
+  primitive beyond the modal (focus goes to the first field, Esc returns focus to the opener,
+  Esc is ignored while a confirm is pending — those three were checked), screen-reader
+  output, the boot splash's 3-second "Starting up" line and its error panel (needs the API
+  stopped at boot), and Safari/Firefox. Open `npm --prefix client run dev` → `/design`.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -500,11 +539,73 @@
   do the same thing — the schema says `seed` already wipes — and `--reset` is the explicit
   spelling.
 
+- C1: **C1 renders only the auth screens, "/" and `/design`.** Until C2 builds the shell and
+  the full route table, `SessionLayout` is a bare outlet, `ProtectedRoute` has no `allow` /
+  403 branch (it is unused), and unknown paths get React Router's default error page.
+  `IndexRoute` stands in: signed in, a placeholder naming the person with `Sign out` (C4's
+  `ThisWeekPage` replaces it); signed out, a redirect to `/signin` (C10's landing page
+  replaces it); signed out in the demo, an empty placeholder (C10's chooser). Suspense
+  fallbacks are `null` until C2's page skeleton.
+- C1: `AuthContext` adds `bootFailed` and `retryBoot()` to the §3.3 shape — boot retries a
+  network error or 5xx at 4, 8, 16 and 32 s, keeping the token, then shows the error panel
+  with `Try again`. A 401 at boot clears the token and boots anonymous. A signed-in `signIn`
+  as a different `_id` clears the query cache.
+- C1: `UnsavedChangesContext` is the registry only (`setDirty`, `hasUnsavedChanges`) plus
+  `useUnsavedGuard`; the session-expiry modal asks before `Sign out` / dismiss when anything
+  is dirty. The navigation and tab-close guards on it come with the forms in C4.
+- C1: **Toasts and tooltips use `--d-panel`, not `--ink`.** Design §6.12/§6.13 and
+  `tech_stack.md` §6.7 say `--ink` with `--d-text` text; in the dark theme `--ink` is
+  `#eef1f4`, the same as `--d-text`, so the text would vanish. `tokens.css` itself labels
+  `--d-panel` "dark-band surfaces (demo bar, toasts, tooltips)", and it is theme-independent.
+  In light it is `#14171b` against `--ink`'s `#0d0f12`. Reversible (one class each); see
+  *Open questions*.
+- C1: auth forms disable their fields while the request runs (design §3.12, "fields
+  disabled, values preserved"), where `frontend_architecture.md` §6.1 says fields stay
+  enabled — the screen-specific rule wins on the auth screens only.
+- C1: `Switch` has no anatomy in the design system: built square like the Checkbox
+  (32×18 track, 12px thumb, `--acc` when on, transform and colour transitions only).
+- C1: the Modal focuses the body's first interactive element (the close button only if the
+  body has none) and, since modals are opened from state rather than a Radix `Trigger`,
+  returns focus to whatever opened it.
+- C1: `Panel`'s `sample` prop (the SAMPLE DATA pill) is not built; it arrives with the demo
+  bar in C10. `AvatarStack` is left to the stage that first needs it.
+- C1: the client's Zod schemas: login checks only that both fields are filled (the server has
+  one answer for every failure); signup, invite and reset mirror §2.1's limits (name 1–80,
+  password 8–72, a valid email on signup). Server field errors land on matching fields; the
+  rest and any other code show in the form's strip, worded from `lib/errorCopy.js`
+  (`reportServerError` in `lib/formErrors.js`, beside §6.1's `applyServerErrors`).
+- C1: auth mutations and the link preview use `gcTime: 0`, so a password or link token held
+  as a mutation variable leaves the cache with the screen. The link token is never in a key.
+- C1: **the demo adapter's auth answers.** A1 → `available: false`; A2 → `403 SIGNUP_CLOSED`;
+  A3 → `403 FORBIDDEN` (sign-in isn't demonstrated); A4/A5 read and rename the chosen
+  person; A6 → `{ token: null, user }` after checking the new password's length; A7/A8 →
+  `404 LINK_INVALID`. With no perspective chosen, person-scoped routes answer
+  `403 FORBIDDEN`, never 401 (a 401 would open the session-expiry modal). The fixtures hold
+  the three perspectives (Imali J., Nadia F., Sanduni B. — the owner) with `example.com`
+  emails; `demo.setPerspective(role)` is exported from `bootDemo.js` for C10's chooser.
+- C1: `demoCoverage.test.js` keeps a table of one case per service function; a function
+  without a case fails the first test, so each stage adds its cases with its handlers.
+- C1: `lib/urlParams.js` descriptors carry `parse` / `serialize` / `isDefault` / `toApi`,
+  plus `textParam` for `q`; `useUrlFilters` (C2) builds on them. `lib/format.js` formats
+  hours as plain numbers ("7.5") — the unit is the caller's.
+- C1: ESLint's react-refresh rule is off for `src/context/*Context.jsx`, which keep the
+  context and its provider in one file as the tree says. `client/.prettierrc.json` now points
+  `tailwindStylesheet` at `src/styles/index.css` (the S0 note).
+
 ## Open questions for the owner
-- `npm ci` fails in `client/` on npm 10.9 ("lock file's ajv@6.15.0 does not satisfy
-  ajv@8.20.0"); `server/` is fine. This session used `npm install --no-save`, which left the
-  lockfile untouched. If `npm ci` also fails on your machine, C1 should regenerate
-  `client/package-lock.json` with `npm install`.
+- ~~`npm ci` fails in `client/`~~ **Resolved in C1:** `client/package-lock.json` regenerated
+  with `npm install`; `npm ci` now succeeds.
+- **C1 — `rounded-lg` does not fail to compile.** MASTER_PROMPT's C1 done list says
+  `bg-indigo-500` / `rounded-lg` fail; design §9.4 (copied verbatim) declares
+  `--radius-lg: 0px` (and `sm`, `md`, `xl`), so `rounded-lg` compiles to a zero radius. The
+  effect is still no rounding anywhere. To make it fail, delete those four lines from
+  `@theme` (keeping `--radius-none`) — a change to design §9.4, so it is your call. Built as
+  documented.
+- **C1 — dark toasts and tooltips.** The documents put toasts and tooltips on `--ink`, which
+  is near-white in the dark theme, under `--d-text`, also near-white. Built on `--d-panel`
+  instead (see *Decisions*). In the dark theme that surface is close to `--card`, so a toast
+  separates from the page by its shadow and left bar only — look at `/design` → Dark → *Error
+  (stays)* and decide whether dark needs its own floating-layer token.
 - ~~Blocks S1's tests~~ **Resolved:** the owner allowed `fastdl.mongodb.org` in the
   environment's network settings, so `mongodb-memory-server` can download `mongod`. The
   owner's Atlas string goes in the environment variable `MONGODB_URI`, never in chat.
@@ -525,5 +626,8 @@
   share); noted in `project_structure.md` §2.1 and §6.
 - S5 added `server/tests/rbac/markers.test.js` (the "new" markers, which no §6 item
   covers); noted in `project_structure.md` §2.1 and §6.
+- C1 added `components/ui/inputClasses.js`, `components/shell/BrandMark.jsx`, six files in
+  `components/auth/`, `context/__tests__/authReducer.test.js` and three tests in
+  `lib/__tests__/`; noted in `project_structure.md` §3.1.
 - S6 added `server/tests/rbac/dashboard.test.js` and `server/tests/seed/seed.test.js`;
   noted in `project_structure.md` §6.
