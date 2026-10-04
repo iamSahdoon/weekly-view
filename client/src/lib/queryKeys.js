@@ -12,6 +12,9 @@ export const qk = {
     teamUpdates: () => ["teamUpdates"],
     reviewDesk: () => ["reviewDesk"],
     dashboard: () => ["dashboard"],
+    projects: () => ["projects"],
+    tasks: () => ["tasks"],
+    users: () => ["users"],
   },
 
   bootstrap: () => ["auth", "bootstrap"],

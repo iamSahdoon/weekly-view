@@ -95,6 +95,86 @@ const CASES = {
       args: () => [ctx.imaliLast._id],
       check: (data) => expect(data).toBeNull(),
     },
+    listMyReports: {
+      args: [{ limit: 20, sort: "weekKey", dir: "desc" }],
+      check: (data) => {
+        expect(data.meta.total).toBe(3);
+        expect(data.items.map((r) => r.weekKey)).toEqual([
+          currentWeekKey(),
+          addWeeks(currentWeekKey(), -1),
+          addWeeks(currentWeekKey(), -2),
+        ]);
+        hasKeys(["status", "hours", "projects", "postedWeekdays", "isNew"])(
+          data.items[0],
+        );
+      },
+    },
+    getSummary: {
+      args: () => [{ weekKey: currentWeekKey(), month: "2026-01" }],
+      check: (data) => {
+        hasKeys(["weeksFiled", "hoursThisMonth", "openBlockers"])(data);
+        expect(data.weeksFiled).toBe(2);
+      },
+    },
+    // Monday of the current week is always behind us (or today), so it can be edited.
+    putDay: {
+      args: () => [
+        currentWeekKey(),
+        "mon",
+        {
+          lines: [
+            {
+              _id: ctx.imaliNow.days[0].lines[0]._id,
+              task: ctx.imaliNow.days[0].lines[0].taskId,
+              taskType: "testing",
+              text: "Edited in the demo",
+              hours: 2.5,
+            },
+          ],
+          blockers: [
+            {
+              _id: ctx.imaliNow.days[0].blockers[0]._id,
+              text: "Waiting on API keys from the client",
+            },
+          ],
+          openToTeam: true,
+        },
+      ],
+      check: (view) => {
+        hasKeys(WEEK_VIEW_KEYS)(view);
+        const monday = view.report.days.find((d) => d.weekday === "mon");
+        expect(monday.lines).toHaveLength(1);
+        expect(monday.lines[0].text).toBe("Edited in the demo");
+        expect(monday.editedAt).not.toBeNull();
+      },
+    },
+  },
+  taskService: {
+    listTasks: {
+      args: [],
+      check: (data) =>
+        expect(data.items.map((t) => t.name).sort()).toEqual([
+          "Checkout redesign",
+          "Payments integration",
+        ]),
+    },
+  },
+  projectService: {
+    listProjects: {
+      args: [{ mine: true }],
+      check: (data) => {
+        expect(data.items.map((p) => p.name)).toEqual(["Client A", "R&D"]);
+        hasKeys(["plan", "daysUsed", "daysLeft", "overdueDays", "hoursLogged"])(
+          data.items[0].progress,
+        );
+      },
+    },
+  },
+  holidayService: {
+    listHolidays: {
+      args: [{ from: "2026-01-01", to: "2026-12-31" }],
+      check: (data) => expect(data.items).toEqual([]),
+    },
   },
   userService: {
     // A teammate's week: the days, and no end-of-week layer at all.
@@ -107,6 +187,17 @@ const CASES = {
         expect(view.report.weekComments).toBeNull();
         expect(view.report.contentSource).toBe("withheld");
       },
+    },
+    setLeave: {
+      args: [PERSPECTIVES.member, false],
+      check: (me) => {
+        hasKeys(ME_KEYS)(me);
+        expect(me.onLeave).toBe(false);
+      },
+    },
+    listOnLeave: {
+      args: [],
+      check: (data) => expect(Array.isArray(data.items)).toBe(true),
     },
   },
   reviewService: {

@@ -1,4 +1,5 @@
 import { Outlet, ScrollRestoration } from "react-router-dom";
+import { LeaveGuard } from "../components/shell/LeaveGuard.jsx";
 import { ReAuthModal } from "../components/shell/ReAuthModal.jsx";
 import { SkipLink } from "../components/shell/SkipLink.jsx";
 import { Toaster } from "../components/ui/Toaster.jsx";
@@ -13,6 +14,7 @@ export default function RootLayout() {
       <Outlet />
       <Toaster />
       <ReAuthModal />
+      <LeaveGuard />
       <ScrollRestoration />
     </>
   );

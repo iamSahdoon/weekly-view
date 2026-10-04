@@ -89,3 +89,22 @@ const OUTCOMES = { changes_requested: "sent back", approved: "approved" };
 export function revisionOutcome(revision) {
   return OUTCOMES[revision.action] ?? "submitted";
 }
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/**
+ * A project's progress in words (design §3.1, §6.25): "8 days left" / "overdue by 2
+ * days", or in hours "96.5 of 160 h" ("96.5 h logged" when no hours were planned).
+ */
+export function formatProgress(progress, unit = "days") {
+  if (!progress?.plan) return "No plan";
+  if (unit === "hours") {
+    const planned = progress.plan.plannedHours;
+    return planned
+      ? `${formatHours(progress.hoursLogged)} of ${formatHours(planned)} h`
+      : `${formatHours(progress.hoursLogged)} h logged`;
+  }
+  return progress.overdueDays > 0
+    ? `overdue by ${plural(progress.overdueDays, "day")}`
+    : `${plural(progress.daysLeft, "day")} left`;
+}

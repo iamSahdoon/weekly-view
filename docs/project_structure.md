@@ -532,6 +532,7 @@ client/
 │   │   │   ├── AppBootSplash.jsx
 │   │   │   ├── OfflineStrip.jsx
 │   │   │   ├── ReAuthModal.jsx        # the session-expiry modal (design §3.12)
+│   │   │   ├── LeaveGuard.jsx         # added in C4: asks before an in-app navigation to another page discards unsaved text (useBlocker over UnsavedChangesContext)
 │   │   │   ├── ThemeToggle.jsx
 │   │   │   ├── BrandMark.jsx          # added in C1: the bracketed-bar glyph + wordmark (auth layout, splash, sidebar)
 │   │   │   ├── SkipLink.jsx
@@ -610,11 +611,14 @@ client/
 │   │   ├── demoResponses.js           # added in C3: ok / fail / withUser, shared by the route files
 │   │   ├── demoWeekView.js            # added in C3: the WeekView, Day, Thread and Revision the API computes, computed from the store
 │   │   ├── demoWeekRoutes.js          # added in C3: U8, R3, R4, R8–R11, R13 and C1–C5 for the demo
+│   │   ├── demoDayRoutes.js           # added in C4: R1, R2 and R5 (writing a day) for the demo
+│   │   ├── demoCatalogRoutes.js       # added in C4: T1, P1, HD1, U9, U10 for the demo
 │   │   ├── demoStore.js               # builds the in-memory store; rebuilt on refresh or Start over
 │   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates
 │   │   └── __tests__/
 │   │       ├── demoCoverage.test.js   # every services/ function answered by the adapter
-│   │       └── demoWeeks.test.js      # added in C3: the demo's layers, comment rules, ten-minute window and "new" markers
+│   │       ├── demoWeeks.test.js      # added in C3: the demo's layers, comment rules, ten-minute window and "new" markers
+│   │       └── demoDays.test.js       # added in C4: writing a day, holidays, leave, projects, R1/R2 on a frozen Wednesday
 │   ├── hooks/
 │   │   ├── useAuth.js                 # reads AuthContext
 │   │   ├── useAuthQueries.js          # bootstrap status, link preview, login, signup, accept
@@ -661,6 +665,7 @@ client/
 │   ├── schemas/
 │   │   ├── authSchema.js              # zodResolver schemas, client-side
 │   │   ├── reportSchema.js            # the day panel and the end-of-week form
+│   │   ├── __tests__/reportSchema.test.js  # added in C4: the day form's validation and its R5 body
 │   │   ├── reviewSchema.js            # send-back comment, comments and replies
 │   │   ├── projectSchema.js
 │   │   ├── userSchema.js
@@ -692,7 +697,8 @@ client/
 │   │       ├── urlParams.test.js      # added in C1
 │   │       ├── normalizeError.test.js # added in C1
 │   │       ├── routeParams.test.js    # added in C2
-│   │       └── permissions.test.js    # added in C3: the week-thread gates (G1), comment window, version labels
+│   │       ├── permissions.test.js    # added in C3: the week-thread gates (G1), comment window, version labels
+│   │       └── weekActions.test.js    # added in C4: the top-bar primary action's priority order
 │   ├── styles/
 │   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]
@@ -934,7 +940,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

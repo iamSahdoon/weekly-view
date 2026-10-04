@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toastError } from "../lib/errorToast.js";
 import { invalidateWeek } from "../lib/invalidateWeek.js";
 import { qk } from "../lib/queryKeys.js";
@@ -22,6 +27,23 @@ export function useWeek(userId, weekKey) {
       isMe
         ? reportService.getMyWeek(weekKey)
         : userService.getUserWeek(userId, weekKey),
+  });
+}
+
+/** R1 — the caller's own reports; `filters` are already API params. */
+export function useMyReports(filters) {
+  return useQuery({
+    queryKey: qk.reports(filters),
+    queryFn: () => reportService.listMyReports(filters),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** R2 — the personal strip. */
+export function useReportSummary(weekKey, month) {
+  return useQuery({
+    queryKey: qk.summary(weekKey, month),
+    queryFn: () => reportService.getSummary({ weekKey, month }),
   });
 }
 
@@ -49,6 +71,31 @@ export function useRevision(id, revisionNumber) {
     queryKey: qk.revision(id, revisionNumber),
     queryFn: () => reportService.getRevision(id, revisionNumber),
     enabled: Boolean(id) && revisionNumber != null,
+  });
+}
+
+// R5 — post or edit a day. Not optimistic: a half-posted day that appears to have
+// worked is worse than a short wait (§5.7). The response is the author's WeekView,
+// written straight into the week cache; the views the day feeds are marked stale.
+export function usePutDay() {
+  const queryClient = useQueryClient();
+  const { user: me } = useAuth();
+  return useMutation({
+    mutationFn: ({ weekKey, weekday, body }) =>
+      reportService.putDay(weekKey, weekday, body),
+    onSuccess: (view, { weekKey }) => {
+      queryClient.setQueryData(qk.week(me._id, weekKey), view);
+      queryClient.invalidateQueries({ queryKey: qk.report(view.report._id) });
+      for (const key of [
+        qk.all.teamUpdates(),
+        qk.all.dashboard(),
+        qk.all.reports(),
+        qk.all.projects(),
+        qk.all.tasks(),
+      ]) {
+        queryClient.invalidateQueries({ queryKey: key });
+      }
+    },
   });
 }
 

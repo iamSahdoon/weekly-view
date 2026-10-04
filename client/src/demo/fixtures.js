@@ -1,6 +1,11 @@
 import { addDays, addHours, subMinutes, subWeeks } from "date-fns";
 import { WEEKDAYS } from "../lib/constants.js";
-import { addWeeks, currentWeekKey, weekDays } from "../lib/dates.js";
+import {
+  addWeeks,
+  currentWeekKey,
+  toCalendarDate,
+  weekDays,
+} from "../lib/dates.js";
 
 // Hard-coded demo data (tech_stack.md §6.9). Dates are relative to the moment the
 // demo starts, so it never shows a stale week: the current week, last week and the
@@ -25,6 +30,7 @@ const TASK = {
   scheduler: id("0c", 4),
   research: id("0c", 5),
   planning: id("0c", 6),
+  teamPlanning: id("0c", 7),
 };
 
 let counter = 0;
@@ -57,6 +63,14 @@ function dayOf(weekday, date, { lines, blockers = [], comments = [], open }) {
     comments,
   };
 }
+
+const task = (_id, name, project, owner, doneAt = null) => ({
+  _id,
+  name,
+  project,
+  owner,
+  doneAt: doneAt ? doneAt.toISOString() : null,
+});
 
 const thread = (author, text, createdAt, extra = {}) => ({
   _id: next("d1"),
@@ -360,7 +374,7 @@ export function buildFixtures(now = new Date()) {
       dayOf(weekday, dates(lastWeek)[i], {
         lines: [
           [TASK.scheduler, "development", "Scheduler prototype", 4],
-          [TASK.planning, "meetings", "Planning, one-to-ones", 2.5],
+          [TASK.teamPlanning, "meetings", "Planning, one-to-ones", 2.5],
         ],
         blockers: i === 3 ? [["Design review slipped to next week", true]] : [],
       }),
@@ -372,7 +386,7 @@ export function buildFixtures(now = new Date()) {
           status: "in_progress",
           note: "Prototype runs; needs review",
         },
-        { taskId: TASK.planning, status: "done", note: "" },
+        { taskId: TASK.teamPlanning, status: "done", note: "" },
       ],
       nextWeek: ["Design review"],
       achievements: [
@@ -412,6 +426,7 @@ export function buildFixtures(now = new Date()) {
         status: "active",
         isOwner: false,
         onLeave: false,
+        leaveFrom: null,
         joinedAt: joined,
         projectIds: [PROJECT.clientA, PROJECT.rnd],
       },
@@ -423,6 +438,7 @@ export function buildFixtures(now = new Date()) {
         status: "active",
         isOwner: false,
         onLeave: false,
+        leaveFrom: null,
         joinedAt: joined,
         projectIds: [PROJECT.rnd],
       },
@@ -434,40 +450,67 @@ export function buildFixtures(now = new Date()) {
         status: "active",
         isOwner: true,
         onLeave: false,
+        leaveFrom: null,
         joinedAt: joined,
         projectIds: [],
       },
     ],
+    // Client A has hours planned and time to spare; R&D's plan ran out last week.
     projects: [
-      { _id: PROJECT.clientA, name: "Client A", status: "active" },
-      { _id: PROJECT.rnd, name: "R&D", status: "active" },
+      {
+        _id: PROJECT.clientA,
+        name: "Client A",
+        description: "Checkout and payments for the client's shop",
+        status: "active",
+        plan: {
+          startDate: toCalendarDate(weekDays(addWeeks(thisWeek, -6))[0].date),
+          plannedDays: 50,
+          plannedHours: 300,
+        },
+        planHistory: [],
+      },
+      {
+        _id: PROJECT.rnd,
+        name: "R&D",
+        description: "Prototypes and research",
+        status: "active",
+        plan: {
+          startDate: toCalendarDate(weekDays(addWeeks(thisWeek, -6))[0].date),
+          plannedDays: 25,
+          plannedHours: null,
+        },
+        planHistory: [],
+      },
     ],
+    // Tasks are personal: each has an owner. Done tasks drop out of the picker.
     tasks: [
-      {
-        _id: TASK.checkout,
-        name: "Checkout redesign",
-        project: PROJECT.clientA,
-      },
-      {
-        _id: TASK.payments,
-        name: "Payments integration",
-        project: PROJECT.clientA,
-      },
-      { _id: TASK.auth, name: "Login timeout", project: PROJECT.clientA },
-      {
-        _id: TASK.scheduler,
-        name: "Scheduler prototype",
-        project: PROJECT.rnd,
-      },
-      { _id: TASK.research, name: "Card-vault research", project: PROJECT.rnd },
-      { _id: TASK.planning, name: "Sprint planning", project: PROJECT.rnd },
+      task(TASK.checkout, "Checkout redesign", PROJECT.clientA, IMALI),
+      task(TASK.payments, "Payments integration", PROJECT.clientA, IMALI),
+      task(TASK.auth, "Login timeout", PROJECT.clientA, IMALI, approvedAt),
+      task(TASK.scheduler, "Scheduler prototype", PROJECT.rnd, NADIA),
+      task(
+        TASK.research,
+        "Card-vault research",
+        PROJECT.rnd,
+        IMALI,
+        sentBackAt,
+      ),
+      task(TASK.planning, "Sprint planning", PROJECT.rnd, IMALI, approvedAt),
+      task(
+        TASK.teamPlanning,
+        "Team planning",
+        PROJECT.rnd,
+        NADIA,
+        nadiaSubmitted,
+      ),
     ],
     reports: [imaliNow, imaliLast, imaliOlder, nadiaLast],
     // When each person last opened each report: `${reportId}:${userId}` → ISO date.
     seen: {
       [`${imaliOlder._id}:${IMALI}`]: subMinutes(now, 5).toISOString(),
     },
-    // Unused until holidays and leave have demo handlers (C8).
+    // { _id, date: "YYYY-MM-DD", name, createdBy }. Read by dayStates and HD1;
+    // written by the holidays page's handlers (C8).
     holidays: [],
   };
 }

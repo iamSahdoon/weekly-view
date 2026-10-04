@@ -8,6 +8,7 @@ export const inputClasses = cn(
   "transition-[background-color,border-color] duration-[120ms] ease-linear",
   "enabled:hover:border-hair2 focus:border-acc focus:bg-card",
   "disabled:cursor-not-allowed disabled:bg-tint2 disabled:text-mut",
-  "read-only:border-dashed read-only:bg-transparent read-only:text-body read-only:hover:border-hair",
+  // A <select> matches :read-only in Chromium, so the read-only look is for text fields.
+  "[&:read-only:not(select)]:border-dashed [&:read-only:not(select)]:bg-transparent [&:read-only:not(select)]:text-body [&:read-only:not(select)]:hover:border-hair",
   "aria-invalid:border-st-corr-fg",
 );
