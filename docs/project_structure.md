@@ -515,6 +515,7 @@ client/
 │   │   │   ├── FilterBar.jsx
 │   │   │   ├── Meter.jsx
 │   │   │   ├── NewMarker.jsx          # the 6px square (§6.24)
+│   │   │   ├── inputClasses.js        # added in C1: the Input look shared by Input, Textarea, Select (keeps component files component-only)
 │   │   │   └── Toaster.jsx            # Sonner mount, constrained per tech_stack §6.7
 │   │   ├── shell/                     # AppShell parts (§1)
 │   │   │   ├── Sidebar.jsx
@@ -527,6 +528,7 @@ client/
 │   │   │   ├── OfflineStrip.jsx
 │   │   │   ├── ReAuthModal.jsx        # the session-expiry modal (design §3.12)
 │   │   │   ├── ThemeToggle.jsx
+│   │   │   ├── BrandMark.jsx          # added in C1: the bracketed-bar glyph + wordmark (auth layout, splash, sidebar)
 │   │   │   ├── SkipLink.jsx
 │   │   │   └── DemoBar.jsx            # the 36px --ink bar: SAMPLE DATA, Switch, Start over (§3.14)
 │   │   ├── report/                    # §3.1–3.4, §4
@@ -585,6 +587,12 @@ client/
 │   │   ├── holiday/                   # §3.17
 │   │   ├── user/                      # §3.10–3.11, §3.15
 │   │   ├── auth/                      # §3.12 form bodies shared across the auth screens
+│   │   │   ├── AuthScreen.jsx         # added in C1: heading, --mut line, panel, footer link
+│   │   │   ├── AuthLink.jsx           # added in C1: the one secondary text link
+│   │   │   ├── SignInForm.jsx         # added in C1: shared by /signin and ReAuthModal
+│   │   │   ├── FormStrip.jsx          # added in C1: the --st-corr-bg failure strip
+│   │   │   ├── LinkPreviewGate.jsx    # added in C1: A7 before the invite / reset form
+│   │   │   └── LinkExpired.jsx        # added in C1: the one expired-link state
 │   │   └── marketing/                 # the landing page's sections, ported from landing-reference/index.html (brand §6.0)
 │   ├── demo/                          # the client-side demo — tech_stack.md §6.9
 │   │   ├── bootDemo.js                # builds the store, installs the adapter — dynamically imported by main.jsx
@@ -623,7 +631,8 @@ client/
 │   │   ├── authReducer.js
 │   │   ├── UnsavedChangesContext.jsx  # registry of dirty forms: guards navigation, tab close and sign-out
 │   │   ├── DayDraftsContext.jsx       # unposted day text, in memory only
-│   │   └── PageChromeContext.jsx      # the TopBar's slot targets
+│   │   ├── PageChromeContext.jsx      # the TopBar's slot targets
+│   │   └── __tests__/authReducer.test.js  # added in C1: the SESSION_EXPIRED boot guard
 │   ├── services/
 │   │   ├── apiClient.js               # the Axios instance, both interceptors, and `api` (returns envelope.data)
 │   │   ├── authService.js
@@ -661,7 +670,10 @@ client/
 │   │   ├── format.js                  # hours, dates, relative times
 │   │   ├── chartTheme.js              # chart colours and axis props as token strings
 │   │   └── __tests__/
-│   │       └── constants.parity.test.js
+│   │       ├── constants.parity.test.js
+│   │       ├── dates.test.js          # added in C1
+│   │       ├── urlParams.test.js      # added in C1
+│   │       └── normalizeError.test.js # added in C1
 │   ├── styles/
 │   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]

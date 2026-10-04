@@ -1,0 +1,107 @@
+/* Global element styles beyond tokens.css's base block (project_structure.md §3.3):
+   the universal focus ring, scrollbars, and the keyframes the ui/ primitives use.
+   Every value is a token; tokens.css already carries the reduced-motion block. */
+
+/* §6.0 — one ring, one colour, everywhere. :focus without -visible is never styled. */
+:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+.focus-halo:focus-visible {
+  box-shadow: 0 0 0 4px var(--acc-l);
+}
+/* Where an outset ring would be clipped (table rows, tabs, nav items, cells). */
+.focus-inset:focus-visible {
+  outline-offset: -2px;
+}
+
+/* §6.2 — number inputs: native spinners hidden. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+* {
+  scrollbar-color: var(--hair2) transparent;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+/* §6.16 — the one loop in the product. tokens.css's reduced-motion block cuts
+   it to one 1ms iteration; .wv-skeleton then rests at 0.7. */
+@keyframes wv-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.wv-skeleton {
+  animation: wv-pulse 900ms ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wv-skeleton {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* Floating layers (§6.11, §6.13, §6.19). Radix keeps a closing layer mounted while
+   its exit animation runs, so enter and exit are keyed on data-state. */
+@keyframes wv-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes wv-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes wv-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes wv-drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+.wv-backdrop[data-state="open"] {
+  animation: wv-fade-in 180ms var(--ease-out);
+}
+.wv-backdrop[data-state="closed"] {
+  animation: wv-fade-out 120ms var(--ease-in);
+}
+.wv-modal[data-state="open"] {
+  animation: wv-rise-in 180ms var(--ease-out);
+}
+.wv-modal[data-state="closed"] {
+  animation: wv-fade-out 120ms var(--ease-in);
+}
+.wv-tooltip[data-state="delayed-open"],
+.wv-tooltip[data-state="instant-open"] {
+  animation: wv-fade-in 100ms linear;
+}
+.wv-tooltip[data-state="closed"] {
+  animation: wv-fade-out 100ms linear;
+}
+.wv-popover[data-state="open"] {
+  animation: wv-drop-in 120ms var(--ease-out);
+}
+.wv-popover[data-state="closed"] {
+  animation: wv-fade-out 100ms linear;
+}

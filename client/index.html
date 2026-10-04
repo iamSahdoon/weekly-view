@@ -1,9 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WeeklyView</title>
+    <!-- product_design_system.md §9.2: one request, three variable families. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chivo:wght@300..900&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Applied before the app bundle, so there is no theme flash. Storage may be
+         blocked (frontend_architecture.md §2): fall back to light. -->
+    <script>
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem("wv.theme") === "dark" ? "dark" : "light";
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

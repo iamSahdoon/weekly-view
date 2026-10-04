@@ -1,0 +1,152 @@
+/* client/src/styles/index.css — product_design_system.md §9.4, verbatim. */
+@import "tailwindcss";
+@import "./tokens.css"; /* §9.3 — :root + [data-theme="dark"] */
+@import "./base.css"; /* global elements, focus ring, reduced motion */
+
+@theme {
+  /* ── Colors — REPLACED ──────────────────────────────────────────
+     Every entry maps to a variable from tokens.css and never restates
+     a hex. @theme does not participate in the [data-theme="dark"]
+     cascade: a literal here would compile the light value into every
+     utility, and dark mode would switch hand-written CSS while every
+     bg-card and text-ink stayed light. tokens.css is the source of
+     truth; this is a mapping layer over it. */
+  --color-*: initial;
+
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-tint: var(--tint);
+  --color-tint2: var(--tint2);
+
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-mut: var(--mut);
+
+  --color-hair: var(--hair);
+  --color-hair2: var(--hair2);
+  --color-rule: var(--rule);
+
+  --color-acc: var(--acc);
+  --color-acc-d: var(--acc-d);
+  --color-acc-l: var(--acc-l);
+  --color-acc-txt: var(--acc-txt);
+  --color-acc-on-d: var(--acc-on-d);
+  --color-on-acc: var(--on-acc);
+
+  --color-d-panel: var(--d-panel);
+  --color-d-panel2: var(--d-panel2);
+  --color-d-line: var(--d-line);
+  --color-d-hover: var(--d-hover);
+  --color-d-text: var(--d-text);
+  --color-d-body: var(--d-body);
+  --color-d-mut: var(--d-mut);
+
+  --color-st-draft-fg: var(--st-draft-fg);
+  --color-st-draft-bg: var(--st-draft-bg);
+  --color-st-draft-bd: var(--st-draft-bd);
+  --color-st-subm-fg: var(--st-subm-fg);
+  --color-st-subm-bg: var(--st-subm-bg);
+  --color-st-subm-bd: var(--st-subm-bd);
+  --color-st-corr-fg: var(--st-corr-fg);
+  --color-st-corr-bg: var(--st-corr-bg);
+  --color-st-corr-bd: var(--st-corr-bd);
+  --color-st-appr-fg: var(--st-appr-fg);
+  --color-st-appr-bg: var(--st-appr-bg);
+  --color-st-appr-bd: var(--st-appr-bd);
+  --color-st-none-fg: var(--st-none-fg);
+  --color-st-none-bg: var(--st-none-bg);
+  --color-st-none-bd: var(--st-none-bd);
+
+  --color-chart-1: var(--c1); /* Development   */
+  --color-chart-2: var(--c2); /* Testing       */
+  --color-chart-3: var(--c3); /* Meetings      */
+  --color-chart-4: var(--c4); /* Documentation */
+  --color-chart-5: var(--c5); /* Review        */
+  --color-chart-6: var(--c6); /* Other         */
+  --color-chart-7: var(--c7); /* Research & study */
+
+  /* ── Spacing — REPLACED, keyed by px ────────────────────────────
+     `--spacing: initial` switches off v4's dynamic scale, so only the
+     brand's sixteen steps (§5.1) compile. p-18 is a build-time nothing,
+     not a silent 72px. */
+  --spacing: initial;
+  --spacing-0: 0px;
+  --spacing-px: 1px;
+  --spacing-2: 2px;
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-8: 8px;
+  --spacing-11: 11px;
+  --spacing-14: 14px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-22: 22px;
+  --spacing-24: 24px;
+  --spacing-26: 26px;
+  --spacing-32: 32px;
+  --spacing-44: 44px;
+  --spacing-52: 52px;
+  --spacing-62: 62px;
+  --spacing-88: 88px;
+  --spacing-96: 96px;
+
+  /* ── Type scale — REPLACED: the brand's roles + §0.3's extensions ─ */
+  --text-*: initial;
+
+  --text-metric: 34px;
+  --text-metric--line-height: 1;
+  --text-metric--letter-spacing: -0.03em;
+
+  --text-metric-sm: 26px;
+  --text-metric-sm--line-height: 1;
+  --text-metric-sm--letter-spacing: -0.025em;
+
+  --text-page: 28px;
+  --text-page--line-height: 1.12;
+  --text-page--letter-spacing: -0.035em;
+
+  --text-sub: 20px;
+  --text-sub--line-height: 1.2;
+  --text-sub--letter-spacing: -0.03em;
+
+  --text-panel: 17px;
+  --text-panel--line-height: 1.25;
+  --text-panel--letter-spacing: -0.02em;
+
+  --text-panel-sm: 15px;
+  --text-panel-sm--line-height: 1.3;
+  --text-panel-sm--letter-spacing: -0.015em;
+
+  --text-lg: 16px;
+  --text-lg--line-height: 1.55;
+
+  --text-base: 14px;
+  --text-base--line-height: 1.5;
+
+  --text-dense: 13px;
+  --text-dense--line-height: 1.45;
+
+  --text-caption: 12px;
+  --text-caption--line-height: 1.4;
+
+  --text-micro: 11px;
+  --text-micro--line-height: 1.2;
+  --text-micro--letter-spacing: 0.02em;
+
+  /* ── Fonts — REPLACED ───────────────────────────────────────────── */
+  --font-*: initial;
+  --font-display: var(--f-display);
+  --font-ui: var(--f-ui);
+  --font-mono: var(--f-mono);
+
+  /* ── Shape — the editorial signature ────────────────────────────── */
+  --radius-*: initial;
+  --radius-none: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+
+  /* ── Breakpoints — the defaults plus xs ─────────────────────────── */
+  --breakpoint-xs: 480px; /* sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536 remain */
+}
