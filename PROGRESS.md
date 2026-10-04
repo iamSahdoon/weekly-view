@@ -2,12 +2,12 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: S4** (S1's Atlas check is still the owner's to run — see *Open questions*)
+**Next stage: S4**
 
 | Stage | What | Status |
 | --- | --- | --- |
 | S0 | Repo scaffold | done |
-| S1 | Server foundation, models, test harness | done — Atlas check pending |
+| S1 | Server foundation, models, test harness | done |
 | S2 | Auth, users, links, leave, ownership | done |
 | S3 | Projects, tasks, holidays, calendar | done |
 | S4 | Reports, days, submit, week reads | not started |
@@ -50,7 +50,9 @@
   `MongooseServerSelectionError` after 10 s. Either the Atlas IP access list doesn't admit
   this cloud container, or the cloud environment doesn't let database traffic out (it routes
   outbound HTTPS through a proxy). It can't be told apart from here. The value was never
-  printed. The check moves to the owner's machine (steps under *Open questions*).
+  printed. The check moves to the owner's machine.
+- **Atlas: passed on the owner's Windows machine (2026-10-04)** — `npm run dev` printed
+  `MongoDB connected`, and `/api/health` returned `success: true`.
 
 ### S2 checks (2026-10-03)
 - `npm run lint`: clean. `npm test`: green — server 131 (54 foundation, 20 in
@@ -72,7 +74,8 @@
   remove → the removed person's token `401`; the database rows matched the responses
   (status, `tokenVersion`, work periods, leave, no link fields left after accept). The raw
   link token never appeared in the server's morgan log.
-- Atlas still not exercised (see *Open questions*); nothing in S2 needs it.
+- Atlas was not exercised in S2; nothing in S2 needs it (S1's check later passed on the
+  owner's machine).
 
 ### S3 checks (2026-10-03)
 - `npm run lint`: clean. `npm test`: green — server 191 (54 foundation, 15 in
@@ -180,8 +183,15 @@
   in the same write that closes their work period (`to: now` on both). Noted in
   `database_schema.md` §3.3.
 
-- S3: P1 takes no date from the client, so project progress counts "today" as the
-  **server's UTC calendar date** (`calendarService.todayUtc`). See *Open questions*.
+- S3, **owner decision (2026-10-04):** project progress counts "today" as the **server's
+  UTC calendar date** (`calendarService.todayUtc`); P1 takes no date from the client, and
+  no API change is made. `api_specification.md` I2 (the client's clock defines today)
+  governs weeks the client sends, not P1. A team east of UTC sees the day's count move at
+  00:00 UTC (05:30 in Colombo), not at local midnight.
+- S3, **owner decision (2026-10-04):** a person's expected days are the working days on
+  which a work period covers them, minus leave (`database_schema.md` §0.2): someone who
+  joins on a Wednesday is expected Wednesday to Friday. `database_schema.md` §5.0 step 2
+  was reworded to match §0.2, with a note naming the decision.
 - S3: `calendarService` is mostly pure functions over a holiday set
   (`countWorkingDays`, `workingDaysIn`, `isOnTeamForWeek`, `expectedDaysOf`, `weekStateOf`,
   `planDaysUsed`); `holidaySet`, `workingDaysOfWeek` and `holidaysForPlans` are the only
@@ -211,31 +221,6 @@
   `claude/<stage-id>-<short-stage-name>`, created from `main` (owner's instruction).
 
 ## Open questions for the owner
-- **S3 — which day is "today" for project progress?** `api_specification.md` I2 says the
-  client's clock defines today, but P1 has no parameter to carry it. Built: the server's
-  UTC date, so a team east of UTC sees the new day's count from 00:00 UTC (05:30 in
-  Colombo), not local midnight. Reversible: P1 could take an optional `today` from the
-  client. Keep it, or add the parameter?
-- **S3 — expected days for someone who joins mid-week.** `database_schema.md` §0.2 says a
-  person's expected days are the working days "on which they were on the team"; §5.0
-  step 2 computes them as working days minus leave only (whole-week membership in step 1).
-  They differ only for someone who joins mid-week. Built (§0.2): joined Wednesday →
-  expected Wed–Fri, not Mon–Fri; the leave rule is unchanged. Reversible: one condition in
-  `calendarService.expectedDaysOf`. S4's submit rules depend on it — confirm before S4.
-- **S1 Atlas check — needs you.** The cloud value is now complete, but this cloud session
-  can't reach Atlas on port 27017. Run the check on Windows:
-  1. Atlas → **Database** → your cluster → **Connect** → **Drivers** → copy the string. Replace
-     `<db_password>` with the database user's password and put `/weeklyview` just before the `?`.
-  2. Atlas → **Network Access** → **Add IP Address** → **Add current IP address** (or
-     `0.0.0.0/0`, as the README explains for Render).
-  3. In a terminal in the repo: `git pull`, then `cd server`, then `copy .env.example .env`.
-  4. Open `server\.env` and set `MONGODB_URI=` to the string from step 1, and `JWT_SECRET=` to
-     the output of `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
-  5. `npm install`, then `npm run dev`. Expect `MongoDB connected` and `API listening on :5000`.
-  6. Open http://localhost:5000/api/health — expect `{"success":true,"data":{"status":"ok"},…}`.
-     If it stops at step 5 instead, the error line names the cause (an IP not allowed, a wrong
-     password).
-  Starting the S1 server creates nothing on Atlas: no model is loaded until S2.
 - `npm ci` fails in `client/` on npm 10.9 ("lock file's ajv@6.15.0 does not satisfy
   ajv@8.20.0"); `server/` is fine. This session used `npm install --no-save`, which left the
   lockfile untouched. If `npm ci` also fails on your machine, C1 should regenerate

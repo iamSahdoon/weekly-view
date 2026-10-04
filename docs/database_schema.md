@@ -707,10 +707,12 @@ three stages:
 1. **On the team.** A user is in the set for W if one of their `workPeriods` covers W:
    `from ≤ weekEnd` and (`to` is `null` or `to > weekEnd`). A person removed during the
    week is not expected that week; a person who joined during it is.
-2. **Expected days.** `WD` minus the days one of their `leave` periods covers. A period
-   covers a day when the day's date is on or after `from`'s date and before `to`'s date (or
-   `to` is `null`) — **the day leave is switched on is the first day away; the day it is
-   switched off is the first day back.** Dates compared in UTC.
+2. **Expected days.** The days of `WD` on which one of their `workPeriods` covers them,
+   minus the days one of their `leave` periods covers (§0.2) — someone who joined on a
+   Wednesday is expected Wednesday to Friday. A period covers a day when the day's date is
+   on or after `from`'s date and before `to`'s date (or `to` is `null`) — **the day leave is
+   switched on is the first day away; the day it is switched off is the first day back.**
+   Dates compared in UTC. _(Team days only: owner decision, 2026-10-04.)_
 3. **The report**, looked up by `{ author, weekKey }`, projecting `status` and
    `days.weekday` only — never `content`.
 
