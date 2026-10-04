@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { apiClient } from "../../services/apiClient.js";
 import { createDemoAdapter } from "../demoAdapter.js";
+import { addWeeks, currentWeekKey } from "../../lib/dates.js";
 import { createDemoStore } from "../demoStore.js";
 import { PERSPECTIVES } from "../fixtures.js";
 
@@ -29,7 +30,130 @@ const hasKeys = (keys) => (data) =>
   expect(Object.keys(data)).toEqual(expect.arrayContaining(keys));
 const rejects = (code) => ({ rejects: code });
 
+// The fixtures' ids change per run (their dates are relative), so a case whose
+// arguments name a report or a thread takes them from the store: `args(ctx)`.
+let ctx = null;
+const WEEK_VIEW_KEYS = [
+  "user",
+  "weekKey",
+  "weekStart",
+  "weekEnd",
+  "expectedDays",
+  "dayStates",
+  "state",
+  "report",
+];
+const DAY_KEYS = ["weekday", "lines", "blockers", "comments", "canComment"];
+const THREAD_KEYS = [
+  "_id",
+  "author",
+  "text",
+  "editableUntil",
+  "replies",
+  "isNew",
+];
+
 const CASES = {
+  reportService: {
+    getMyWeek: {
+      args: () => [currentWeekKey()],
+      check: (view) => {
+        hasKeys(WEEK_VIEW_KEYS)(view);
+        expect(view.user._id).toBe(PERSPECTIVES.member);
+        expect(view.report.status).toBe("draft");
+      },
+    },
+    getReport: {
+      args: () => [ctx.imaliLast._id],
+      check: (view) => hasKeys(WEEK_VIEW_KEYS)(view),
+    },
+    listRevisions: {
+      args: () => [ctx.imaliOlder._id],
+      check: (data) =>
+        expect(data.items.map((r) => r.revisionNumber)).toEqual([2, 1]),
+    },
+    getRevision: {
+      args: () => [ctx.imaliOlder._id, 1],
+      check: hasKeys(["revisionNumber", "isCurrent", "content", "days"]),
+    },
+    setResolution: {
+      args: () => [ctx.imaliNow._id, ctx.imaliNow.days[0].blockers[0]._id],
+      check: (data) => expect(data.resolvedAt).not.toBeNull(),
+    },
+    clearResolution: {
+      args: () => [ctx.imaliNow._id, ctx.imaliNow.days[0].blockers[0]._id],
+      check: (data) => expect(data.resolvedAt).toBeNull(),
+    },
+    setTeamComments: {
+      args: () => [ctx.imaliNow._id, "mon", false],
+      check: (day) => {
+        hasKeys(DAY_KEYS)(day);
+        expect(day.openToTeam).toBe(false);
+      },
+    },
+    markSeen: {
+      args: () => [ctx.imaliLast._id],
+      check: (data) => expect(data).toBeNull(),
+    },
+  },
+  userService: {
+    // A teammate's week: the days, and no end-of-week layer at all.
+    getUserWeek: {
+      args: () => [PERSPECTIVES.manager, addWeeks(currentWeekKey(), -1)],
+      check: (view) => {
+        hasKeys(WEEK_VIEW_KEYS)(view);
+        expect(view.report.days.length).toBe(5);
+        expect(view.report.content).toBeNull();
+        expect(view.report.weekComments).toBeNull();
+        expect(view.report.contentSource).toBe("withheld");
+      },
+    },
+  },
+  reviewService: {
+    commentOnDay: {
+      args: () => [ctx.imaliLast._id, "mon", "Thanks for the note."],
+      check: (day) => {
+        hasKeys(DAY_KEYS)(day);
+        expect(day.comments.at(-1).text).toBe("Thanks for the note.");
+      },
+    },
+    commentOnWeek: {
+      args: () => [ctx.imaliLast._id, "A member can't start one."],
+      ...rejects("FORBIDDEN"),
+    },
+    reply: {
+      args: () => [ctx.imaliLast._id, ctx.sendBack._id, "Fixed."],
+      check: (thread) => {
+        hasKeys(THREAD_KEYS)(thread);
+        expect(thread.replies.at(-1).text).toBe("Fixed.");
+      },
+    },
+    editComment: {
+      args: () => [ctx.imaliLast._id, ctx.sendBack._id, "Not mine to edit."],
+      ...rejects("EDIT_WINDOW_CLOSED"),
+    },
+    editReply: {
+      args: () => [
+        ctx.imaliLast._id,
+        ctx.sendBack._id,
+        ctx.sendBack.replies[0]._id,
+        "Too late.",
+      ],
+      ...rejects("EDIT_WINDOW_CLOSED"),
+    },
+    deleteComment: {
+      args: () => [ctx.imaliLast._id, ctx.sendBack._id],
+      ...rejects("EDIT_WINDOW_CLOSED"),
+    },
+    deleteReply: {
+      args: () => [
+        ctx.imaliLast._id,
+        ctx.sendBack._id,
+        ctx.sendBack.replies[0]._id,
+      ],
+      ...rejects("EDIT_WINDOW_CLOSED"),
+    },
+  },
   authService: {
     getBootstrap: { args: [], check: hasKeys(["available"]) },
     signUp: {
@@ -57,6 +181,8 @@ const CASES = {
   },
 };
 
+const argsOf = (testCase) =>
+  typeof testCase.args === "function" ? testCase.args() : testCase.args;
 const moduleName = (path) => path.split("/").pop().replace(".js", "");
 const functionsOf = (module) =>
   Object.entries(module).filter(([, value]) => typeof value === "function");
@@ -64,6 +190,16 @@ const functionsOf = (module) =>
 beforeAll(() => {
   const store = createDemoStore();
   store.session.userId = PERSPECTIVES.member;
+  const last = addWeeks(currentWeekKey(), -1);
+  const reportOf = (author, weekKey) =>
+    store.reports.find((r) => r.author === author && r.weekKey === weekKey);
+  const imaliLast = reportOf(PERSPECTIVES.member, last);
+  ctx = {
+    imaliLast,
+    imaliNow: reportOf(PERSPECTIVES.member, currentWeekKey()),
+    imaliOlder: reportOf(PERSPECTIVES.member, addWeeks(currentWeekKey(), -2)),
+    sendBack: imaliLast.weekComments[0],
+  };
   apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
 });
 
@@ -85,11 +221,11 @@ describe("demo coverage", () => {
       if (!testCase) continue;
       it(`answers ${moduleName(path)}.${name}`, async () => {
         if (testCase.rejects) {
-          const error = await fn(...testCase.args).catch((e) => e);
+          const error = await fn(...argsOf(testCase)).catch((e) => e);
           expect(error.name).toBe("ApiError");
           expect(error.code).toBe(testCase.rejects);
         } else {
-          testCase.check(await fn(...testCase.args));
+          testCase.check(await fn(...argsOf(testCase)));
         }
       });
     }

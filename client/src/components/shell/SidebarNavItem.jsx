@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { cn } from "../../lib/cn.js";
+import { NewMarker } from "../ui/NewMarker.jsx";
 import { Tooltip } from "../ui/Tooltip.jsx";
 
 // Design §1.3. 38px, 14px Instrument Sans, a 16px / 1.5px icon in --mut. Active:
@@ -45,14 +46,7 @@ export function SidebarNavItem({
         </span>
       )}
       {dot && (
-        <span
-          role="img"
-          aria-label="New"
-          className={cn(
-            "size-[6px] shrink-0 bg-acc",
-            rail && "absolute top-11 right-[14px]",
-          )}
-        />
+        <NewMarker className={cn(rail && "absolute top-11 right-[14px]")} />
       )}
     </Link>
   );
