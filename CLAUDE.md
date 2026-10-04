@@ -140,5 +140,8 @@ owner's Atlas string — ask for it; tests use an in-memory Mongo and never touc
   Never ask for a secret in chat; secrets go in the environment's settings or a local `.env`.
 - **End every stage with "Your next steps"**: the PR to merge and the exact prompt for the
   next session.
-- **Name the stage.** Commit messages and PR titles start with the stage id, e.g.
-  `S1: server foundation, models, test harness`. (Cloud sessions assign the branch name.)
+- **Name the stage.** Every session works on a branch named
+  `claude/<stage-id>-<short-stage-name>` (e.g. `claude/c1-client-foundation`), created from
+  `main`. The owner permits this in place of the branch a cloud session assigns; push there
+  and open the PR from it. Commit messages and PR titles start with the stage id, e.g.
+  `S1: server foundation, models, test harness`.

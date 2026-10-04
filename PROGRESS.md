@@ -2,14 +2,14 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: S3** (S1's Atlas check is still the owner's to run — see *Open questions*)
+**Next stage: S4**
 
 | Stage | What | Status |
 | --- | --- | --- |
 | S0 | Repo scaffold | done |
-| S1 | Server foundation, models, test harness | done — Atlas check pending |
+| S1 | Server foundation, models, test harness | done |
 | S2 | Auth, users, links, leave, ownership | done |
-| S3 | Projects, tasks, holidays, calendar | not started |
+| S3 | Projects, tasks, holidays, calendar | done |
 | S4 | Reports, days, submit, week reads | not started |
 | S5 | Comments, review, "new" markers | not started |
 | S6 | Dashboard, seed script | not started |
@@ -50,7 +50,9 @@
   `MongooseServerSelectionError` after 10 s. Either the Atlas IP access list doesn't admit
   this cloud container, or the cloud environment doesn't let database traffic out (it routes
   outbound HTTPS through a proxy). It can't be told apart from here. The value was never
-  printed. The check moves to the owner's machine (steps under *Open questions*).
+  printed. The check moves to the owner's machine.
+- **Atlas: passed on the owner's Windows machine (2026-10-04)** — `npm run dev` printed
+  `MongoDB connected`, and `/api/health` returned `success: true`.
 
 ### S2 checks (2026-10-03)
 - `npm run lint`: clean. `npm test`: green — server 131 (54 foundation, 20 in
@@ -72,7 +74,34 @@
   remove → the removed person's token `401`; the database rows matched the responses
   (status, `tokenVersion`, work periods, leave, no link fields left after accept). The raw
   link token never appeared in the server's morgan log.
-- Atlas still not exercised (see *Open questions*); nothing in S2 needs it.
+- Atlas was not exercised in S2; nothing in S2 needs it (S1's check later passed on the
+  owner's machine).
+
+### S3 checks (2026-10-03)
+- `npm run lint`: clean. `npm test`: green — server 191 (54 foundation, 15 in
+  `tests/calendar/calendarService.test.js`, 20 in `tests/rbac/auth.test.js`, 73 in
+  `tests/rbac/adminRoutes.test.js`, 29 in `tests/rbac/projects.test.js`), client 1.
+- **Done list, as tests** (`projects.test.js`, "S3 done list", the clock frozen with
+  `vi.useFakeTimers({ toFake: ["Date"] })`): a 20-day plan from Monday 7 Sep 2026 shows
+  1 used / 19 left that Monday and 18 on Tuesday; day 20 (Fri 2 Oct) shows 0 left, day 21
+  (Mon 5 Oct) "overdue by 1"; a holiday added on Tue 8 Sep takes that day back out and moves
+  day 21 to Tue 6 Oct; removing it restores the count; projects, reports, tasks and users are
+  deep-equal before the holiday, after adding it and after removing it.
+- §6.6 item 33's S3 rows are in `adminRoutes.test.js`: member → P2–P5 `403 FORBIDDEN`,
+  manager and member → HD2–HD4 `403 FORBIDDEN` (nothing written), manager and admin → P2–P5
+  succeed. No §6.1–§6.5 item belongs to S3.
+- **Walkthrough on the real server** (`node src/server.js` against a local in-memory replica
+  set, driven with curl; today was Sat 3 Oct 2026): owner signs up, invites a manager and a
+  member (A8); P2 as the manager with a plan from Mon 28 Sep → 201, 5 used / 15 left; as the
+  member → `403 FORBIDDEN`; `CLIENT A` → `409 PROJECT_NAME_TAKEN`; P1 as the assigned member
+  serves the base shape plus `progress`, no manager fields; HD2 as the manager → 403; as the
+  owner on Tue 29 Sep → 201 with `createdBy` as a UserRef, and progress drops to 4 used;
+  Saturday → `422` `fields.date`; P4 to 25 days → the old plan in `planHistory` with
+  `changedBy`; HD4 → 200 and progress is back to 5; P5 twice → `inactive` both times and the
+  default P1 list is empty; P3 on an unknown id → `404 PROJECT_NOT_FOUND`. The database rows
+  matched (plan and history stored, membership on the member only, no holiday left).
+- `hoursLogged`, T1's `hoursTotal` and `lastWeekKey` are tested against reports inserted
+  directly; nothing writes lines until R5 (S4).
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -154,21 +183,44 @@
   in the same write that closes their work period (`to: now` on both). Noted in
   `database_schema.md` §3.3.
 
+- S3, **owner decision (2026-10-04):** project progress counts "today" as the **server's
+  UTC calendar date** (`calendarService.todayUtc`); P1 takes no date from the client, and
+  no API change is made. `api_specification.md` I2 (the client's clock defines today)
+  governs weeks the client sends, not P1. A team east of UTC sees the day's count move at
+  00:00 UTC (05:30 in Colombo), not at local midnight.
+- S3, **owner decision (2026-10-04):** a person's expected days are the working days on
+  which a work period covers them, minus leave (`database_schema.md` §0.2): someone who
+  joins on a Wednesday is expected Wednesday to Friday. `database_schema.md` §5.0 step 2
+  was reworded to match §0.2, with a note naming the decision.
+- S3: `calendarService` is mostly pure functions over a holiday set
+  (`countWorkingDays`, `workingDaysIn`, `isOnTeamForWeek`, `expectedDaysOf`, `weekStateOf`,
+  `planDaysUsed`); `holidaySet`, `workingDaysOfWeek` and `holidaysForPlans` are the only
+  reads. P1 reads holidays once for every plan on the page.
+- S3: `progress` is `null` for a project with no plan — on every manager item, and on a
+  member's assigned projects. A member's unassigned projects carry no `progress` key at all.
+- S3: `memberIds` (sorted by `_id`) and `memberCount` count invited and active people whose
+  `projects` hold the project; removed people are not members. P3's `memberIds` replaces
+  membership among invited and active people and leaves a removed person's record alone.
+  P2/P3 `memberIds` naming an unknown or removed person → `422` `fields.memberIds`.
+- S3: limits the spec doesn't give: project name 1–100, description ≤ 200, `memberIds` ≤ 500.
+  `plannedHours` may be omitted on P2 and P4 and is then `null`. An empty P3 or HD3 body →
+  `422`. P3, P4 and P5 work on inactive projects (the spec doesn't forbid it).
+- S3: P4 appends the replaced plan to `planHistory` and sets the new one in **one**
+  update-pipeline write, so two concurrent extensions can't record the same plan twice.
+  A first plan adds no history entry. `changedAt` is the API server's clock.
+- S3: P1 `usedInWeek` ignores `status` (it is its own selection); `mine` combines with
+  either. Query booleans (`mine`, `includeDone`) accept exactly `true` / `false`.
+- S3: HD1 requires both `from` and `to`; "at most one year apart" means `to` ≤ `from` plus
+  one calendar year. HD4 answers 200 with the deleted holiday's item.
+- S3: T1 sorts by name (case-insensitive). `hoursTotal` / `lastWeekKey` come from the
+  actor's own lines in reports of every status.
+- S3: shared Zod fields are exported from the validator that owns them: `objectId` from
+  `userValidator.js`, `calendarDate` / `weekdayDate` from `holidayValidator.js`,
+  `booleanQuery` from `projectValidator.js`.
+- S3: CLAUDE.md's "Name the stage" rule now says every session works on
+  `claude/<stage-id>-<short-stage-name>`, created from `main` (owner's instruction).
+
 ## Open questions for the owner
-- **S1 Atlas check — needs you.** The cloud value is now complete, but this cloud session
-  can't reach Atlas on port 27017. Run the check on Windows:
-  1. Atlas → **Database** → your cluster → **Connect** → **Drivers** → copy the string. Replace
-     `<db_password>` with the database user's password and put `/weeklyview` just before the `?`.
-  2. Atlas → **Network Access** → **Add IP Address** → **Add current IP address** (or
-     `0.0.0.0/0`, as the README explains for Render).
-  3. In a terminal in the repo: `git pull`, then `cd server`, then `copy .env.example .env`.
-  4. Open `server\.env` and set `MONGODB_URI=` to the string from step 1, and `JWT_SECRET=` to
-     the output of `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
-  5. `npm install`, then `npm run dev`. Expect `MongoDB connected` and `API listening on :5000`.
-  6. Open http://localhost:5000/api/health — expect `{"success":true,"data":{"status":"ok"},…}`.
-     If it stops at step 5 instead, the error line names the cause (an IP not allowed, a wrong
-     password).
-  Starting the S1 server creates nothing on Atlas: no model is loaded until S2.
 - `npm ci` fails in `client/` on npm 10.9 ("lock file's ajv@6.15.0 does not satisfy
   ajv@8.20.0"); `server/` is fine. This session used `npm install --no-save`, which left the
   lockfile untouched. If `npm ci` also fails on your machine, C1 should regenerate
@@ -187,3 +239,5 @@
 - ~~Temporary: `server/tests/smoke.test.js`~~ — deleted in S1.
 - S1 added `server/tests/foundation/` (five test files proving the stage's *done* list);
   noted in `project_structure.md` §2.1 and §6.
+- S3 added `server/tests/calendar/calendarService.test.js` and
+  `server/tests/rbac/projects.test.js`; noted in `project_structure.md` §2.1 and §6.

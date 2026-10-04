@@ -268,10 +268,13 @@ server/
 │   │   ├── reviewAccess.test.js       # self-review guard; unrequested approval; review races
 │   │   ├── adminRoutes.test.js        # user management, owner protection, email and reset links, holidays
 │   │   ├── auth.test.js               # bootstrap race; password change never 401
+│   │   ├── projects.test.js           # added in S3: P1–P5 and T1 — item shapes per role, filters, plans, derived progress
 │   │   └── scopeParity.test.js        # buildReportScope ↔ canReadContent parity; no private layer leaks
 │   ├── policy/
 │   │   ├── reportPolicy.test.js       # pure-function unit tests, no HTTP, no DB
 │   │   └── submitRules.test.js
+│   ├── calendar/                      # added in S3 (§6)
+│   │   └── calendarService.test.js    # working days, expected days, week state, project days used
 │   └── foundation/                    # added in S1: proves its "done" list (§6)
 │       ├── app.test.js                # /api/health, 404 ROUTE_NOT_FOUND envelope, CORS, helmet
 │       ├── middleware.test.js         # validate, authenticate, authorize, errorHandler duplicate-key mapping
@@ -879,6 +882,8 @@ They are grouped by what they prove rather than by the file they touch:
   owner rules, and list-scope/predicate parity.
 - `tests/foundation/` — added in S1: the app shell, middleware, models, indexes and utils
   the RBAC suite stands on, so a broken foundation fails there first.
+- `tests/calendar/` — added in S3: `calendarService`'s rules (working days, expected days,
+  week state, project days used) against a holiday set, so S4 and S6 build on proven ones.
 
 Co-locating these beside the code would scatter the RBAC suite across many folders,
 and the suite is the deliverable that requirements §12's access-control line is

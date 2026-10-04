@@ -2,14 +2,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import bcrypt from "bcryptjs";
 import request from "supertest";
 import app from "../../src/app.js";
+import { Holiday } from "../../src/models/holidayModel.js";
 import { Project } from "../../src/models/projectModel.js";
 import { Report } from "../../src/models/reportModel.js";
 import { User } from "../../src/models/userModel.js";
 import { bearer, createUser } from "../helpers/testAuth.js";
 import { clearDb } from "../helpers/testDb.js";
 
-// api_specification.md §6.6 (33–40) for the S2 routes, plus U1, U2, U9 and U10.
-// Later stages add their rows to 33: U7 (S4), P2–P5 and HD2–HD4 (S3), D1–D8 (S6).
+// api_specification.md §6.6 (33–40) for the S2 and S3 routes, plus U1, U2, U9, U10 and
+// the holidays (HD1–HD4). Later stages add their rows to 33: U7 (S4), D1–D8 (S6).
 
 const api = request(app);
 const PASSWORD = "correct horse battery";
@@ -70,6 +71,17 @@ const routes = {
     { email: "changed@example.com" },
   ],
   U13: (id) => ["post", `/api/users/${id}/reset-link`],
+  P2: () => ["post", "/api/projects", { name: "Client A" }],
+  P3: (id) => ["patch", `/api/projects/${id}`, { name: "Client B" }],
+  P4: (id) => [
+    "put",
+    `/api/projects/${id}/plan`,
+    { startDate: "2026-09-07", plannedDays: 20 },
+  ],
+  P5: (id) => ["post", `/api/projects/${id}/deactivate`],
+  HD2: () => ["post", "/api/holidays", { date: "2026-09-08", name: "Poya" }],
+  HD3: (id) => ["patch", `/api/holidays/${id}`, { name: "Renamed" }],
+  HD4: (id) => ["delete", `/api/holidays/${id}`],
 };
 
 function call(route, actor, id) {
@@ -93,6 +105,48 @@ describe("33 · wrong role → 403 FORBIDDEN", () => {
     expect(res.status).toBe(403);
     expect(res.body.error).toEqual({ code: "FORBIDDEN" });
   });
+
+  it.each(["P2", "P3", "P4", "P5"])("member → %s", async (route) => {
+    const project = await Project.create({ name: "Existing" });
+    const res = await call(route, memberX, project._id);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toEqual({ code: "FORBIDDEN" });
+    expect(await Project.find().lean()).toEqual([
+      expect.objectContaining({
+        name: "Existing",
+        status: "active",
+        plan: null,
+      }),
+    ]);
+  });
+
+  it.each(["HD2", "HD3", "HD4"])("manager and member → %s", async (route) => {
+    const holiday = await Holiday.create({
+      date: new Date("2026-09-09T00:00:00Z"),
+      name: "Kept",
+      createdBy: admin._id,
+    });
+    for (const actor of [managerA, memberX]) {
+      const res = await call(route, actor, holiday._id);
+      expect(res.status).toBe(403);
+      expect(res.body.error).toEqual({ code: "FORBIDDEN" });
+    }
+    expect(await Holiday.find().lean()).toEqual([
+      expect.objectContaining({ name: "Kept" }),
+    ]);
+  });
+
+  it.each(["P2", "P3", "P4", "P5"])(
+    "manager and admin → %s → 2xx",
+    async (route) => {
+      for (const actor of [managerA, admin]) {
+        const project = await Project.create({ name: `P ${actor.name}` });
+        const res = await call(route, actor, project._id);
+        expect([200, 201]).toContain(res.status);
+        await Project.deleteMany({});
+      }
+    },
+  );
 
   it("without a token → 401", async () => {
     const res = await api.get("/api/users");
@@ -725,5 +779,114 @@ describe("U9 and U10 — leave", () => {
       .set(as(admin))
       .send({ onLeave: true });
     expect(ghostRes.status).toBe(404);
+  });
+});
+
+describe("HD1–HD4 — holidays", () => {
+  const add = (body, actor = admin) =>
+    api.post("/api/holidays").set(as(actor)).send(body);
+  const year = "/api/holidays?from=2026-01-01&to=2026-12-31";
+
+  it("an admin adds one; everyone reads them by date with the creator", async () => {
+    const res = await add({ date: "2026-09-08", name: "  Poya  " });
+    expect(res.status).toBe(201);
+    expect(res.body.data).toEqual({
+      _id: expect.any(String),
+      date: "2026-09-08",
+      name: "Poya",
+      createdBy: {
+        _id: String(admin._id),
+        name: "Admin A.",
+        role: "admin",
+        status: "active",
+        onLeave: false,
+      },
+    });
+    await add({ date: "2026-04-14", name: "New Year" }, owner);
+    await add({ date: "2027-01-15", name: "Next year" });
+
+    for (const actor of [memberX, managerA, admin]) {
+      const list = await api.get(year).set(as(actor));
+      expect(list.status).toBe(200);
+      expect(list.body.data).toEqual({ items: expect.any(Array) });
+      expect(list.body.data.items.map((h) => [h.date, h.name])).toEqual([
+        ["2026-04-14", "New Year"],
+        ["2026-09-08", "Poya"],
+      ]);
+    }
+  });
+
+  it("a date already taken → 409 HOLIDAY_EXISTS; a weekend → 422", async () => {
+    await add({ date: "2026-09-08", name: "Poya" });
+    let res = await add({ date: "2026-09-08", name: "Again" });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toEqual({ code: "HOLIDAY_EXISTS" });
+
+    res = await add({ date: "2026-09-12", name: "Saturday" });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toEqual({
+      code: "VALIDATION_FAILED",
+      fields: { date: "Pick a Monday to Friday" },
+    });
+    for (const body of [
+      { date: "2026-09-31", name: "No such day" },
+      { date: "8 Sep 2026", name: "Wrong form" },
+      { date: "2026-09-09", name: "" },
+      { date: "2026-09-09", name: "x".repeat(101) },
+    ]) {
+      expect((await add(body)).status).toBe(422);
+    }
+    expect(await Holiday.countDocuments()).toBe(1);
+  });
+
+  it("HD3 renames or moves one; a taken date → 409; unknown → 404", async () => {
+    const a = (await add({ date: "2026-09-08", name: "A" })).body.data;
+    await add({ date: "2026-09-09", name: "B" });
+    const edit = (id, body) =>
+      api.patch(`/api/holidays/${id}`).set(as(admin)).send(body);
+
+    let res = await edit(a._id, { name: "A renamed", date: "2026-09-10" });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      date: "2026-09-10",
+      name: "A renamed",
+    });
+    res = await edit(a._id, { date: "2026-09-09" });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toEqual({ code: "HOLIDAY_EXISTS" });
+    res = await edit(a._id, { date: "2026-09-13" });
+    expect(res.status).toBe(422);
+    res = await edit(a._id, {});
+    expect(res.status).toBe(422);
+    res = await edit(ghost, { name: "Nobody" });
+    expect(res.status).toBe(404);
+    expect(res.body.error).toEqual({ code: "HOLIDAY_NOT_FOUND" });
+  });
+
+  it("HD4 deletes for real; again → 404", async () => {
+    const a = (await add({ date: "2026-09-08", name: "A" })).body.data;
+    let res = await api.delete(`/api/holidays/${a._id}`).set(as(admin));
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ _id: a._id, date: "2026-09-08" });
+    expect(await Holiday.countDocuments()).toBe(0);
+    res = await api.delete(`/api/holidays/${a._id}`).set(as(admin));
+    expect(res.status).toBe(404);
+    expect(res.body.error).toEqual({ code: "HOLIDAY_NOT_FOUND" });
+  });
+
+  it("HD1 needs from ≤ to, at most one year apart", async () => {
+    const get = (q) => api.get(`/api/holidays${q}`).set(as(memberX));
+    expect((await get("?from=2026-01-01&to=2027-01-01")).status).toBe(200);
+    for (const q of [
+      "",
+      "?from=2026-01-01",
+      "?from=2026-01-02&to=2026-01-01",
+      "?from=2026-01-01&to=2027-01-02",
+      "?from=2026-13-01&to=2026-12-31",
+    ]) {
+      const res = await get(q);
+      expect(res.status).toBe(422);
+      expect(res.body.error.code).toBe("VALIDATION_FAILED");
+    }
   });
 });
