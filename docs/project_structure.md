@@ -451,9 +451,11 @@ client/
 │   │   ├── IndexRoute.jsx             # "/" → ThisWeekPage · landing · or the demo chooser
 │   │   ├── ProtectedRoute.jsx         # layout route: auth + allow=[roles]; renders the 403 state (tech_stack §6.4)
 │   │   ├── PublicOnly.jsx             # sends a signed-in visitor away from /signin and /signup
-│   │   └── DevOnlyRoute.jsx           # gates /design behind import.meta.env.DEV
+│   │   ├── ParamGuard.jsx             # added in C2: a malformed :week / :userId / :reportId renders NotFoundPage, no request (frontend_architecture §4.1)
+│   │   ├── DevOnlyRoute.jsx           # gates /design behind import.meta.env.DEV
+│   │   └── __tests__/routeGuards.test.jsx  # added in C2: ProtectedRoute's 403, ParamGuard, and the Sidebar's DOM per role (static render)
 │   ├── layouts/
-│   │   ├── RootLayout.jsx             # router root: Outlet, Toaster, OfflineStrip, ReAuthModal
+│   │   ├── RootLayout.jsx             # router root: SkipLink, Outlet, Toaster, ReAuthModal, ScrollRestoration — C2: OfflineStrip is mounted by AppShell, under the top bar (design §3.13)
 │   │   ├── AppShell.jsx               # sidebar + top bar frame; renders <Outlet/>
 │   │   ├── AuthLayout.jsx             # the centred 420px column, no shell (§3.12)
 │   │   └── MarketingLayout.jsx        # sticky nav + footer for the landing page, in the landing theme (brand §6.0)
@@ -480,6 +482,7 @@ client/
 │   │   ├── DemoEntryPage.jsx          # /demo — the perspective chooser (§3.14)
 │   │   ├── NotFoundPage.jsx           # §3.13
 │   │   ├── ForbiddenPage.jsx          # §3.13
+│   │   ├── PendingPage.jsx            # added in C2, temporary: stands in for each page a later stage builds so the route table and its guards exist now; C11 deletes it
 │   │   └── DesignPage.jsx             # /design, dev-only style guide
 │   ├── components/
 │   │   ├── ui/                        # the §6 inventory — design-system primitives
@@ -530,6 +533,8 @@ client/
 │   │   │   ├── ThemeToggle.jsx
 │   │   │   ├── BrandMark.jsx          # added in C1: the bracketed-bar glyph + wordmark (auth layout, splash, sidebar)
 │   │   │   ├── SkipLink.jsx
+│   │   │   ├── PageContainer.jsx      # added in C2: a page names its width — doc 860 · page 1240 · wide 1560 (frontend_architecture §7.3)
+│   │   │   ├── __tests__/navItems.test.js  # added in C2: which groups each role gets, and in what order
 │   │   │   └── DemoBar.jsx            # the 36px --ink bar: SAMPLE DATA, Switch, Start over (§3.14)
 │   │   ├── report/                    # §3.1–3.4, §4
 │   │   │   ├── WeekStrip.jsx          # the five-day strip — the daily-update control (§3.1)
@@ -609,6 +614,7 @@ client/
 │   │   ├── useAutosave.js             # the weekly form's debounced, coalescing autosave
 │   │   ├── useNow.js                  # one shared ticker for the comment countdowns
 │   │   ├── useMediaQuery.js
+│   │   ├── useShellMode.js            # added in C2: full / rail / drawer from the width and the wv.nav.collapsed choice (frontend_architecture §7.2)
 │   │   ├── useOnlineStatus.js
 │   │   ├── useUnsavedGuard.js         # registers dirty state with UnsavedChangesContext
 │   │   ├── useDocumentTitle.js
@@ -662,6 +668,7 @@ client/
 │   │   ├── queryKeys.js               # the qk factory — no key literals elsewhere
 │   │   ├── queryClient.js
 │   │   ├── urlParams.js               # enumParam, listParam, weekParam, pageParam, limitParam
+│   │   ├── routeParams.js             # added in C2: isObjectId and paramsAreValid, for ParamGuard
 │   │   ├── tokenStore.js              # wv_token get / set / clear, try/catch around storage
 │   │   ├── authEvents.js              # the tiny emitter behind "session-expired"
 │   │   ├── permissions.js             # UX gates derived from role and ownership — never the authority
@@ -673,7 +680,8 @@ client/
 │   │       ├── constants.parity.test.js
 │   │       ├── dates.test.js          # added in C1
 │   │       ├── urlParams.test.js      # added in C1
-│   │       └── normalizeError.test.js # added in C1
+│   │       ├── normalizeError.test.js # added in C1
+│   │       └── routeParams.test.js    # added in C2
 │   ├── styles/
 │   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]
@@ -910,8 +918,10 @@ writes the report suites share — a frozen clock, day bodies, posting and filin
 week, and (S5) the review and comment calls. `tests/rbac/markers.test.js` was added in S5
 for the "new" markers (`isNew`, N1), which no §6 item covers.
 
-The client carries exactly two tests: `lib/__tests__/constants.parity.test.js` (§7.1)
-and `demo/__tests__/demoCoverage.test.js` (§3.4). Component and E2E testing stays
+The client's two required tests are `lib/__tests__/constants.parity.test.js` (§7.1)
+and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones beside the
+code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
+tests are static renders (`react-dom/server`) with no new dependency. E2E testing stays
 deferred per `tech_stack.md` §8.
 
 ---

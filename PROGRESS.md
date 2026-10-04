@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C2**
+**Next stage: C3**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -14,7 +14,7 @@
 | S5 | Comments, review, "new" markers | done |
 | S6 | Dashboard, seed script | done |
 | C1 | Client foundation: lib, apiClient, auth, base UI, `/design` | done |
-| C2 | Shell, tables, filters, URL state | not started |
+| C2 | Shell, tables, filters, URL state | done |
 | C3 | Reading a week; comment components | not started |
 | C4 | Writing: day panel, This week | not started |
 | C5 | The weekly form | not started |
@@ -265,6 +265,80 @@
   Esc is ignored while a confirm is pending — those three were checked), screen-reader
   output, the boot splash's 3-second "Starting up" line and its error panel (needs the API
   stopped at boot), and Safari/Firefox. Open `npm --prefix client run dev` → `/design`.
+
+### C2 checks (2026-10-04)
+- **Owner note (2026-10-04):** the three seed failures below do not reproduce elsewhere — all 21
+  `seed.test.js` tests pass on `main` on the owner's machine. They were this cloud container
+  (Mongo connection timeouts), not the code.
+- `npm run lint`: clean (client and server). `npm test`: **client green, server not fully green in
+  this container** — client 48 (30 from C1, plus 18); server 378 of 381. The three that fail are the
+  last three of `server/tests/seed/seed.test.js` ("has seen marks…", "every report's revisions
+  match…", "reseeding across a year boundary…"): `MongooseError: Connection operation buffering
+  timed out after 10000ms`. They fail the same way in every run, and on an untouched
+  `origin/main` checked out in a clean worktree. C2 changes nothing under `server/`; the
+  first full run had six failures in that file, so it is timing-dependent. S6 recorded 381
+  green. Cause not investigated (the file freezes `Date` with fake timers around
+  mongodb-memory-server; this container's Node / driver timing is the first suspect). The client's 18 new tests: `routeGuards.test.jsx` 8 (a member at `/review` gets the 403 state and none of
+  the page; the admin line; a manager is let in; a bad `:week` is the not-found page; the Sidebar's
+  markup per role has no manager or admin item for a member, and marks one item current, People on a
+  person's week, This week on the edit route), `navItems.test.js` 4, `routeParams.test.js` 3, and
+  3 more in `urlParams.test.js`. `vite build` OK. No service function was added, so
+  `demoCoverage.test.js` is unchanged and green.
+- **Walkthrough in a real browser** (Playwright's Chromium, headless; the API on a local in-memory
+  replica set, Vite dev server; an owner, a manager and a member made through the API). Every line
+  below was asserted by the script, which exited 0:
+  - *Guards:* a member at `/review` → the 403 state **inside the shell**, URL unchanged, the top
+    bar reads "No access", and the sidebar's DOM holds exactly *This week · My reports · Team
+    updates* — no *Review desk, Team dashboard, People, Projects, Users, Holidays* anywhere in
+    `<aside>`. `/users` for a member and for a manager → "This area is for admins." `/reports/2026-W99`,
+    `/people/nothex/reports/2026-W40` and `/nowhere` → the 404 state inside the shell. A manager's
+    groups are *Review · Team · My work* (My work last), an admin's *Review · Team · Admin · My
+    work*. Signed out: `/review` → `/signin`; `/nowhere` → a standalone 404 with no shell.
+  - *URL state* (the `/design` "Table, filter bar, pagination" section is wired to `useUrlFilters`):
+    typing in the search is debounced (nothing in the URL at 100 ms, `?q=nad` after 250 ms) and
+    **replaces** history; a sort header click writes `?sort=hours&dir=asc` and `aria-sort`
+    follows, a second click flips it (`dir=desc` is the default, so it leaves the URL); `Clear (n)`
+    removes the filters and keeps the sort; the multi-select writes nothing until `Apply`
+    (`?project=a,b`); `Next page` → `?page=2` and the range text → "21–32 of 32"; changing a
+    filter drops `page`; **Back** returns to page 2 with the same first row; a **reload** keeps
+    the URL, the rows and the filter triggers' state; a hand-edited
+    `?sort=bogus&dir=up&page=-3&limit=7&person=,,` reads as the defaults with no error; rows per
+    page → `?limit=50`.
+  - *Shell:* ≥ 1280 px sidebar 240 px and top bar 62 px; collapse → 62 px rail, labels become
+    tooltips, `wv.nav.collapsed` stored and honoured after a reload; at 1100 px a stored
+    "expanded" choice wins over the automatic rail and with no choice it is the rail; below
+    1024 px there is no `<aside>` in the DOM, the hamburger opens a 280 px drawer, focus goes to
+    the first nav link, **Esc**, a backdrop click and a route change each close it, and focus
+    returns to the hamburger. Signed in through the real form → `/` in the shell; navigating
+    between pages keeps the same sidebar node (no remount) and sets `document.title` to
+    "{title} · WeeklyView"; Back works; Sign out from the user popover → `/signin`, token gone.
+    The user popover opens upward (*Account · Appearance · Sign out*); Dark sets
+    `<html data-theme>` and `wv.theme`; Esc closes it and returns focus to the trigger. Offline
+    (browser context offline) → the strip under the top bar, gone when online. First Tab lands on
+    "Skip to content", visible; Enter moves to `#main`.
+  - *Week picker:* `‹` steps back, `›` is disabled at the current week, `‹` disables at `min`;
+    the popover is a Mon–Fri grid; `→` moves the highlighted week and focus, `Enter` selects and
+    closes, `Esc` closes and returns focus to the trigger.
+  - *360 px:* no horizontal overflow on a shell page or on `/design`; the table is stacked cards
+    (no `<table>` in that section), `Rows per page` is hidden, the filter bar is search + `Filters`,
+    whose sheet holds a `Sort` select and both multi-selects; picking a sort there writes
+    `?sort=hours&dir=asc`.
+  - No JavaScript errors in any run. The only console errors were the container's blocked
+    Google Fonts requests (`ERR_CERT_AUTHORITY_INVALID`) and the expected 401 / 403 / 404s.
+  - `/demo` boots, makes no API request, and (signed out) has no shell.
+- **Screenshots looked at** (1400 px light and dark, 900 px drawer, 360 px cards): the shell, 403 and
+  404 states, the multi-select, the week picker, the table and stacked cards. **The container
+  blocks Google Fonts, so every screenshot used the fallback sans-serif and monospace**:
+  layout, spacing, colour and states were looked at; Chivo / Instrument Sans / JetBrains Mono
+  metrics were not.
+- **Still unverified, for the owner to look at** in a real browser: the three fonts at their real
+  metrics (top-bar title, nav items, the table's header and mono cells); hover, press and
+  focus-visible states (the screenshots are static); the motion — the drawer's 200 ms slide, the
+  tab bar's slide, the route's 140 ms fade, the sidebar's 160 ms width change — which was run but
+  not watched; the 44 × 44 touch targets below 1024 px (the CSS is there; no touch device or
+  hit-test measured); keyboard use of the multi-select and the Tabs / SegmentedControl arrows
+  beyond what is listed; screen-reader output; Safari and Firefox. Open
+  `npm --prefix client run dev` → `/design` (the last two sections are new).
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -595,7 +669,85 @@
   context and its provider in one file as the tree says. `client/.prettierrc.json` now points
   `tailwindStylesheet` at `src/styles/index.css` (the S0 note).
 
+- C2: **`PendingPage` stands in for every page a later stage builds.** The route table (every
+  path in `frontend_architecture.md` §4.1, with `ProtectedRoute allow` and `ParamGuard`) is
+  complete now; each page renders `PendingPage` (inside the shell, with its `PageHeader`
+  title) until its stage replaces that line in `routes/index.jsx` — C3 the report-reading
+  routes, C4 `/`, C5 the edit route, C6 history / updates / review, C7 `/team`, C8 the rest.
+  Real pages should be `lazy()` imports as the C1 auth pages are (§4.1). C11 deletes the file.
+  Two redirects in §4.1's "Normalising" belong to the pages that know the data and are not
+  built: `/people/:me/reports/:week` → `/reports/:week` (C3) and a non-editable
+  `/reports/:week/edit` → `/reports/:week` (C5).
+- C2: **The top-bar title is the page's `<h1>`** (`PageHeader` portals it as one). Pages with an
+  in-page heading (design §3.0: This week, Team dashboard, Profile, Projects) should render it
+  as an `<h2>` visually styled as the page title — the bar is the landmark.
+- C2: **`OfflineStrip` is mounted by `AppShell`**, under the top bar, not by `RootLayout`
+  (`project_structure.md` listed it there): design §3.13 puts it below the top bar, which only
+  the shell has. Signed-out screens show no strip. `project_structure.md` is updated.
+- C2: **The sidebar's dots and count are wired in data, not yet in value.** `navItems.js` carries
+  `dot` (N1 key) and `count` (V4); `Sidebar` takes a `marks` prop that is `{}` until `useNewMarks`
+  (C9) and the review-desk count hook (C6) exist. The dot is a local 6 × 6 square; C3's
+  `NewMarker` replaces it.
+- C2: **`--demo-h` is set to `0px` by `AppShell`.** C10 builds the 36 px `DemoBar` and flips it in
+  the demo. Every sticky `top` already reads `calc(… + var(--demo-h, 0px))`.
+- C2: **Popovers use CSS keyframes (`.wv-popover`), not Motion `AnimatePresence`** (design §8.2
+  #7–#8 names Motion), as C1's modal and tooltip do; same 120 / 100 ms and `translateY(-2px)`.
+  Motion is used where layout projection or exit orchestration is needed: the drawer, the tab
+  bar (`layoutId`) and the route fade.
+- C2: **Drawer mode is below 1024 px for every width** (`frontend_architecture.md` §7.2), the
+  hamburger being the top bar's first control; the drawer is a Radix Dialog (focus trap, Esc,
+  focus returned to the hamburger) animated with Motion — 200 ms in, 140 ms out, `translateX`
+  plus backdrop opacity.
+- C2: **Top bar below 1024 px:** secondary actions move into a `⋯` popover (the secondary slot
+  node exists only while it is open, so the page's portal mounts then); the week picker **stays**
+  in the bar (design §10 says "page title only" at 768–1023 px, which would leave the week
+  unchangeable); below 640 px the week picker wraps to its own row under the title.
+- C2: **`Table`** (design §5, `frontend_architecture.md` §8.2): `sortable` columns get a header
+  `<button>`; clicking calls `onSortChange({ id, dir })` with the direction already toggled
+  (`defaultDir` on a column sets its first direction). Added columns props: `mono` (the §5.2
+  date / week-id style) and `label` (the stacked card's label, defaulting to `header`). The
+  first column is the primary identifier and, with `getRowHref`, is wrapped in a real `<Link>`;
+  the row click skips clicks on any link, button or input inside it. Below 768 px it renders
+  stacked cards (`mobile: "primary" | "status" | "pair" | "hidden"`; default first = primary,
+  rest = pair); skeleton rows match the column count.
+- C2: **`FilterBar`** adds `sort={{ options, value, onChange }}` — the single `Sort` select that
+  replaces sortable headers below 768 px (design §5.6) — and `width` ("wide" 1560 / "page"
+  1240) so its content aligns with the page's. Its sheet below 900 px is the shared `Modal`
+  (a centred 420 px dialog from 640 px up, full screen below), with `Done`, not a separate
+  full-screen component.
+- C2: **`MultiSelect`** is a popover with a native checkbox list (so it needs no listbox ARIA),
+  `↑ ↓` between boxes, a search field above 8 options, and a `--tint` footer. `Apply` commits
+  the draft; `Clear` commits an empty selection and closes.
+- C2: **`WeekPicker`** disables weeks outside `[min, max]` (`max` defaults to the current week);
+  `↑ ↓` step weeks as well as `← →`; a row with no weekday in the viewed month (the 1st is a
+  weekend) is not drawn; month arrows disable when the month holds no allowed week.
+  `useWeekParam` clamps `?week=` with the same rule, using the browser's clock and the local
+  week of `user.joinedAt`. `SegmentedControl`'s selected segment is `--acc-l` / `--acc-txt`
+  (design §6 gives it no anatomy), as the active nav item is.
+- C2: **404 and 403 copy.** Signed in, the primary is design §3.13's `Go to this week`; signed
+  out (404 only) it is `Go to the start page`, since "this week" means nothing without a session.
+- C2: **ESLint:** `argsIgnorePattern: "^[A-Z_]"` joins `varsIgnorePattern`, and Motion is imported
+  as `Motion` — with no `eslint-plugin-react`, `<Icon />` and `<motion.div>` read as unused.
+- C2: **`useUrlFilters`** leaves params outside its spec (`week`, `day`) untouched; `clear()`
+  resets filters only (not `sort`, `dir`, `limit`) and goes to page 1. A hand-edited URL is read
+  as defaults but is not rewritten until the next change.
+- C2: **`ScrollRestoration`** is mounted in `RootLayout`, so a new page opens at the top and Back
+  restores the scroll.
+
+- C2, **owner decision (2026-10-04): every C2 decision above is accepted as built** — `PendingPage`
+  stand-ins, the `<h1>` top-bar title, `OfflineStrip` in `AppShell`, the `marks` wiring, `--demo-h`,
+  CSS popovers, drawer below 1024 px, the overflow `⋯` menu and week picker placement, the `Table`,
+  `FilterBar`, `MultiSelect`, `WeekPicker` and `SegmentedControl` choices, the 404 copy, the ESLint
+  change, `useUrlFilters` and `ScrollRestoration`.
+
 ## Open questions for the owner
+- ~~C2: `server/tests/seed/seed.test.js` fails 3 tests in the cloud container~~ **Resolved
+  (owner, 2026-10-04):** all 21 pass on `main` elsewhere, so the failures were this container,
+  not S6. Server suite stands at 381 green.
+- ~~C2, to confirm or change~~ **Resolved (owner, 2026-10-04): all C2 decisions accepted as built** (all recorded under *Decisions*): the signed-out 404's
+  button reads `Go to the start page`; the week picker stays in the top bar between 768 and
+  1023 px where design §10 says "page title only"; the top-bar title is the page's `<h1>`; the
+  `FilterBar` sheet is the shared `Modal`.
 - ~~`npm ci` fails in `client/`~~ **Resolved in C1:** `client/package-lock.json` regenerated
   with `npm install`; `npm ci` now succeeds.
 
@@ -611,6 +763,12 @@
   share); noted in `project_structure.md` §2.1 and §6.
 - S5 added `server/tests/rbac/markers.test.js` (the "new" markers, which no §6 item
   covers); noted in `project_structure.md` §2.1 and §6.
+- C2 added `components/shell/PageContainer.jsx`, `hooks/useShellMode.js`, `lib/routeParams.js`,
+  `routes/ParamGuard.jsx`, `pages/PendingPage.jsx` (temporary) and three test files
+  (`routes/__tests__/routeGuards.test.jsx`, `components/shell/__tests__/navItems.test.js`,
+  `lib/__tests__/routeParams.test.js`); `project_structure.md` §3.1 and §6 are updated. The
+  route and nav tests are static renders — `project_structure.md` §6 had said the client
+  carries two tests, a statement C1 had already outgrown.
 - C1 added `components/ui/inputClasses.js`, `components/shell/BrandMark.jsx`, six files in
   `components/auth/`, `context/__tests__/authReducer.test.js` and three tests in
   `lib/__tests__/`; noted in `project_structure.md` §3.1.

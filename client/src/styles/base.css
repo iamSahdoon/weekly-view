@@ -105,3 +105,22 @@ button:not(:disabled),
 .wv-popover[data-state="closed"] {
   animation: wv-fade-out 100ms linear;
 }
+
+/* Below 1024px every interactive element has a 44×44px hit area, reached with a
+   pseudo-element so the visual size stays (design §10, "Touch targets"). */
+@media (max-width: 1023px) {
+  .touch-target {
+    position: relative;
+  }
+  .touch-target::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+  }
+}
