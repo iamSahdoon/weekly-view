@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toastError } from "../lib/errorToast.js";
 import { invalidateWeek } from "../lib/invalidateWeek.js";
 import { qk } from "../lib/queryKeys.js";
 import * as reportService from "../services/reportService.js";
@@ -51,93 +52,125 @@ export function useRevision(id, revisionNumber) {
   });
 }
 
-// R10 — flips `resolvedAt` in the week cache at once and restores it on error
-// (§5.7: one of the three optimistic toggles). The server keeps the original
-// `resolvedAt` when it resolves twice, so the optimistic value is only a stand-in.
-export function useResolveBlocker(week) {
-  const queryClient = useQueryClient();
-  const { user: me } = useAuth();
+// The two optimistic toggles of §5.7 — the only optimistic writes in the product. Each
+// flips its field in the week cache at once; on failure it restores the cache and raises
+// an error toast with `Retry`, which sends the same write again. Built as options so
+// the rules can be tested without rendering a hook; `retry(vars)` re-fires the mutation.
+
+function editWeek(queryClient, key, edit) {
+  const previous = queryClient.getQueryData(key);
+  if (previous?.report) {
+    queryClient.setQueryData(key, {
+      ...previous,
+      report: { ...previous.report, days: edit(previous.report.days) },
+    });
+  }
+  return previous;
+}
+
+const refreshWeek = (queryClient, week) => {
+  invalidateWeek(queryClient, {
+    userId: week.user._id,
+    weekKey: week.weekKey,
+    reportId: week.report._id,
+  });
+  queryClient.invalidateQueries({ queryKey: qk.all.teamUpdates() });
+};
+
+// R10 — `resolvedAt` flips at once. The server keeps the original `resolvedAt` when it
+// resolves twice, so the optimistic value is only a stand-in until the refetch.
+export function resolveBlockerOptions({ queryClient, week, me, retry }) {
   const key = qk.week(week.user._id, week.weekKey);
-  return useMutation({
+  return {
     mutationFn: ({ blockerId, resolved }) =>
       resolved
         ? reportService.setResolution(week.report._id, blockerId)
         : reportService.clearResolution(week.report._id, blockerId),
     onMutate: async ({ blockerId, resolved }) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData(key);
-      if (previous?.report) {
-        queryClient.setQueryData(key, {
-          ...previous,
-          report: {
-            ...previous.report,
-            days: previous.report.days.map((day) => ({
-              ...day,
-              blockers: day.blockers.map((b) =>
-                b._id === blockerId
-                  ? {
-                      ...b,
-                      resolvedAt: resolved ? new Date().toISOString() : null,
-                      resolvedBy: resolved ? me : null,
-                    }
-                  : b,
-              ),
-            })),
-          },
-        });
-      }
+      const previous = editWeek(queryClient, key, (days) =>
+        days.map((day) => ({
+          ...day,
+          blockers: day.blockers.map((b) =>
+            b._id === blockerId
+              ? {
+                  ...b,
+                  resolvedAt: resolved ? new Date().toISOString() : null,
+                  resolvedBy: resolved ? me : null,
+                }
+              : b,
+          ),
+        })),
+      );
       return { previous };
     },
-    onError: (_error, _vars, context) => {
+    onError: (error, vars, context) => {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
+      toastError(
+        vars.resolved
+          ? "That blocker wasn’t marked as resolved."
+          : "That blocker wasn’t reopened.",
+        error,
+        { id: `blocker-${vars.blockerId}`, retry: () => retry(vars) },
+      );
     },
     onSettled: () => {
-      invalidateWeek(queryClient, {
-        userId: week.user._id,
-        weekKey: week.weekKey,
-        reportId: week.report._id,
-      });
-      queryClient.invalidateQueries({ queryKey: qk.all.teamUpdates() });
+      refreshWeek(queryClient, week);
       queryClient.invalidateQueries({ queryKey: qk.all.dashboard() });
     },
-  });
+  };
 }
 
-// R11 — flips `openToTeam` in the week cache at once, restores on error.
-export function useTeamComments(week) {
+export function useResolveBlocker(week) {
   const queryClient = useQueryClient();
+  const { user: me } = useAuth();
+  const mutation = useMutation(
+    resolveBlockerOptions({
+      queryClient,
+      week,
+      me,
+      retry: (vars) => mutation.mutate(vars),
+    }),
+  );
+  return mutation;
+}
+
+// R11 — `openToTeam` flips at once.
+export function teamCommentsOptions({ queryClient, week, retry }) {
   const key = qk.week(week.user._id, week.weekKey);
-  return useMutation({
+  return {
     mutationFn: ({ weekday, open }) =>
       reportService.setTeamComments(week.report._id, weekday, open),
     onMutate: async ({ weekday, open }) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData(key);
-      if (previous?.report) {
-        queryClient.setQueryData(key, {
-          ...previous,
-          report: {
-            ...previous.report,
-            days: previous.report.days.map((day) =>
-              day.weekday === weekday ? { ...day, openToTeam: open } : day,
-            ),
-          },
-        });
-      }
+      const previous = editWeek(queryClient, key, (days) =>
+        days.map((day) =>
+          day.weekday === weekday ? { ...day, openToTeam: open } : day,
+        ),
+      );
       return { previous };
     },
-    onError: (_error, _vars, context) => {
+    onError: (error, vars, context) => {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
-    },
-    onSettled: () => {
-      invalidateWeek(queryClient, {
-        userId: week.user._id,
-        weekKey: week.weekKey,
-        reportId: week.report._id,
+      toastError("That day’s comment setting didn’t save.", error, {
+        id: `team-comments-${vars.weekday}`,
+        retry: () => retry(vars),
       });
-      queryClient.invalidateQueries({ queryKey: qk.all.teamUpdates() });
     },
-  });
+    onSettled: () => refreshWeek(queryClient, week),
+  };
+}
+
+export function useTeamComments(week) {
+  const queryClient = useQueryClient();
+  const mutation = useMutation(
+    teamCommentsOptions({
+      queryClient,
+      week,
+      retry: (vars) => mutation.mutate(vars),
+    }),
+  );
+  return mutation;
 }
 
 // R13 — silent. Invalidates what shows "new" elsewhere, and deliberately **not**

@@ -680,6 +680,7 @@ client/
 │   │   ├── authEvents.js              # the tiny emitter behind "session-expired"
 │   │   ├── permissions.js             # UX gates derived from role and ownership — never the authority
 │   │   ├── invalidateWeek.js          # added in C3: the one invalidation helper for a week and its report (frontend_architecture §5.7)
+│   │   ├── errorToast.js              # added in C3: the error toast with `Retry` for a failed write that has no form (frontend_architecture §5.7)
 │   │   ├── submitChecklist.js         # the submit checklist from dayStates + task statuses
 │   │   ├── weekActions.js             # the top-bar primary action for a week
 │   │   ├── format.js                  # hours, dates, relative times
@@ -932,7 +933,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

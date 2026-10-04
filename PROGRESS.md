@@ -341,8 +341,8 @@
   `npm --prefix client run dev` → `/design` (the last two sections are new).
 
 ### C3 checks (2026-10-04)
-- `npm run lint`: clean (client and server). `npm test`: green — server 381 (unchanged), client 95
-  (64 before C3, plus 31): `permissions.test.js` 9 (the week-thread gates of G1, the 10-minute
+- `npm run lint`: clean (client and server). `npm test`: green — server 381 (unchanged), client 101
+  (64 before C3, plus 37): `permissions.test.js` 9 (the week-thread gates of G1, the 10-minute
   countdown arithmetic, version labels), `demoWeeks.test.js` 14 (the layers of a week through the
   demo adapter, resolve and team-comment rules, week comments, the 10-minute window on a frozen clock
   — 9 min 59 s edits, 10 min 1 s is `EDIT_WINDOW_CLOSED` for edit and delete —, comments with
@@ -379,7 +379,8 @@
   Google Fonts, so every screenshot used the fallback sans-serif and monospace.** Found and fixed by
   looking: each day's table sized its columns on its own (now a fixed layout), and at 360 px the
   table scrolled sideways and hid the hours (below 640 px each line now stacks).
-- **Not done / unverified:** the demo was exercised through its adapter in tests only — there is no
+- **Not done / unverified:** the failure toast on the two toggles (owner's answer, below) is checked
+  by unit tests on the mutation options only — it was not provoked in a browser. The demo was exercised through its adapter in tests only — there is no
   demo chooser until C10, so no page was driven in the browser at `/demo`. Hover, press and
   focus-visible states, the confirm dialog's focus return, keyboard use of the versions list, the
   countdown ticking in a real clock (the shared ticker is unit-checked by arithmetic only), screen
@@ -800,9 +801,21 @@
   `["week"]` and that `["report", id]` stale, and only the weeks on screen refetch. The blocker and
   team-comment hooks hold the week and use the targeted form.
 - C3: **`useResolveBlocker(week)` and `useTeamComments(week)` are the two optimistic toggles** of
-  §5.7: each edits the week cache at once, restores it on error, and invalidates in `onSettled`. Their
-  failure is not yet shown as the "error toast with `Retry`" of §5.7 — the restore is the only
-  feedback — because `Toaster` has no `Retry` wiring until a stage uses it.
+  §5.7: each edits the week cache at once and invalidates in `onSettled`. Built as option objects
+  (`resolveBlockerOptions`, `teamCommentsOptions`) so their rules are tested without rendering a hook.
+  Failure handling is the owner's decision below.
+- C3, **owner decision (2026-10-04): decisions 1–4 accepted as built** — the member's back-link to
+  Team updates in place of the breadcrumb; the resolve toggle on the daily-update rows only;
+  comment hooks invalidating every cached week; a confirm before deleting a comment.
+- C3, **owner decision (2026-10-04): the optimistic toggles follow §5.7 on failure** — the change
+  is restored and an error toast with `Retry` is raised (`lib/errorToast.js`: `toast.error`,
+  `duration: Infinity`, the description from `lib/errorCopy.js`, action `Retry`, which sends the
+  same write again; an `id` per control makes a repeat failure replace the toast, not stack).
+  Titles: "That blocker wasn’t marked as resolved." / "That blocker wasn’t reopened." /
+  "That day’s comment setting didn’t save." `hooks/__tests__/useReportQueries.test.js` (6 tests)
+  runs the real mutation options against a query client: a flip is visible before the server
+  answers, a refusal restores the cache and raises the toast with `Retry`, `Retry` re-fires the same
+  variables, the week is marked stale afterwards either way, and a success raises nothing.
 - C3: **Breadcrumb for a member.** Design §3.4 gives `People → Nadia F. → Week 31`, but People and a
   person's profile are manager pages, so for a member (who reaches someone's week from Team
   updates) the links would end in the 403 state. Managers and admins get the breadcrumb; a member
@@ -852,10 +865,8 @@
   `demoWeeks.test.js`.
 
 ## Open questions for the owner
-- C3, to confirm or change (all recorded under *Decisions*): the member's back-link to Team updates
-  in place of the breadcrumb; the resolve toggle living on the daily-update rows only; comment
-  hooks invalidating every cached week; deleting a comment going through a confirm; the optimistic
-  toggles restoring silently where §5.7 says "error toast with `Retry`".
+- ~~C3, to confirm or change~~ **Resolved (owner, 2026-10-04):** decisions 1–4 accepted as built;
+  decision 5 changed to follow §5.7 — see the two C3 owner decisions under *Decisions*.
 - ~~C2: `server/tests/seed/seed.test.js` fails 3 tests in the cloud container~~ **Resolved
   (owner, 2026-10-04):** all 21 pass on `main` elsewhere, so the failures were this container,
   not S6. Server suite stands at 381 green.
@@ -870,7 +881,8 @@
 - C3 added `components/ui/RoleChip.jsx`, `components/report/BlockerRow.jsx`,
   `components/report/WeekNotices.jsx`, `lib/invalidateWeek.js`, `demo/demoResponses.js`,
   `demo/demoWeekView.js`, `demo/demoWeekRoutes.js` and three test files (`lib/__tests__/permissions.test.js`,
-  `demo/__tests__/demoWeeks.test.js`, `pages/__tests__/ReportDetailPage.test.jsx`); `project_structure.md`
+  `demo/__tests__/demoWeeks.test.js`, `pages/__tests__/ReportDetailPage.test.jsx`), and after the owner's answers
+  `lib/errorToast.js` and `hooks/__tests__/useReportQueries.test.js`; `project_structure.md`
   §3.1 and §6 are updated. `lib/permissions.js` (in the tree) and `userService.js` / `reviewService.js` /
   `reportService.js` are started, not complete; `StartThread` and `WeekComments` share files and folders
   as noted under *Decisions*.
