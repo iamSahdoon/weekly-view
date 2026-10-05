@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C7**
+**Next stage: C8**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -19,7 +19,7 @@
 | C4 | Writing: day panel, This week | done |
 | C5 | The weekly form | done |
 | C6 | History, team updates, review desk, review page | done |
-| C7 | Dashboard and charts | not started |
+| C7 | Dashboard and charts | done |
 | C8 | Projects, users, holidays, people, profile, account | not started |
 | C9 | "New" markers, system states, print | not started |
 | C10 | Demo chooser and bar, landing page | not started |
@@ -738,6 +738,121 @@ The fix, with no test skipped or weakened:
 - Departure: `tests/helpers/globalSetup.js` and `tests/foundation/testDb.test.js`
   are new; `project_structure.md` §2.1 notes them.
 
+### C7 checks (2026-10-05)
+- `npm run lint`: clean (client and server, 0 warnings). Client `vite build`: OK (the dashboard, with
+  Recharts, is its own lazy chunk, 408 kB). Client `npm test`: green — **339** (241 before C7, plus 98):
+  `TeamDashboardPage.test.jsx` 33 (the seven blocks in the order of design §3.7; every block failing on
+  its own beside blocks that loaded; the team table's columns, row links, `Approval asked`, status
+  filter and filtered-empty state; the five-day strip; the metric strip's four cells, its single
+  coloured number and its omitted sub-lines; the projects table's units, overdue words, disclosure
+  rows and `onExtend`; the feed's eight rows; the tooltip; and a **source check** — no hex / `rgb()` /
+  `hsl()` in `components/dashboard/`, `chartTheme.js` or the page, no library legend, every tooltip
+  `content={<ChartTooltip/>}`, every drawn series `isAnimationActive={hasMounted}`, no pie),
+  `demoDashboard.test.js` 24 (D1–D6, D8 by the server's rules; a member is refused on all seven),
+  `dashboardParams.test.js` 12 (**`status` is in D2's params and no other block's**; D8 takes the week
+  only), `dashboardData.test.js` 17, `chartTheme.test.js` 5 (**the seven task-type colours are the same
+  object the day panel and the form use**; every colour is `var(--token)`), and 7 new cases in
+  `demoCoverage.test.js`. Server: 382 of 382 (the five-run proof is under *Seed tests made reliable*).
+- **The done list, in a real browser against the real API** (Playwright's Chromium, headless; the API
+  on a **local in-memory replica set**, filled by the repo's seed; Vite dev server). **No Atlas /
+  `MONGODB_URI` database was touched or connected to.** One script asserted every line below and ended
+  `ALL PASSED`; screenshots at 1440, 800 and 360 px, light and dark, were looked at.
+  - *The `status` URL parameter changes the team table and nothing else.* Ticking Draft in the table's
+    own filter wrote `?status=draft`, sent exactly **one** request (D2, with `status=draft`), left the
+    metric strip's text identical, and narrowed the table to the API's 2 Drafts. The filter reads
+    `Status: Draft`. Clearing it removed the parameter.
+  - *The page-level filters.* Person reached D1, D2, D3, D4 and D5 and **not** D8 or D6; the week
+    picker made D1–D5 and D8 ask again and **not** D6. The trend's window (`trendWeeks=4`) sent one
+    request (D3, `weeks=4`) and the axis showed four weeks; choosing a person drew a second line and a
+    legend (`Team`, `Imali J.`); the `Days | Hours` control rewrote the progress words and
+    `unit=hours`; a project row opened to show each person, hours this week and in total, last day.
+  - *Each block fails independently.* With D4 and D1 answered `500`, the Hours chart and the metric
+    strip each showed their inline error (the chart's at its real 240 px, title and scope kept) while
+    the team table, workload chart and feed loaded; `Try again` recovers a block.
+  - *No hex, no default legend or tooltip.* Every `fill` / `stroke` in the three charts' SVG is a
+    `var(--token)`; there is no `.recharts-legend-wrapper` or `.recharts-default-tooltip`; hovering a bar
+    or the line shows our tooltip (a dark surface, mono header, swatch, tabular value) in both themes.
+  - *The seven colours match the day panel and the form.* The dashboard's legend swatches and the
+    weekly form's task-type swatches (`/reports/<week>/edit`) have the same computed colour for all
+    seven categories; the hours bars carry `var(--c1) … var(--c7)` in the task types' order.
+  - Heights: plots are 260 / 240 / 240 px; the feed holds 352 px (eight rows). **No horizontal overflow
+    at 1440, 800 or 360 px**, and no page errors. A member at `/team` gets the 403 state and no
+    `Team dashboard` link in the nav.
+- **Found by running it and fixed:** (1) the hidden chart summary was a `<table class="sr-only">`,
+  which doesn't clip, so a wide one scrolled the page 314 px sideways at 360 px — now a clipping
+  wrapper; (2) the metric strip stayed 2×2 at 1440 px (Tailwind sorts `min-[900px]:` before `sm:`) —
+  now `grid-cols-4` stepped down with `max-[899px]` and `max-[639px]`; (3) the workload chart lost the
+  total label on rows whose last task type had no hours — a hair-wide trailing bar now carries it;
+  (4) the hours axis ended at the raw maximum (85 h) — it now uses a rounded one; (5) in the dark
+  theme the tooltip was unreadable (see decision 2).
+- **Not done / unverified:** the demo was exercised through its adapter in tests only (no chooser until
+  C10). Not clicked: the Person popover's search, the `Filters` sheet below 900 px, the week picker's
+  popover grid, keyboard walks of the project disclosure rows, reduced motion. Real fonts (the container
+  blocks Google Fonts), Safari, Firefox and screen readers are unverified. The chart's *animation* (320 ms
+  on a filter change, none on mount) is configured and source-checked, not seen.
+
+### C7 decisions (to confirm or change)
+1. **`Extend plan` is not in the projects table yet.** Design §3.7 puts it in the row menu and opens
+   `PlanModal`, which is C8's. `ProjectsTable` takes `onExtend` and shows the button only when the page
+   passes it; C8 wires it.
+2. **The tooltip's surface is `--d-panel`, not `--ink`** (design §7.3 says `--ink` with `--d-text`).
+   `--ink` turns light in the dark theme, which left `--d-text` text unreadable; `--d-panel` is the
+   near-black the Toaster and Tooltip already use and is the same colour as `--ink` in the light theme.
+3. **The trend's empty text** is "No data for W34–W41." (the window), since design §7.3's "No data for
+   week 38." names one week and the trend spans several. D3 can't tell "no data" from "zero Done tasks",
+   so it is shown when every week is zero.
+4. **`useWeekParam.setWeek` also drops `page`**, as it already drops `day`: a page of the team table
+   belongs to the week it was chosen in.
+5. **The "no team" state** (design §3.7) is D2 with no person, project or status filter returning zero
+   people; it replaces the strip, tables and charts. `Invite people` (admin only) links to `/users`.
+6. **The page-level filter count and `Clear` cover person and project only**; `status`, the trend's
+   window and person, and `unit` belong to their blocks. Changing the trend's or the unit's control keeps
+   the team table on its page; changing the status filter resets it.
+7. **The team table's status filter** reads `Status: Draft` or `Status: 2` (the shared `MultiSelect`),
+   not the list of names design §3.7's example shows.
+8. **The workload chart's header is two lines tall** at ≤ 1440 px: seven legend items don't fit beside
+   the title in a six-column panel, so its header is taller than the feed's beside it.
+9. **The feed hides its status chip below 640 px** so the names aren't cut to two letters.
+10. **Own rows link to `/reports/:week`**, not `/people/:you/reports/:week`, as on Team updates. The feed's
+    rows link to the report's author's week; the table's Submitted rows of someone else go to review.
+11. **D7** (the profile's strip) and its demo handler wait for the profile page (C8); `dashboardService`
+    has D1–D6 and D8 only.
+12. **Seed note, not changed (S6):** the seed puts the current week's events on days that may still be
+    ahead of today, so on an early-week day the metric strip can say "oldest sent back in 4 days" and
+    the feed shows later dates. Real data never has a future time.
+
+### Owner: test by hand (C7)
+Run `npm run seed` locally first (**local database only**); every seed account's password is
+`weekly-view-dev`. Seed week: Nadia F. Submitted and asked, Ruwan P. Submitted, Tharindu S. Needs
+correction, Imali J. and Sanduni B. Approved, Ayesha C. Draft; one person on leave, one not started.
+**The page** (as Nadia, a manager):
+1. Sign in as `nadia@example.com` and click **Team dashboard**. From the top: four numbers in one panel
+   (filed, compliance, needs correction — the only red number — and open blockers), the **Team** table,
+   **Projects**, then two charts and the activity list.
+2. In the **Team** table, click the **Person** column header once: the order reverses and the address gains `dir=desc`.
+   Click **Status** (the button above the table, right side), tick **Draft**, **Apply**. Only the table
+   changes; the four numbers do not. Reload: the filter is still there. Open the button again, **Clear**.
+3. In the **Updates** column a filled square is a posted day, an empty red-edged one a missing day, a
+   hatched one leave or a holiday. Click any row: a Submitted report that isn't yours
+   opens the review page; your own row and anyone else's go to that person's week.
+4. **Projects:** click **Hours**, then **Days**. Click a project's name: it opens to show who worked on
+   it, with hours this week and in total. "overdue by N days" is red.
+5. **Tasks completed:** open **8 weeks** and choose **4 weeks**: the line has four points. Open **Team
+   only**, choose a person: a second line and a legend appear. Hover the line: a dark box names the
+   week and the numbers.
+6. **Hours by task type** and **Workload by project:** hover a bar. The seven colours (Development blue,
+   Testing light blue, Meetings green, Documentation grey, Review red, Research & study gold, Other
+   purple) are the ones on the weekly form's hours grid — open **This week** → the form to compare.
+7. Click the top bar's week **‹**: every block but **Recent activity** changes. Click **Person** in the
+   filter bar at the top, tick one person, **Apply**: the numbers, table and charts narrow; **Projects** and
+   **Recent activity** do not. **Clear (1)** resets it.
+8. Switch to dark (the theme button in the sidebar): charts and the tooltip stay readable.
+**Narrow screen and a member:**
+9. In the browser's device toolbar choose a 360 px phone: the table is cards, nothing scrolls sideways,
+   the charts are one column.
+10. Sign out, sign in as `imali@example.com` (a member): there is no **Team dashboard** in the nav and
+    typing `/team` shows the "You don't have access" page inside the shell.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -1321,6 +1436,7 @@ The fix, with no test skipped or weakened:
      empties it. The rail's "Before you submit" heading over the checklist is new copy.
 
 ## Open questions for the owner
+- C7, to confirm or change: the twelve decisions under *C7 decisions* — especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).
 - ~~C6, to confirm or change~~ **Resolved (owner, 2026-10-05):** all ten decisions accepted; `blockersOnly` now means open blockers and the review panel is pinned — see *C6 owner answers*. (Was: the ten decisions above, especially 1 (People is C8) and 4 (the
   feed's optimistic toggles); and the `blockersOnly` gap.)
 - ~~C5, to confirm or change~~ **Resolved (owner, 2026-10-05):** all seven C5 decisions accepted
@@ -1343,6 +1459,7 @@ The fix, with no test skipped or weakened:
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C7 added `lib/dashboardParams.js`, `lib/dashboardData.js`, `demo/demoDashboardRoutes.js`, `components/ui/AvatarStack.jsx` (in the tree of §3.1 as `AvatarStack` of the `ui/` list, now a file) and five test files (`pages/__tests__/TeamDashboardPage.test.jsx`, `demo/__tests__/demoDashboard.test.js`, `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`); `project_structure.md` §3.1 and §6 are updated. `MetricCell` is built (`PersonalStrip` still draws its own three cells). `typeColor` in `chartTheme.js` is `TASK_TYPE_COLORS` itself, not a second copy.
 - C6 added `components/report/WeekDocument.jsx`, `components/ui/WeekRangeFilter.jsx`, `demo/demoReviewRoutes.js`, `demo/demoUserRoutes.js`, `lib/reviewDeskParams.js`, `lib/reviewOutcome.js`, `lib/updatesDay.js` and five test files (`pages/__tests__/ReviewPages.test.jsx`, `demo/__tests__/demoReview.test.js`, `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`); `project_structure.md` §3.1 and §6 are updated. `WeekComments.jsx` (built in C3) is reused by the review page unchanged. `hooks/useNewMarks.js` and the desk's count are C9's.
 - C5 added four test files (`hooks/__tests__/useAutosave.test.js`, `lib/__tests__/submitChecklist.test.js`,
   `demo/__tests__/demoContent.test.js`, `pages/__tests__/ReportEditPage.test.jsx`) and R6/R7 to

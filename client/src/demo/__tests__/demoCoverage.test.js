@@ -307,6 +307,35 @@ const CASES = {
       ...rejects("EDIT_WINDOW_CLOSED"),
     },
   },
+  dashboardService: {
+    // The seven blocks are for managers and admins; a member is refused (the content:
+    // demoDashboard.test.js).
+    getSummary: {
+      args: () => [{ weekKey: currentWeekKey() }],
+      ...rejects("FORBIDDEN"),
+    },
+    getTeam: {
+      args: () => [{ weekKey: currentWeekKey() }],
+      ...rejects("FORBIDDEN"),
+    },
+    getTrend: {
+      args: () => [{ endWeek: currentWeekKey() }],
+      ...rejects("FORBIDDEN"),
+    },
+    getHours: {
+      args: () => [{ weekKey: currentWeekKey() }],
+      ...rejects("FORBIDDEN"),
+    },
+    getWorkload: {
+      args: () => [{ weekKey: currentWeekKey() }],
+      ...rejects("FORBIDDEN"),
+    },
+    getActivity: { args: [], ...rejects("FORBIDDEN") },
+    getProjects: {
+      args: () => [{ weekKey: currentWeekKey() }],
+      ...rejects("FORBIDDEN"),
+    },
+  },
   authService: {
     getBootstrap: { args: [], check: hasKeys(["available"]) },
     signUp: {

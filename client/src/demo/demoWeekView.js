@@ -311,7 +311,7 @@ export const expectedDaysOf = (store, user, weekKey) =>
   );
 
 /** `dayStates` on the browser's clock — the demo has no other. */
-function dayStatesOf(store, user, report, weekKey, now) {
+export function dayStatesOf(store, user, report, weekKey, now) {
   const posted = new Set((report?.days ?? []).map((d) => d.weekday));
   const today = toCalendarDate(new Date(now));
   return Object.fromEntries(
@@ -327,7 +327,7 @@ function dayStatesOf(store, user, report, weekKey, now) {
 }
 
 /** The derived week state (database_schema.md §5.0). */
-function weekStateOf(store, report, weekKey, expectedDays) {
+export function weekStateOf(store, report, weekKey, expectedDays) {
   if (report && report.status !== "draft") return report.status;
   const holidays = holidayDates(store);
   const working = weekDays(weekKey).filter(
