@@ -20,8 +20,8 @@ export function SignInForm({
 }) {
   const form = useForm({
     resolver: zodResolver(signInSchema),
-    mode: "onBlur",
-    reValidateMode: "onChange",
+    // Design §4.10: on blur first, then on every change once a field has been touched.
+    mode: "onTouched",
     defaultValues: { email: defaultEmail, password: "" },
   });
   const { errors } = form.formState;

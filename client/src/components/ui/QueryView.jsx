@@ -7,7 +7,8 @@ import { cn } from "../../lib/cn.js";
 //
 //   skeleton  query.isPending — first load only, layout-matched, never a spinner
 //   empty     isEmpty(data)
-//   error     query.isError — the filter bar and headers stay live around it
+//   error     query.isError with no data yet — the filter bar and headers stay live
+//             around it. A failed background refetch keeps the loaded data on screen.
 //   content   otherwise; dimmed with aria-busy while refetching over placeholder data
 
 export function QueryView({
@@ -19,7 +20,7 @@ export function QueryView({
   children,
 }) {
   if (query.isPending) return skeleton ?? null;
-  if (query.isError) {
+  if (query.isError && query.data === undefined) {
     return (
       error ?? (
         <InlineError title="This didn't load." onRetry={() => query.refetch()}>

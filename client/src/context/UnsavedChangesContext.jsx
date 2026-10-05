@@ -1,23 +1,45 @@
-import { createContext, useCallback, useMemo, useRef } from "react";
+import { createContext, useCallback, useEffect, useMemo, useRef } from "react";
 
-// The registry of dirty forms (frontend_architecture.md §2). C1 needs only the
-// question "is anything unsaved?" for the session-expiry modal's dismiss; the
-// navigation and tab-close guards built on it come with the forms (C4).
+// The registry of dirty forms (frontend_architecture.md §2): "is anything unsaved?"
+// guards the session-expiry modal's dismiss, sign-out, in-app navigation (LeaveGuard)
+// and tab close — the browser's own `beforeunload` prompt, armed here. An entry
+// registered with `keepsOnNavigate` (the day drafts, which outlive the page) arms
+// every guard but the in-app navigation one.
 export const UnsavedChangesContext = createContext(null);
 
 export function UnsavedChangesProvider({ children }) {
-  const dirty = useRef(new Set());
+  // id → { keepsOnNavigate }
+  const dirty = useRef(new Map());
 
-  const setDirty = useCallback((id, isDirty) => {
-    if (isDirty) dirty.current.add(id);
-    else dirty.current.delete(id);
-  }, []);
+  const setDirty = useCallback(
+    (id, isDirty, { keepsOnNavigate = false } = {}) => {
+      if (isDirty) dirty.current.set(id, { keepsOnNavigate });
+      else dirty.current.delete(id);
+    },
+    [],
+  );
 
   const hasUnsavedChanges = useCallback(() => dirty.current.size > 0, []);
 
+  /** Would leaving this page lose something? (LeaveGuard) */
+  const losesOnNavigate = useCallback(
+    () => [...dirty.current.values()].some((d) => !d.keepsOnNavigate),
+    [],
+  );
+
+  useEffect(() => {
+    const onBeforeUnload = (event) => {
+      if (dirty.current.size === 0) return;
+      event.preventDefault();
+      event.returnValue = ""; // older browsers need it set to show the prompt
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
   const value = useMemo(
-    () => ({ setDirty, hasUnsavedChanges }),
-    [setDirty, hasUnsavedChanges],
+    () => ({ setDirty, hasUnsavedChanges, losesOnNavigate }),
+    [setDirty, hasUnsavedChanges, losesOnNavigate],
   );
   return (
     <UnsavedChangesContext.Provider value={value}>

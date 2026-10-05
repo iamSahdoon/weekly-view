@@ -29,14 +29,14 @@ export function userRef(store, id) {
     : null;
 }
 
-function projectRef(store, id) {
+export function projectRef(store, id) {
   const project = store.projects.find((p) => p._id === id);
   return project
     ? { _id: project._id, name: project.name, status: project.status }
     : null;
 }
 
-function taskRef(store, id) {
+export function taskRef(store, id) {
   const task = store.tasks.find((t) => t._id === id);
   return task
     ? {
@@ -45,6 +45,25 @@ function taskRef(store, id) {
         project: projectRef(store, task.project),
       }
     : null;
+}
+
+/** The API's `Me` (api_specification.md §1.10). */
+export function meOf(store, user) {
+  const owner = store.users.find((u) => u.isOwner);
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    projects: user.projectIds
+      .map((id) => projectRef(store, id))
+      .filter(Boolean),
+    joinedAt: user.joinedAt,
+    isOwner: user.isOwner,
+    onLeave: user.onLeave,
+    owner: owner ? { name: owner.name, email: owner.email } : null,
+  };
 }
 
 // ---------------------------------------------------------------- policies (§3)
@@ -225,7 +244,7 @@ function reportOut(store, actor, report, expectedDays) {
     revisionNumber: report.revisionNumber,
     submittedAt: report.submittedAt,
     lastActivityAt: report.lastActivityAt,
-    updatedAt: report.lastActivityAt,
+    updatedAt: report.updatedAt ?? report.lastActivityAt,
     days: sortedDays(report.days).map((d) => dayOut(store, actor, report, d)),
     // Rows follow the live lines; status and note come from the served content.
     tasks: [...hoursByTask].map(([taskId, hours]) => ({
@@ -268,21 +287,55 @@ function reportOut(store, actor, report, expectedDays) {
   };
 }
 
+// ---------------------------------------------------------------- calendar (§0.2)
+
+const holidayDates = (store) => new Set(store.holidays.map((h) => h.date));
+
+/**
+ * Why a weekday is or isn't expected of `user` — `expected`, `holiday`, `not_on_team`
+ * or `leave`, in that order, as the server's calendar decides it. The demo has one work
+ * period per person (from `joinedAt`) and one open leave period (from `leaveFrom`).
+ */
+export function dayAvailability(store, user, weekKey, weekday) {
+  const { date } = weekDays(weekKey).find((d) => d.weekday === weekday);
+  const key = toCalendarDate(date);
+  if (holidayDates(store).has(key)) return "holiday";
+  if (key < toCalendarDate(new Date(user.joinedAt))) return "not_on_team";
+  if (user.leaveFrom && key >= user.leaveFrom) return "leave";
+  return "expected";
+}
+
+export const expectedDaysOf = (store, user, weekKey) =>
+  WEEKDAYS.filter(
+    (d) => dayAvailability(store, user, weekKey, d) === "expected",
+  );
+
 /** `dayStates` on the browser's clock — the demo has no other. */
-function dayStatesOf(report, weekKey, now) {
+function dayStatesOf(store, user, report, weekKey, now) {
   const posted = new Set((report?.days ?? []).map((d) => d.weekday));
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
+  const today = toCalendarDate(new Date(now));
   return Object.fromEntries(
     weekDays(weekKey).map(({ weekday, date }) => {
       if (posted.has(weekday)) return [weekday, "posted"];
-      if (date > today) return [weekday, "future"];
-      return [
-        weekday,
-        date.getTime() === today.getTime() ? "today" : "missing",
-      ];
+      const availability = dayAvailability(store, user, weekKey, weekday);
+      if (availability !== "expected") return [weekday, availability];
+      const key = toCalendarDate(date);
+      if (key > today) return [weekday, "future"];
+      return [weekday, key === today ? "today" : "missing"];
     }),
   );
+}
+
+/** The derived week state (database_schema.md §5.0). */
+function weekStateOf(store, report, weekKey, expectedDays) {
+  if (report && report.status !== "draft") return report.status;
+  const holidays = holidayDates(store);
+  const working = weekDays(weekKey).filter(
+    ({ date }) => !holidays.has(toCalendarDate(date)),
+  );
+  if (working.length === 0) return "holiday_week";
+  if (expectedDays.length === 0) return "on_leave";
+  return report ? report.status : "not_started";
 }
 
 /** A WeekView of `user`'s week for `actor`; `report` may be undefined (I3). */
@@ -295,15 +348,17 @@ export function weekViewOf(
   now = Date.now(),
 ) {
   const days = weekDays(weekKey);
+  const storedUser = store.users.find((u) => u._id === user._id) ?? user;
+  const expectedDays = expectedDaysOf(store, storedUser, weekKey);
   return {
     user: userRef(store, user._id),
     weekKey,
     weekStart: toCalendarDate(days[0].date),
     weekEnd: toCalendarDate(days[4].date),
-    expectedDays: [...WEEKDAYS],
-    dayStates: dayStatesOf(report, weekKey, now),
-    state: report ? report.status : "not_started",
-    report: report ? reportOut(store, actor, report, [...WEEKDAYS]) : null,
+    expectedDays,
+    dayStates: dayStatesOf(store, storedUser, report, weekKey, now),
+    state: weekStateOf(store, report, weekKey, expectedDays),
+    report: report ? reportOut(store, actor, report, expectedDays) : null,
   };
 }
 

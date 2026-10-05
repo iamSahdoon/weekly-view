@@ -229,6 +229,26 @@ function PostedDay({ week, day, canResolve, canToggle, resolve, toggleTeam }) {
   );
 }
 
+/**
+ * One posted day with the reader's three actions, for a page that shows a single day
+ * (the day panel on This week). Owns the same two mutations as the block.
+ */
+export function PostedUpdate({ week, day }) {
+  const { user: me } = useAuth();
+  const resolve = useResolveBlocker(week);
+  const toggleTeam = useTeamComments(week);
+  return (
+    <PostedDay
+      week={week}
+      day={day}
+      canResolve={canResolveBlocker(me, week.report)}
+      canToggle={canToggleTeamComments(me, week.report)}
+      resolve={resolve}
+      toggleTeam={toggleTeam}
+    />
+  );
+}
+
 export function DailyUpdatesBlock({ week }) {
   const { user: me } = useAuth();
   const report = week.report;

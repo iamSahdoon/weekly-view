@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C4**
+**Next stage: C5**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -16,7 +16,7 @@
 | C1 | Client foundation: lib, apiClient, auth, base UI, `/design` | done |
 | C2 | Shell, tables, filters, URL state | done |
 | C3 | Reading a week; comment components | done |
-| C4 | Writing: day panel, This week | not started |
+| C4 | Writing: day panel, This week | done |
 | C5 | The weekly form | not started |
 | C6 | History, team updates, review desk, review page | not started |
 | C7 | Dashboard and charts | not started |
@@ -389,6 +389,80 @@
   `report`), so a week reopened inside the 30 s `staleTime` is served from the cache with the
   markers it loaded with; that is C9's done item ("shows its markers once and not on reopening") and
   was not exercised here.
+
+- **C3 fix (2026-10-04, found by the owner):** with the API stopped, a failed toggle's
+  invalidation refetched the week, the refetch failed and the whole page became "This week didn't
+  load". Now the error state shows only when there is no data yet: `QueryView` and
+  `ReportDetailPage` (the week, the versions list and a chosen version) test
+  `isError && data === undefined`, so a failed background refetch keeps the loaded week on screen.
+  Tests: `ReportDetailPage.test.jsx` (a cached week plus a failed refetch renders exactly as before;
+  a week that never loaded still shows the error with `Try again` — the first fails without the fix)
+  and `components/ui/__tests__/QueryView.test.jsx` (2).
+
+### C4 checks (2026-10-04)
+- **Owner answers, second round (2026-10-05):** lint clean; client 147 green; the leave confirm
+  walked in a browser (see *Decisions*). Server suite not re-run (no server change).
+- **Owner answers (2026-10-05):** `npm run lint` clean; client 145 green (after the fixture fix
+  below). Server: 376–380 of 381 in this container, across runs. The failures are only in
+  `tests/seed/seed.test.js` — `MongooseError: Connection operation buffering timed out` — the
+  container issue recorded in C2 (nothing under `server/` changed). The drafts move and the auth
+  forms' timing were not re-walked in a browser.
+- `npm run lint`: clean (client and server). `npm test`: green — server 381 (unchanged), client 145
+  (105 after the C3 fix, plus 40): `weekActions.test.js` 9 (the top-bar action's priority order and
+  the panel's button), `reportSchema.test.js` 6 (ids round-trip so a blocker keeps its resolution,
+  empty blockers dropped, `newTask`, the four field messages, quarter hours, R5 path mapping),
+  `demoDays.test.js` 10 (on a frozen Wednesday: the first post creates the Draft, lines on two
+  projects and a new task, the new task in T1, editing keeps line and blocker ids and the
+  resolution, dropping a blocker prunes it, future / holiday / out-of-range / frozen-week /
+  someone else's task / done task / bad hours refused with the server's codes, holidays in
+  `dayStates` and HD1, leave on and off through U9 / U10, project progress, R1 and R2),
+  `ThisWeekPage.test.jsx` 7 (the day panel's composer / posted / missing / frozen / holiday /
+  future states, the page, and the first-week panel), and 8 new cases in `demoCoverage.test.js`
+  (every new service function is answered by the demo). `vite build` OK.
+- **The done list, in a real browser against the real API** (Playwright's Chromium, headless; the
+  API on a local in-memory replica set, `npm run seed`, Vite dev server; today was a Sunday, so the
+  current week's Wednesday holiday and four past days were in play). Every line below was asserted
+  by the script, which exited 0 on a freshly reseeded database:
+  - *Post a day with lines on two projects and a new task* (Malith, Not started, every day missing):
+    the top bar read `Fill in Monday`; the holiday cell is `aria-disabled`; Monday opened in the
+    composer with "Monday’s update is missing — your report can’t be submitted without it."; line 1
+    an existing task (Internal Tooling) picked from the combobox, line 2 "Start a new task…" chosen
+    with the keyboard, named, on Client A; a blocker; the live total read 5.5 h. `Post update` → R5
+    200 → the posted view shows both projects, the new task and the blocker; the strip's Monday
+    shows 5.5 h; the top bar moved to `Fill in Tuesday`; the week's panel reads Draft (the first post
+    created the report).
+  - *Edit it*: `Edit` → change a line → `Post update` → the new text with "· edited".
+  - *Switch days without losing unposted text*: Monday's unposted lines (both tasks, the new task's
+    name, the blocker) survived a switch to Tuesday and back, and Tuesday's typed text survived a
+    switch back to it. Navigating to another page with unposted text opened "Leave this page?";
+    Cancel stayed.
+  - *The top-bar primary action follows the week's state*: Ayesha (Draft, Friday missing)
+    `Fill in Friday`; Tharindu (Needs correction) `Fix and resubmit`, with the correction panel
+    ("Sent back by Ruwan P." · date · rev 1); Nadia (Submitted) no primary, the panel offers
+    `View report`; Dinesh (on leave) "You’re on leave · Turn off".
+  - A blank line posted shows "Choose a task." / "Choose a type." / "Say what you did." / "Enter
+    the hours." and sends nothing. At 360 px there is no horizontal overflow and a line stacks.
+    No page errors.
+  - *The C3 fix*: with every API request aborted, the week page's team-comments switch reverted
+    with the toast, and after the failed refetch the week was still on screen (no "This week
+    didn’t load.").
+- **Found by looking at the screenshots and fixed:** every native `<select>` had a dashed border —
+  Chromium matches a select as `:read-only`, which picked up the read-only look in
+  `ui/inputClasses.js` (a C1 bug, on every Select); and a line's "Choose a type." stayed after a
+  type was chosen (RHF's `onBlur` mode re-validates on change only after a submit — now
+  `onTouched`, which is design §4.10's rule). Both re-checked by the script.
+- **Screenshots looked at** (1280 px and 360 px): composing, posted, Needs correction, a 360 px
+  composer. The container blocks Google Fonts, so the fallback fonts were used.
+- **Not done / unverified:** the demo was exercised through its adapter in tests only (no chooser
+  until C10). Not clicked in the browser: `Save`, the correction panel's `Reply`, `Turn off`
+  leave, the Days | Hours toggle, the holiday cell's tooltip, `Cancel` on an edit. The browser's
+  own tab-close prompt (`beforeunload`) can’t be shown headless — the listener has no test and is
+  unverified. Hover / focus states, screen readers, the combobox with a screen reader, real
+  fonts, Safari and Firefox are unverified.
+- **Environment note:** this container has a `MONGODB_URI` environment variable set to an Atlas
+  cluster, and it takes precedence over `server/.env`. The first `npm run seed` tried it and
+  could not connect (nothing was written). Every later run set `MONGODB_URI` to the local
+  in-memory server explicitly.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -864,7 +938,91 @@
   (reply, edit, delete, toggles) are covered by the browser walkthrough and, for their rules, by
   `demoWeeks.test.js`.
 
+- C4: **This week is built whole**, including `CurrentWeekPanel`, `RecentWeeksList` and
+  `PersonalStrip`, which the stage's build list doesn't name but design §3.1 and §9.1 put on the
+  page. That brought R1 and R2 (`listMyReports`, `getSummary`, `useMyReports`,
+  `useReportSummary`) and their demo handlers forward from C6; the R1 handler applies every
+  filter and sort, so C6 can reuse it.
+- C4: **The chosen day in the strip** is marked with a 2px `--ink` bar along the top (design
+  §3.1 gives every cell state but not "selected"; today already uses the bottom `--acc` bar).
+- C4: **Default day** stays as C2's `useWeekdayParam` (frontend §9.1: today in the current week,
+  else the earliest missing, else Monday). Design §3.1's "today, or the earliest missing day if
+  there is one" could be read as missing first; the top-bar action already points at the
+  missing day.
+- C4: **Drafts.** `DayDraftsProvider` wraps the page (§9.1), so drafts survive day and week
+  switches. Per §6.3 a draft written by `Save` marks the composer clean; text carried over a
+  day switch is kept but still counts as unsaved, so the guards still ask. `LeaveGuard`
+  (`useBlocker`, mounted in `RootLayout`) asks only when the path changes. See *Open questions*
+  for what happens to saved drafts on leaving the page.
+- C4: **Composer details the design doesn't give:** a `Cancel` text button while editing a posted
+  day (it drops the draft and returns to the posted view); the header reads "Not posted",
+  "Saved, not posted" or "Posted 17:42 · edited". The first-week panel's `Post today’s update`
+  and the "This week's report" panel's button are secondary, because the top bar holds the page's
+  one primary.
+- C4: **Day form errors** show beneath the line (§4.11), one message per field. R5's
+  `lines.N.newTask.*` paths are mapped onto the form's `lines.N.task.*`. `PROJECT_INACTIVE`
+  names no line, so it goes on the first new-task line's project; `TASK_NOT_FOUND` and
+  `DAY_NOT_EXPECTED` (worded from `reason`), `WEEK_OUT_OF_RANGE` and `REPORT_STATE_CHANGED`
+  are inline under the buttons and refetch what §5.8 says.
+- C4: **Validation timing** is RHF's `onTouched` for the day form (design §4.10). The auth forms
+  (C1) still use `onBlur` with `reValidateMode: "onChange"`, which only re-checks on change after
+  a submit. Not changed here.
+- C4: **`ui/inputClasses.js`** keeps the read-only look off `<select>` (`[&:read-only:not(select)]`),
+  a C1 bug shown by C4's screenshots.
+- C4: **`Combobox`** uses Radix Popover's `Anchor` directly rather than the shared `Popover`
+  wrapper, because focus must stay in the input (aria-activedescendant); same classes as the
+  wrapper.
+- C4: **`useHolidaysForWeek`** fetches whole calendar years (`qk.holidays(year)`,
+  `from: YYYY-01-01, to: YYYY-12-31`) so the holidays page (C8) shares the cache.
+  `qk.all` gained `projects`, `tasks` and `users` prefixes for invalidation.
+- C4: **`usePutDay`** writes the response into the week cache and invalidates `report(id)`,
+  `teamUpdates`, `dashboard`, `reports`, `projects` and `tasks` (§5.7). `useSetLeave` sets the
+  actor's `Me` from the response when they are the target.
+- C4: **The demo's calendar.** Tasks now have an `owner` and `doneAt` (Nadia has her own "Team
+  planning" in place of Imali's shared "Sprint planning"); projects have plans (Client A in time,
+  R&D overdue); users have `leaveFrom`. `dayStates`, `expectedDays` and the week state now model
+  holidays, leave and `not_on_team` in the server's order. The holidays fixture is still empty
+  (C8). `meOf`, `projectRef` and `taskRef` moved to `demoWeekView.js`.
+
+- C4, **owner decision (2026-10-05): day drafts are kept until sign-out.** `DayDraftsProvider` moved
+  from `ThisWeekPage` to `SessionLayout`, keyed by the signed-in person, so unposted text (saved or
+  not) survives moving to another page and back, and ends at sign-out. Leaving This week no longer
+  loses anything, so the day panel and the drafts register with `UnsavedChangesContext` as
+  `keepsOnNavigate`: they arm the tab-close prompt, sign-out and the re-auth dismiss, but not
+  `LeaveGuard` (which now asks `losesOnNavigate()`). A reload still loses drafts — nothing is
+  written to the device (§2). This departs from frontend §9.1 ("wraps this page's content") at the
+  owner's request.
+- C4, **owner decision (2026-10-05): the sign-in and sign-up forms validate `onTouched`** — on blur
+  first, then on every change once a field has been touched, so an error clears as soon as it is
+  fixed (design §4.10), as the day form does. The accept-invite and reset-password forms still use
+  `onBlur` + `reValidateMode: "onChange"` (not asked; same gap).
+- C4 answers: **a C3 fixture fix found by the date.** On a Monday morning, last week's send-back
+  (Friday + 3 days, 09:00) and Imali's reply (12:00) were still in the future, so the reply's
+  10-minute window read as open and three demo tests failed — on `main` too. The send-back is now
+  Friday 18:00, after the 17:00 submit.
+
+- C4, **owner decision (2026-10-05): turning leave off asks first.** `Turn off` on This week opens
+  `components/user/EndLeaveDialog.jsx` (the shared `ConfirmDialog`, not destructive): "Turn off your
+  leave?" / "Today will need a daily update." / `Turn off leave`; U9 is sent only on confirm, and the
+  dialog closes when it settles (a failure shows in the strip, as before). For a manager or admin
+  ending someone else's leave the same dialog reads "Turn off {first name}’s leave?" / "{First name}
+  will need a daily update for today." — that control lives on the people and users pages, so C8
+  must use `EndLeaveDialog` with `isSelf={false}`. Turning leave on does not ask. Noted in
+  `requirments_doc.md` §15. Test: `lib/__tests__/endLeaveCopy.test.js` (2) for the wording; the click
+  path was walked in a browser against the real API (Dinesh, on leave in the seed): `Turn off` → the
+  dialog → `Cancel` closes it and sends nothing; `Turn off` → `Turn off leave` sends U9 once and the
+  on-leave line goes away.
+- **For C8 (owner decision, 2026-10-05; not built in C4):** the person's profile (`/people/:userId`)
+  must show managers and admins a **leave history** — each leave period's start, end and who set
+  it. The data is already stored on the user's leave periods (`database_schema.md` §1.1); no API
+  endpoint serves it yet, so C8 must check the API spec for one or raise it before building.
+  Ending someone's leave from C8's pages uses `EndLeaveDialog` (above). Noted in
+  `requirments_doc.md` §15.
+
 ## Open questions for the owner
+- ~~C4, to confirm or change~~ **Resolved (owner, 2026-10-05):** saved drafts are kept until
+  sign-out, and the sign-in and sign-up forms take the `onTouched` validation timing — see the two
+  C4 owner decisions under *Decisions*. The other C4 decisions stand as built.
 - ~~C3, to confirm or change~~ **Resolved (owner, 2026-10-04):** decisions 1–4 accepted as built;
   decision 5 changed to follow §5.7 — see the two C3 owner decisions under *Decisions*.
 - ~~C2: `server/tests/seed/seed.test.js` fails 3 tests in the cloud container~~ **Resolved
@@ -878,6 +1036,14 @@
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C4 added `components/shell/LeaveGuard.jsx`, `demo/demoDayRoutes.js`, `demo/demoCatalogRoutes.js`
+  and four test files (`demo/__tests__/demoDays.test.js`, `lib/__tests__/weekActions.test.js`,
+  `schemas/__tests__/reportSchema.test.js`, `pages/__tests__/ThisWeekPage.test.jsx`), and after the
+  owner's answers `components/user/EndLeaveDialog.jsx` and `lib/__tests__/endLeaveCopy.test.js`;
+  `project_structure.md` §3.1 and §6 are updated. The C3 fix added
+  `components/ui/__tests__/QueryView.test.jsx`. `projectService`, `holidayService` and
+  `userService` hold reads only so far; `MetricCell` (C7) is not built — `PersonalStrip` draws
+  its three cells itself.
 - C3 added `components/ui/RoleChip.jsx`, `components/report/BlockerRow.jsx`,
   `components/report/WeekNotices.jsx`, `lib/invalidateWeek.js`, `demo/demoResponses.js`,
   `demo/demoWeekView.js`, `demo/demoWeekRoutes.js` and three test files (`lib/__tests__/permissions.test.js`,

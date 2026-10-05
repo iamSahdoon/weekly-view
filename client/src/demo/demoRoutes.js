@@ -5,35 +5,12 @@
 // so the pages' error paths run in the demo too (demoResponses.js).
 
 import { fail, ok, withUser } from "./demoResponses.js";
+import { catalogRoutes } from "./demoCatalogRoutes.js";
+import { dayRoutes } from "./demoDayRoutes.js";
+import { meOf } from "./demoWeekView.js";
 import { weekRoutes } from "./demoWeekRoutes.js";
 
 const NOT_IN_DEMO = "Accounts and links aren't part of the demo.";
-
-function projectRef(store, id) {
-  const project = store.projects.find((p) => p._id === id);
-  return project
-    ? { _id: project._id, name: project.name, status: project.status }
-    : null;
-}
-
-/** The API's `Me` (api_specification.md §1.10). */
-export function meOf(store, user) {
-  const owner = store.users.find((u) => u.isOwner);
-  return {
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    status: user.status,
-    projects: user.projectIds
-      .map((id) => projectRef(store, id))
-      .filter(Boolean),
-    joinedAt: user.joinedAt,
-    isOwner: user.isOwner,
-    onLeave: user.onLeave,
-    owner: owner ? { name: owner.name, email: owner.email } : null,
-  };
-}
 
 const authRoutes = [
   // A1 — nobody signs up in the demo.
@@ -73,13 +50,18 @@ const authRoutes = [
   ["post", "/auth/links/accept", () => fail(404, "LINK_INVALID", NOT_IN_DEMO)],
 ];
 
-const ROUTES = [...authRoutes, ...weekRoutes].map(
-  ([method, path, handler]) => ({
-    method,
-    handler,
-    ...compile(path),
-  }),
-);
+// The day write and the This week lists come before weekRoutes, whose
+// `/reports/:id` would otherwise answer `/reports/summary`.
+const ROUTES = [
+  ...authRoutes,
+  ...dayRoutes,
+  ...catalogRoutes,
+  ...weekRoutes,
+].map(([method, path, handler]) => ({
+  method,
+  handler,
+  ...compile(path),
+}));
 
 function compile(path) {
   const names = [];

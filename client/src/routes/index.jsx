@@ -15,7 +15,7 @@ import SessionLayout from "./SessionLayout.jsx";
 // its guard. Routes that make no sense in the demo carry handle.realOnly.
 //
 // Pages that a later stage builds render PendingPage until then: C3 replaces the
-// report-reading routes (done in C3), C4 "/", C5 the edit route, C6 history / updates / review,
+// report-reading routes (done in C3), C4 "/" (done, in IndexRoute), C5 the edit route, C6 history / updates / review,
 // C7 /team, C8 the rest.
 
 const SignInPage = lazy(() => import("../pages/SignInPage.jsx"));

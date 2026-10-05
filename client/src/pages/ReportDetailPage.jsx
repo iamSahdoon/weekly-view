@@ -72,7 +72,9 @@ function WeekDetail({ weekKey, userId }) {
     );
   }
 
-  if (query.isError) {
+  // Only a week that never loaded is replaced by the error: a failed background
+  // refetch (after a toggle's invalidation, say) keeps the loaded week on screen.
+  if (query.isError && week === undefined) {
     const code = query.error.code;
     if (code === "USER_NOT_FOUND" || code === "REPORT_NOT_FOUND") {
       return <NotFoundPage />;
@@ -242,7 +244,7 @@ function ReportWeek({ week, own }) {
               <RailBlock label="Versions">
                 {revisions.isPending ? (
                   <p className="text-dense text-mut">Loading versions…</p>
-                ) : revisions.isError ? (
+                ) : revisions.isError && revisions.data === undefined ? (
                   <p className="text-dense text-mut">
                     Versions didn’t load.{" "}
                     <button
@@ -305,7 +307,7 @@ function DocumentArea({
         />
         {revision.isPending ? (
           <DocumentSkeleton />
-        ) : revision.isError ? (
+        ) : revision.isError && revision.data === undefined ? (
           <InlineError
             title="This version didn’t load."
             onRetry={() => revision.refetch()}

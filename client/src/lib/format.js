@@ -89,3 +89,42 @@ const OUTCOMES = { changes_requested: "sent back", approved: "approved" };
 export function revisionOutcome(revision) {
   return OUTCOMES[revision.action] ?? "submitted";
 }
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/**
+ * A project's progress in words (design §3.1, §6.25): "8 days left" / "overdue by 2
+ * days", or in hours "96.5 of 160 h" ("96.5 h logged" when no hours were planned).
+ */
+export function formatProgress(progress, unit = "days") {
+  if (!progress?.plan) return "No plan";
+  if (unit === "hours") {
+    const planned = progress.plan.plannedHours;
+    return planned
+      ? `${formatHours(progress.hoursLogged)} of ${formatHours(planned)} h`
+      : `${formatHours(progress.hoursLogged)} h logged`;
+  }
+  return progress.overdueDays > 0
+    ? `overdue by ${plural(progress.overdueDays, "day")}`
+    : `${plural(progress.daysLeft, "day")} left`;
+}
+
+/**
+ * The confirm before ending leave (owner decision, C4): yourself, or — for a manager or
+ * admin — someone else. `person` is a UserRef or Me.
+ */
+export function endLeaveCopy(person, isSelf) {
+  if (isSelf) {
+    return {
+      title: "Turn off your leave?",
+      body: "Today will need a daily update.",
+      confirmLabel: "Turn off leave",
+    };
+  }
+  const first = firstNameOf(person?.name) || "This person";
+  return {
+    title: `Turn off ${first}’s leave?`,
+    body: `${first} will need a daily update for today.`,
+    confirmLabel: "Turn off leave",
+  };
+}
