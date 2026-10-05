@@ -191,3 +191,84 @@ describe("opening a day to team comments", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 });
+
+// The Team updates page shows the same days, so its feed flips with the week (§9.2).
+describe("a toggle made on the team updates feed", () => {
+  const FEED = qk.teamUpdates("2026-W40", "mon", {});
+  const entry = (reportId) => ({
+    reportId,
+    day: {
+      weekday: "mon",
+      openToTeam: false,
+      blockers: [{ _id: `b-${reportId}`, resolvedAt: null, resolvedBy: null }],
+    },
+  });
+  const feed = () => client.getQueryData(FEED).items;
+
+  beforeEach(() => {
+    client.setQueryData(FEED, {
+      items: [entry("r1"), entry("r2"), { reportId: null, day: null }],
+    });
+  });
+
+  it("flips only that report's day, and restores it when the server refuses", async () => {
+    let fail;
+    service.setTeamComments.mockReturnValue(
+      new Promise((_, reject) => (fail = reject)),
+    );
+    const observer = new MutationObserver(
+      client,
+      teamCommentsOptions({ queryClient: client, week: WEEK, retry: vi.fn() }),
+    );
+    const pending = observer
+      .mutate({ weekday: "mon", open: true })
+      .catch(() => {});
+    await vi.waitFor(() => expect(feed()[0].day.openToTeam).toBe(true));
+    expect(feed()[1].day.openToTeam).toBe(false);
+    expect(feed()[2]).toEqual({ reportId: null, day: null });
+
+    fail(apiError("NETWORK_ERROR"));
+    await pending;
+    expect(feed()[0].day.openToTeam).toBe(false);
+  });
+
+  it("resolves a blocker in the feed at once, and restores it on failure", async () => {
+    client.setQueryData(KEY, {
+      ...view(),
+      report: {
+        ...view().report,
+        days: [
+          {
+            weekday: "mon",
+            openToTeam: false,
+            blockers: [{ _id: "b-r1", resolvedAt: null, resolvedBy: null }],
+          },
+        ],
+      },
+    });
+    let fail;
+    service.setResolution.mockReturnValue(
+      new Promise((_, reject) => (fail = reject)),
+    );
+    const observer = new MutationObserver(
+      client,
+      resolveBlockerOptions({
+        queryClient: client,
+        week: WEEK,
+        me: ME,
+        retry: vi.fn(),
+      }),
+    );
+    const pending = observer
+      .mutate({ blockerId: "b-r1", resolved: true })
+      .catch(() => {});
+    await vi.waitFor(() =>
+      expect(feed()[0].day.blockers[0].resolvedAt).not.toBeNull(),
+    );
+    expect(feed()[1].day.blockers[0].resolvedAt).toBeNull();
+
+    fail(apiError("NETWORK_ERROR"));
+    await pending;
+    expect(feed()[0].day.blockers[0].resolvedAt).toBeNull();
+  });
+});

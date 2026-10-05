@@ -4,7 +4,7 @@ import { cn } from "../../lib/cn.js";
 import { inputClasses } from "./inputClasses.js";
 
 // Design §6.4: native on purpose — accessible, keyboard-correct, the OS picker on
-// mobile. `options` is [{ value, label, disabled? }]; `placeholder` is a disabled
+// mobile. `size` is `sm` in a filter bar (30px), `md`, or `lg`. `options` is [{ value, label, disabled? }]; `placeholder` is a disabled
 // first option shown in --mut while it is the selection.
 
 export const Select = forwardRef(function Select(
@@ -20,7 +20,9 @@ export const Select = forwardRef(function Select(
           "appearance-none pr-32",
           size === "lg"
             ? "h-[var(--ctrl-h-lg)]"
-            : "h-[var(--ctrl-h)] max-md:h-[var(--ctrl-h-lg)]",
+            : size === "sm"
+              ? "h-[var(--ctrl-h-sm)] px-11! text-dense max-md:h-[var(--ctrl-h-lg)]"
+              : "h-[var(--ctrl-h)] max-md:h-[var(--ctrl-h-lg)]",
           "has-[option[value='']:checked]:text-mut",
         )}
         {...props}

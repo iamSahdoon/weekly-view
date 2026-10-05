@@ -1,7 +1,11 @@
 import { api } from "./apiClient.js";
 
-// Users (api_specification.md §2.2). C3 needs U8, C4 the leave line (U9, U10); the
-// rest arrive with the people, users and profile pages (C6, C8).
+// Users (api_specification.md §2.2). C3 needs U8, C4 the leave line (U9, U10), C6 the
+// list for its person filters (U1); the rest arrive with the people, users and profile
+// pages (C8).
+
+/** U1 → paginated users (managers and admins only). */
+export const listUsers = (params) => api.get("/users", { params });
 
 /** U8 → WeekView, anyone's week. */
 export const getUserWeek = (userId, weekKey) =>

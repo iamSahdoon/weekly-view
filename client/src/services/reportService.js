@@ -2,7 +2,7 @@ import { api } from "./apiClient.js";
 
 // Reports and days (api_specification.md §2.5). C3 holds the reads and the two
 // switches a reader can flip; C4 the day write and the This week lists (R1, R2, R5);
-// C5 the end-of-week content and submit (R6, R7).
+// C5 the end-of-week content and submit (R6, R7); C6 the team feed (R12).
 
 /** R1 → paginated ReportRow items, the caller's own. */
 export const listMyReports = (params) => api.get("/reports", { params });
@@ -46,6 +46,12 @@ export const clearResolution = (id, blockerId) =>
 /** R11 → Day */
 export const setTeamComments = (id, weekday, open) =>
   api.put(`/reports/${id}/days/${weekday}/team-comments`, { open });
+
+/** R12 → { items: [{ user, state, reportId, day }] }, sorted by name, the viewer first. */
+export const listTeamUpdates = ({ weekKey, weekday, project, blockersOnly }) =>
+  api.get("/updates", {
+    params: { weekKey, weekday, project, blockersOnly },
+  });
 
 /** R13 → null. Silent: nothing shows when it fails. */
 export const markSeen = (id) => api.post(`/reports/${id}/seen`);

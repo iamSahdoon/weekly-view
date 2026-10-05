@@ -519,6 +519,7 @@ client/
 │   │   │   ├── FilterBar.jsx
 │   │   │   ├── Meter.jsx
 │   │   │   ├── NewMarker.jsx          # the 6px square (§6.24)
+│   │   │   ├── WeekRangeFilter.jsx    # added in C6: the filter bar's From / To week control (§6.21), drafted in a popover and applied
 │   │   │   ├── RoleChip.jsx           # added in C3: the Manager / Admin label beside a name; a member carries none
 │   │   │   ├── inputClasses.js        # added in C1: the Input look shared by Input, Textarea, Select (keeps component files component-only)
 │   │   │   └── Toaster.jsx            # Sonner mount, constrained per tech_stack §6.7
@@ -565,6 +566,7 @@ client/
 │   │   │   ├── BlockerRow.jsx         # added in C3: a blocker as read — Key bar, Carried over, Resolved, the resolve toggle when given `onResolve`
 │   │   │   ├── WeekNotices.jsx        # added in C3: the strips and panels that stand where the document would be (teammate note, Draft note, correcting and version banners)
 │   │   │   ├── RevisionsRail.jsx
+│   │   │   ├── WeekDocument.jsx       # added in C6: the end-of-week document (or the note in its place), the rail's version list and `RailBlock` — shared by the week page and the review page
 │   │   │   └── ReportHistoryTable.jsx
 │   │   ├── comment/                   # §6.23 — used by report/, updates/ and review/
 │   │   │   ├── CommentThread.jsx
@@ -579,7 +581,7 @@ client/
 │   │   │   ├── ReviewStatusBlock.jsx
 │   │   │   ├── WeekComments.jsx       # overall comments on the week, with versions and kinds
 │   │   │   ├── ReviewActionPanel.jsx  # Approve, Send back, Comment only
-│   │   │   └── ReadOnlyStrip.jsx
+│   │   │   └── ReadOnlyStrip.jsx      # the `--tint` strip above a reviewed report, and the self-review guard's wording
 │   │   ├── dashboard/                 # §3.7–3.8, §7
 │   │   │   ├── MetricStrip.jsx
 │   │   │   ├── MetricCell.jsx
@@ -614,13 +616,16 @@ client/
 │   │   ├── demoWeekRoutes.js          # added in C3: U8, R3, R4, R8–R11, R13 and C1–C5 for the demo
 │   │   ├── demoDayRoutes.js           # added in C4: R1, R2 and R5 (writing a day) for the demo; C5 adds R6 and R7 (autosave, submit)
 │   │   ├── demoCatalogRoutes.js       # added in C4: T1, P1, HD1, U9, U10 for the demo
+│   │   ├── demoReviewRoutes.js        # added in C6: R12 (the team feed) and V1–V3 (approve, send back, the review desk) for the demo
+│   │   ├── demoUserRoutes.js          # added in C6: U1 (the people list) for the demo; C8 adds the rest of the user routes
 │   │   ├── demoStore.js               # builds the in-memory store; rebuilt on refresh or Start over
 │   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates
 │   │   └── __tests__/
 │   │       ├── demoCoverage.test.js   # every services/ function answered by the adapter
 │   │       ├── demoWeeks.test.js      # added in C3: the demo's layers, comment rules, ten-minute window and "new" markers
 │   │       ├── demoDays.test.js       # added in C4: writing a day, holidays, leave, projects, R1/R2 on a frozen Wednesday
-│   │       └── demoContent.test.js    # added in C5: R6 autosave and R7 submit / resubmit, with the server's codes
+│   │       ├── demoContent.test.js    # added in C5: R6 autosave and R7 submit / resubmit, with the server's codes
+│   │       └── demoReview.test.js     # added in C6: the desk never lists your own report, the pinned revision, the 10-character send-back, R12's filters, U1
 │   ├── hooks/
 │   │   ├── useAuth.js                 # reads AuthContext
 │   │   ├── useAuthQueries.js          # bootstrap status, link preview, login, signup, accept
@@ -691,6 +696,9 @@ client/
 │   │   ├── errorToast.js              # added in C3: the error toast with `Retry` for a failed write that has no form (frontend_architecture §5.7)
 │   │   ├── submitChecklist.js         # the submit checklist from dayStates + task statuses
 │   │   ├── weekActions.js             # the top-bar primary action for a week
+│   │   ├── reviewDeskParams.js        # added in C6: the review desk's URL spec, and the query behind "Next in review desk"
+│   │   ├── reviewOutcome.js           # added in C6: "Approved by Ruwan P. at 10:22"
+│   │   ├── updatesDay.js              # added in C6: which days Team updates can show, and the default one
 │   │   ├── format.js                  # hours, dates, relative times
 │   │   ├── chartTheme.js              # chart colours and axis props as token strings
 │   │   └── __tests__/
@@ -702,7 +710,10 @@ client/
 │   │       ├── permissions.test.js    # added in C3: the week-thread gates (G1), comment window, version labels
 │   │       ├── weekActions.test.js    # added in C4: the top-bar primary action's priority order
 │   │       ├── endLeaveCopy.test.js   # added in C4: the wording of the confirm before ending leave
-│   │       └── submitChecklist.test.js  # added in C5: the two submit rules and their words
+│   │       ├── submitChecklist.test.js  # added in C5: the two submit rules and their words
+│   │       ├── reviewDeskParams.test.js # added in C6
+│   │       ├── reviewOutcome.test.js    # added in C6
+│   │       └── updatesDay.test.js       # added in C6
 │   ├── styles/
 │   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]
@@ -944,7 +955,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

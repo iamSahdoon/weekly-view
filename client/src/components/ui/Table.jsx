@@ -9,7 +9,12 @@ import { Skeleton } from "./Skeleton.jsx";
 //   columns  [{ id, header, cell(row), align: "left"|"right", width?, sortable?,
 //               defaultDir?, mono?, mobile?: "primary"|"status"|"pair"|"hidden", label? }]
 //   sort     { id, dir } — from the URL; onSortChange({ id, dir }) when a header is clicked
+//   linkState  router state passed along when a row is opened (the review desk
+//            hands its filters to the review page this way)
 //   dense    36px rows for read-only report tables
+//   emptyState / keepHeader  what stands in for the rows of an empty list; with
+//            `keepHeader` the header row stays above it (a filtered-out list, design
+//            §3.3), without it the state replaces the table (a list that is new)
 //
 // Below 768px it renders stacked cards instead of a <table> — one or the other,
 // never both in the DOM (frontend_architecture.md §7.4). The whole row is the
@@ -24,6 +29,7 @@ export function Table({
   rowKey = "_id",
   getRowHref,
   onRowClick,
+  linkState,
   sort,
   onSortChange,
   dense = false,
@@ -31,6 +37,7 @@ export function Table({
   skeletonRows = 8,
   isFetching = false,
   emptyState,
+  keepHeader = false,
   caption,
   className,
 }) {
@@ -49,7 +56,7 @@ export function Table({
     onSortChange({ id: column.id, dir });
   };
 
-  if (!isLoading && !hasRows && emptyState) {
+  if (!isLoading && !hasRows && emptyState && !(keepHeader && !isStacked)) {
     return (
       <div className={cn("border border-hair bg-card", className)}>
         {emptyState}
@@ -62,6 +69,7 @@ export function Table({
     keyOf,
     getRowHref,
     onRowClick,
+    linkState,
     dense,
   };
 
@@ -98,18 +106,24 @@ export function Table({
               </tr>
             </thead>
             <tbody>
-              {isLoading
-                ? Array.from({ length: skeletonRows }, (_, i) => (
-                    <SkeletonRow
-                      key={i}
-                      columns={columns}
-                      index={i}
-                      dense={dense}
-                    />
-                  ))
-                : rows.map((row) => (
-                    <BodyRow key={keyOf(row)} row={row} {...shared} />
-                  ))}
+              {isLoading ? (
+                Array.from({ length: skeletonRows }, (_, i) => (
+                  <SkeletonRow
+                    key={i}
+                    columns={columns}
+                    index={i}
+                    dense={dense}
+                  />
+                ))
+              ) : !hasRows && emptyState ? (
+                <tr>
+                  <td colSpan={columns.length}>{emptyState}</td>
+                </tr>
+              ) : (
+                rows.map((row) => (
+                  <BodyRow key={keyOf(row)} row={row} {...shared} />
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -179,14 +193,14 @@ function cellClass(column, isPrimary) {
   );
 }
 
-function BodyRow({ row, columns, getRowHref, onRowClick, dense }) {
+function BodyRow({ row, columns, getRowHref, onRowClick, linkState, dense }) {
   const navigate = useNavigate();
   const href = getRowHref?.(row);
   const clickable = Boolean(href || onRowClick);
 
   const activate = (event) => {
     if (event.target.closest(INTERACTIVE)) return;
-    if (href) navigate(href);
+    if (href) navigate(href, { state: linkState });
     else onRowClick?.(row);
   };
 
@@ -215,6 +229,7 @@ function BodyRow({ row, columns, getRowHref, onRowClick, dense }) {
           {index === 0 && href ? (
             <Link
               to={href}
+              state={linkState}
               className="text-ink no-underline focus-visible:outline-none"
             >
               {column.cell(row)}
@@ -262,6 +277,7 @@ function StackedRows({
   keyOf,
   getRowHref,
   onRowClick,
+  linkState,
   loadingRows,
 }) {
   const navigate = useNavigate();
@@ -297,7 +313,7 @@ function StackedRows({
               clickable
                 ? (event) => {
                     if (event.target.closest(INTERACTIVE)) return;
-                    if (href) navigate(href);
+                    if (href) navigate(href, { state: linkState });
                     else onRowClick?.(row);
                   }
                 : undefined
@@ -313,6 +329,7 @@ function StackedRows({
                 {href ? (
                   <Link
                     to={href}
+                    state={linkState}
                     className="text-ink no-underline focus-visible:outline-none"
                   >
                     {primary.cell(row)}

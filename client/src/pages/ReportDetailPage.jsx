@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { DailyUpdatesBlock } from "../components/report/DailyUpdatesBlock.jsx";
-import { ReportDocument } from "../components/report/ReportDocument.jsx";
-import { RevisionsRail } from "../components/report/RevisionsRail.jsx";
 import {
-  CorrectingBanner,
-  DraftNote,
-  RevisionBanner,
-  TeammateNote,
-} from "../components/report/WeekNotices.jsx";
+  DocumentSkeleton,
+  RailBlock,
+  VersionsList,
+  WeekDocument,
+} from "../components/report/WeekDocument.jsx";
 import { WeekComments } from "../components/review/WeekComments.jsx";
 import { PageContainer } from "../components/shell/PageContainer.jsx";
 import { PageHeader } from "../components/shell/PageHeader.jsx";
@@ -24,11 +22,7 @@ import {
   useRevisions,
   useWeek,
 } from "../hooks/useReportQueries.js";
-import {
-  firstNameOf,
-  formatWeekRange,
-  revisionOutcome,
-} from "../lib/format.js";
+import { firstNameOf, formatWeekRange } from "../lib/format.js";
 import {
   canEditReport,
   isAuthorOf,
@@ -215,7 +209,7 @@ function ReportWeek({ week, own }) {
 
             <DailyUpdatesBlock week={week} />
 
-            <DocumentArea
+            <WeekDocument
               week={week}
               revision={selected != null ? revision : null}
               selected={selected}
@@ -242,26 +236,11 @@ function ReportWeek({ week, own }) {
 
             {readable && (
               <RailBlock label="Versions">
-                {revisions.isPending ? (
-                  <p className="text-dense text-mut">Loading versions…</p>
-                ) : revisions.isError && revisions.data === undefined ? (
-                  <p className="text-dense text-mut">
-                    Versions didn’t load.{" "}
-                    <button
-                      type="button"
-                      className="underline underline-offset-2"
-                      onClick={() => revisions.refetch()}
-                    >
-                      Try again
-                    </button>
-                  </p>
-                ) : (
-                  <RevisionsRail
-                    revisions={revisions.data.items}
-                    selected={selected}
-                    onSelect={setSelected}
-                  />
-                )}
+                <VersionsList
+                  revisions={revisions}
+                  selected={selected}
+                  onSelect={setSelected}
+                />
               </RailBlock>
             )}
 
@@ -282,86 +261,8 @@ function ReportWeek({ week, own }) {
   );
 }
 
-// The part of the page that depends on what the response contains.
-function DocumentArea({
-  week,
-  revision,
-  selected,
-  onBack,
-  revisions,
-  firstName,
-  author,
-  manager,
-}) {
-  const report = week.report;
-
-  // A past version chosen in the rail.
-  if (selected != null) {
-    const summary = revisions?.find((r) => r.revisionNumber === selected);
-    return (
-      <div className="flex flex-col gap-24">
-        <RevisionBanner
-          revisionNumber={selected}
-          outcome={summary ? revisionOutcome(summary) : "earlier version"}
-          onBack={onBack}
-        />
-        {revision.isPending ? (
-          <DocumentSkeleton />
-        ) : revision.isError && revision.data === undefined ? (
-          <InlineError
-            title="This version didn’t load."
-            onRetry={() => revision.refetch()}
-          />
-        ) : (
-          <ReportDocument week={week} revision={revision.data} />
-        )}
-      </div>
-    );
-  }
-
-  if (report.content === null) {
-    // Withheld. A teammate is told why; a manager on a Draft is told what is coming.
-    if (!author && !manager) return <TeammateNote />;
-    return <DraftNote authorFirstName={firstName} />;
-  }
-
-  return (
-    <div className="flex flex-col gap-24">
-      {report.contentSource === "revision" && (
-        <CorrectingBanner
-          authorFirstName={firstName}
-          sentBackAt={report.latestComment?.createdAt}
-        />
-      )}
-      <ReportDocument week={week} />
-    </div>
-  );
-}
-
-function RailBlock({ label, children }) {
-  return (
-    <section className="flex flex-col gap-8 border-t border-hair pt-14 first:border-t-0 first:pt-0">
-      <h3 className="text-caption font-medium text-mut">{label}</h3>
-      {children}
-    </section>
-  );
-}
-
 // ---------------------------------------------------------------- loading
 // Layout-matched (design §3.4 "Loading"): the daily-updates rows, the document, the rail.
-
-function DocumentSkeleton() {
-  return (
-    <div className="flex flex-col gap-44">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="flex flex-col gap-14">
-          <Skeleton className="h-[24px] w-[220px]" />
-          <Skeleton className="h-[72px] w-full" />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function DetailSkeleton() {
   return (

@@ -47,6 +47,22 @@ export function useReportSummary(weekKey, month) {
   });
 }
 
+/**
+ * R12 — one day of the team. `filters` are `{ project?, blockersOnly? }`; empty ones are
+ * left out so two equal views share a cache entry. Sorting is the server's (§9.2).
+ */
+export function useTeamUpdates(weekKey, weekday, filters = {}) {
+  const params = {};
+  if (filters.project) params.project = filters.project;
+  if (filters.blockersOnly) params.blockersOnly = true;
+  return useQuery({
+    queryKey: qk.teamUpdates(weekKey, weekday, params),
+    queryFn: () =>
+      reportService.listTeamUpdates({ weekKey, weekday, ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** R4 — a week by its report's id (the review page, C6). */
 export function useReport(id) {
   return useQuery({
@@ -153,6 +169,33 @@ function editWeek(queryClient, key, edit) {
   return previous;
 }
 
+// The team updates feed shows the same days (`{ items: [{ reportId, day }] }`), so a
+// toggle made there flips at once too: the entries of this report are edited in every
+// cached feed, and the snapshots restore them if the server refuses.
+function editFeeds(queryClient, week, editDay) {
+  const snapshots = queryClient.getQueriesData({
+    queryKey: qk.all.teamUpdates(),
+  });
+  queryClient.setQueriesData({ queryKey: qk.all.teamUpdates() }, (data) =>
+    data?.items
+      ? {
+          ...data,
+          items: data.items.map((item) =>
+            item.reportId === week.report._id && item.day
+              ? { ...item, day: editDay(item.day) }
+              : item,
+          ),
+        }
+      : data,
+  );
+  return snapshots;
+}
+
+const restoreFeeds = (queryClient, snapshots) => {
+  for (const [key, data] of snapshots ?? [])
+    queryClient.setQueryData(key, data);
+};
+
 const refreshWeek = (queryClient, week) => {
   invalidateWeek(queryClient, {
     userId: week.user._id,
@@ -173,24 +216,26 @@ export function resolveBlockerOptions({ queryClient, week, me, retry }) {
         : reportService.clearResolution(week.report._id, blockerId),
     onMutate: async ({ blockerId, resolved }) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = editWeek(queryClient, key, (days) =>
-        days.map((day) => ({
-          ...day,
-          blockers: day.blockers.map((b) =>
-            b._id === blockerId
-              ? {
-                  ...b,
-                  resolvedAt: resolved ? new Date().toISOString() : null,
-                  resolvedBy: resolved ? me : null,
-                }
-              : b,
-          ),
-        })),
-      );
-      return { previous };
+      await queryClient.cancelQueries({ queryKey: qk.all.teamUpdates() });
+      const flip = (day) => ({
+        ...day,
+        blockers: day.blockers.map((b) =>
+          b._id === blockerId
+            ? {
+                ...b,
+                resolvedAt: resolved ? new Date().toISOString() : null,
+                resolvedBy: resolved ? me : null,
+              }
+            : b,
+        ),
+      });
+      const previous = editWeek(queryClient, key, (days) => days.map(flip));
+      const feeds = editFeeds(queryClient, week, flip);
+      return { previous, feeds };
     },
     onError: (error, vars, context) => {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
+      restoreFeeds(queryClient, context?.feeds);
       toastError(
         vars.resolved
           ? "That blocker wasn’t marked as resolved."
@@ -228,15 +273,16 @@ export function teamCommentsOptions({ queryClient, week, retry }) {
       reportService.setTeamComments(week.report._id, weekday, open),
     onMutate: async ({ weekday, open }) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = editWeek(queryClient, key, (days) =>
-        days.map((day) =>
-          day.weekday === weekday ? { ...day, openToTeam: open } : day,
-        ),
-      );
-      return { previous };
+      await queryClient.cancelQueries({ queryKey: qk.all.teamUpdates() });
+      const flip = (day) =>
+        day.weekday === weekday ? { ...day, openToTeam: open } : day;
+      const previous = editWeek(queryClient, key, (days) => days.map(flip));
+      const feeds = editFeeds(queryClient, week, flip);
+      return { previous, feeds };
     },
     onError: (error, vars, context) => {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
+      restoreFeeds(queryClient, context?.feeds);
       toastError("That day’s comment setting didn’t save.", error, {
         id: `team-comments-${vars.weekday}`,
         retry: () => retry(vars),
