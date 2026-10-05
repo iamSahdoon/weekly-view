@@ -28,7 +28,19 @@ beforeAll(async () => {
   replSet = await MongoMemoryReplSet.create({
     replSet: { count: 1, storageEngine: "wiredTiger" },
   });
-  await mongoose.connect(replSet.getUri(), { dbName: "weeklyview-test" });
+  // A short heartbeat keeps the clock-freeze regression test (testDb.test.js) quick.
+  await mongoose.connect(replSet.getUri(), {
+    dbName: "weeklyview-test",
+    heartbeatFrequencyMS: 500,
+  });
+  // Tests freeze `Date` (vi.useFakeTimers). The driver stamps each heartbeat with that
+  // fake clock, but Mongoose's `readyState` compares the stamp with the real one and,
+  // seeing it days old, reports "disconnected": the next syncIndexes() buffers until
+  // "Connection operation buffering timed out after 10000ms". Never keep the stamp.
+  Object.defineProperty(mongoose.connection, "_lastHeartbeatAt", {
+    get: () => null,
+    set: () => {},
+  });
   await Promise.all(models.map((model) => model.syncIndexes()));
 });
 

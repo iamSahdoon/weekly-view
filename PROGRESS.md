@@ -710,6 +710,34 @@ last block.
 16. Window 1: click **Approve**. A banner says "Nadia submitted a new version. Reload to review it.",
     both buttons are grey and your text is still in the box. Click **Reload**, then **Approve**.
 
+### Seed tests made reliable (2026-10-05, before C7)
+`tests/seed/seed.test.js` had failed intermittently in cloud containers ("Connection operation
+buffering timed out after 10000ms"; recorded in C2, C4, C5 and C6). **Not parallelism** — it failed
+about one run in four with the file run on its own. The cause, reproduced on demand:
+- Suites freeze `Date` (`vi.useFakeTimers({ toFake: ["Date"] })`) at a week of their own; the seed
+  suite freezes at 2026-10-01 (and 2027-01-06), which is now **before the real date**.
+- The MongoDB driver stamps each heartbeat with `Date.now()`. Mongoose's `connection.readyState`
+  getter compares that stamp with the *real* clock (it snapshots the native `Date`); a stamp made
+  under a clock frozen days ago looks stale (older than two heartbeats), so `readyState` reads
+  `disconnected` while the raw state is still `connected`.
+- `Model.syncIndexes()` — which `runSeed` calls on every seeding — waits on that getter and buffers
+  for 10 s, then throws. Plain queries don't, so only the seed file failed. Repro: freeze the clock
+  in the past, wait one heartbeat, call `User.syncIndexes()` → the same error, every time.
+The fix, with no test skipped or weakened:
+- `tests/helpers/testDb.js` connects with `heartbeatFrequencyMS: 500` and defines
+  `_lastHeartbeatAt` as a null accessor, so the stale-heartbeat check can never fire under a faked clock.
+- New `tests/foundation/testDb.test.js`: freeze the clock in 2020, let heartbeats land, expect
+  `readyState === 1` and `syncIndexes()` to resolve. It **fails with the accessor removed**
+  (`expected +0 to be 1`) and passes with it.
+- Also seen on the first run in this container: with an **empty mongod cache** every worker started
+  the same download at once (`ENOENT … .downloading`, `ETXTBSY`; three files failed). New
+  `tests/helpers/globalSetup.js` downloads once before the workers start. A cold-cache run (cache
+  moved aside, then a full suite) passed 19 files / 382 tests.
+- **Five full server runs in a row, after the fix: 5 of 5 green** — 19 files, 382 tests each
+  (46–50 s). Before it, one or more seed tests failed in most full runs here.
+- Departure: `tests/helpers/globalSetup.js` and `tests/foundation/testDb.test.js`
+  are new; `project_structure.md` §2.1 notes them.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -1305,7 +1333,8 @@ last block.
   decision 5 changed to follow §5.7 — see the two C3 owner decisions under *Decisions*.
 - ~~C2: `server/tests/seed/seed.test.js` fails 3 tests in the cloud container~~ **Resolved
   (owner, 2026-10-04):** all 21 pass on `main` elsewhere, so the failures were this container,
-  not S6. Server suite stands at 381 green.
+  not S6. Server suite stands at 381 green. **Root cause found and fixed 2026-10-05** — a frozen
+  test clock made Mongoose think the connection was stale; see *Seed tests made reliable*.
 - ~~C2, to confirm or change~~ **Resolved (owner, 2026-10-04): all C2 decisions accepted as built** (all recorded under *Decisions*): the signed-out 404's
   button reads `Go to the start page`; the week picker stays in the top bar between 768 and
   1023 px where design §10 says "page title only"; the top-bar title is the page's `<h1>`; the

@@ -260,7 +260,8 @@ server/
 │   └── server.js                      # connects Mongo, then listens
 ├── tests/
 │   ├── helpers/
-│   │   ├── testDb.js                  # mongodb-memory-server start/stop
+│   │   ├── globalSetup.js             # added after C6: downloads mongod once before the workers start
+│   │   ├── testDb.js                  # mongodb-memory-server start/stop; keeps the connection ready under a frozen clock
 │   │   ├── testAuth.js                # signs a token for a seeded actor
 │   │   └── testWeeks.js               # added in S4: a frozen clock, day bodies, posting and filing a week; S5: review and comment calls
 │   ├── rbac/                          # api_specification.md §6
@@ -285,8 +286,9 @@ server/
 │       ├── middleware.test.js         # validate, authenticate, authorize, errorHandler duplicate-key mapping
 │       ├── indexes.test.js            # every index in database_schema.md §6 exists, and no others
 │       ├── models.test.js             # schema-level validation of the seven models
+│       ├── testDb.test.js             # added after C6: the test connection stays ready while a suite freezes `Date` in the past
 │       └── weeks.test.js              # utils/weeks.js and utils/paginate.js
-├── vitest.config.js                   # setupFiles → tests/helpers/testDb.js
+├── vitest.config.js                   # globalSetup → tests/helpers/globalSetup.js; setupFiles → tests/helpers/testDb.js
 ├── eslint.config.js                   # added in S0: flat config, @eslint/js + globals.node + eslint-config-prettier (the lint script needs one)
 ├── .env.example
 └── package.json
