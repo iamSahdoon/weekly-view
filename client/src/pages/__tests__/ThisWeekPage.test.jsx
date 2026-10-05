@@ -44,7 +44,9 @@ function wrap(client, me, element, path = "/") {
       <QueryClientProvider client={client}>
         <UnsavedChangesProvider>
           <PageChromeProvider>
-            <MemoryRouter initialEntries={[path]}>{element}</MemoryRouter>
+            <MemoryRouter initialEntries={[path]}>
+              <DayDraftsProvider>{element}</DayDraftsProvider>
+            </MemoryRouter>
           </PageChromeProvider>
         </UnsavedChangesProvider>
       </QueryClientProvider>
@@ -63,13 +65,7 @@ function panel(role, weekKey, weekday) {
   const client = newClient();
   client.setQueryData(qk.tasks({ includeDone: false }), { items: [] });
   client.setQueryData(qk.projects({ mine: true }), { items: [] });
-  return wrap(
-    client,
-    me,
-    <DayDraftsProvider>
-      <DayPanel week={view} weekday={weekday} isOwn />
-    </DayDraftsProvider>,
-  );
+  return wrap(client, me, <DayPanel week={view} weekday={weekday} isOwn />);
 }
 
 describe("the day panel — design §4.11", () => {

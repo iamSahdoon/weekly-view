@@ -400,6 +400,11 @@
   and `components/ui/__tests__/QueryView.test.jsx` (2).
 
 ### C4 checks (2026-10-04)
+- **Owner answers (2026-10-05):** `npm run lint` clean; client 145 green (after the fixture fix
+  below). Server: 376–380 of 381 in this container, across runs. The failures are only in
+  `tests/seed/seed.test.js` — `MongooseError: Connection operation buffering timed out` — the
+  container issue recorded in C2 (nothing under `server/` changed). The drafts move and the auth
+  forms' timing were not re-walked in a browser.
 - `npm run lint`: clean (client and server). `npm test`: green — server 381 (unchanged), client 145
   (105 after the C3 fix, plus 40): `weekActions.test.js` 9 (the top-bar action's priority order and
   the panel's button), `reportSchema.test.js` 6 (ids round-trip so a blocker keeps its resolution,
@@ -977,12 +982,27 @@
   holidays, leave and `not_on_team` in the server's order. The holidays fixture is still empty
   (C8). `meOf`, `projectRef` and `taskRef` moved to `demoWeekView.js`.
 
+- C4, **owner decision (2026-10-05): day drafts are kept until sign-out.** `DayDraftsProvider` moved
+  from `ThisWeekPage` to `SessionLayout`, keyed by the signed-in person, so unposted text (saved or
+  not) survives moving to another page and back, and ends at sign-out. Leaving This week no longer
+  loses anything, so the day panel and the drafts register with `UnsavedChangesContext` as
+  `keepsOnNavigate`: they arm the tab-close prompt, sign-out and the re-auth dismiss, but not
+  `LeaveGuard` (which now asks `losesOnNavigate()`). A reload still loses drafts — nothing is
+  written to the device (§2). This departs from frontend §9.1 ("wraps this page's content") at the
+  owner's request.
+- C4, **owner decision (2026-10-05): the sign-in and sign-up forms validate `onTouched`** — on blur
+  first, then on every change once a field has been touched, so an error clears as soon as it is
+  fixed (design §4.10), as the day form does. The accept-invite and reset-password forms still use
+  `onBlur` + `reValidateMode: "onChange"` (not asked; same gap).
+- C4 answers: **a C3 fixture fix found by the date.** On a Monday morning, last week's send-back
+  (Friday + 3 days, 09:00) and Imali's reply (12:00) were still in the future, so the reply's
+  10-minute window read as open and three demo tests failed — on `main` too. The send-back is now
+  Friday 18:00, after the 17:00 submit.
+
 ## Open questions for the owner
-- **C4, to confirm or change:** (1) the decisions marked C4 above. (2) **Saved drafts are lost
-  when you leave This week or reload**, with no prompt: §6.3 says `Save` marks the composer clean
-  and nothing goes to the device, and §9.1 puts `DayDraftsProvider` on the page. If `Save` should
-  survive moving to another page, the provider can move up to `SessionLayout` (cleared on
-  sign-out). That's a one-line move.
+- ~~C4, to confirm or change~~ **Resolved (owner, 2026-10-05):** saved drafts are kept until
+  sign-out, and the sign-in and sign-up forms take the `onTouched` validation timing — see the two
+  C4 owner decisions under *Decisions*. The other C4 decisions stand as built.
 - ~~C3, to confirm or change~~ **Resolved (owner, 2026-10-04):** decisions 1–4 accepted as built;
   decision 5 changed to follow §5.7 — see the two C3 owner decisions under *Decisions*.
 - ~~C2: `server/tests/seed/seed.test.js` fails 3 tests in the cloud container~~ **Resolved

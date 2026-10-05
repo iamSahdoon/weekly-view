@@ -9,7 +9,9 @@ import {
 import { useUnsavedGuard } from "../hooks/useUnsavedGuard.js";
 
 // Unposted day text, in memory only (frontend_architecture.md §2, §6.3): keyed
-// `weekKey:weekday`, never written to the device. A draft is either *saved* (the
+// `weekKey:weekday`, never written to the device. Mounted for the signed-in session
+// (SessionLayout), so drafts survive moving between pages and end at sign-out
+// (owner decision, C4). A draft is either *saved* (the
 // panel's Save) or not — text carried over a day switch is kept but still counts as
 // unsaved, so the tab-close and leave-page guards still ask.
 
@@ -27,7 +29,7 @@ export function DayDraftsProvider({ children }) {
     setUnsaved(n);
   }, []);
 
-  useUnsavedGuard(unsaved > 0);
+  useUnsavedGuard(unsaved > 0, { keepsOnNavigate: true });
 
   const value = useMemo(
     () => ({

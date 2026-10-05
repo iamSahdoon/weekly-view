@@ -71,8 +71,8 @@ function SignUpForm() {
   const signUp = useSignUp();
   const form = useForm({
     resolver: zodResolver(signUpSchema),
-    mode: "onBlur",
-    reValidateMode: "onChange",
+    // Design §4.10: on blur first, then on every change once a field has been touched.
+    mode: "onTouched",
     defaultValues: { name: "", email: "", password: "" },
   });
   const { errors } = form.formState;

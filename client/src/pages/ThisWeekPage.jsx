@@ -16,7 +16,6 @@ import { InlineError } from "../components/ui/InlineError.jsx";
 import { QueryView } from "../components/ui/QueryView.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { WeekPicker } from "../components/ui/WeekPicker.jsx";
-import { DayDraftsProvider } from "../context/DayDraftsContext.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { useHolidaysForWeek } from "../hooks/useHolidayQueries.js";
 import { useProjects } from "../hooks/useProjectQueries.js";
@@ -154,103 +153,99 @@ export default function ThisWeekPage() {
     <>
       {header}
       <PageContainer>
-        <DayDraftsProvider>
-          <div className="flex flex-col gap-32">
-            <div className="flex flex-col gap-8">
-              <WeekStrip
-                dayStates={view.dayStates}
-                days={view.report?.days ?? []}
-                holidays={holidays.data ?? {}}
-                selected={firstWeek ? null : weekday}
-                onSelect={chooseDay}
-                panelId={PANEL_ID}
-              />
-              <OnLeaveStrip
-                names={otherNames}
-                holidays={holidays.data ?? {}}
-                isCurrentWeek={isCurrent}
-                meOnLeave={me.onLeave}
-                ending={setLeave.isPending}
-                error={setLeave.error ? errorCopy(setLeave.error) : null}
-                onEndLeave={() =>
-                  setLeave.mutate({ userId: me._id, onLeave: false })
-                }
-              />
-            </div>
-
-            {firstWeek ? (
-              <FirstWeekPanel
-                canPostToday={
-                  Boolean(today) && view.dayStates[today] === "today"
-                }
-                onStart={() => chooseDay(today)}
-              />
-            ) : (
-              <>
-                <div id={PANEL_ID} ref={panelRef} role="tabpanel">
-                  <DayPanel
-                    key={`${weekKey}:${weekday}`}
-                    week={view}
-                    weekday={weekday}
-                    isOwn
-                  />
-                </div>
-
-                {view.report?.status === "needs_correction" && (
-                  <CorrectionPanel week={view} />
-                )}
-
-                <div className="grid gap-24 lg:grid-cols-12">
-                  <div className="lg:col-span-8">
-                    <CurrentWeekPanel week={view} />
-                  </div>
-                  {myProjects.length > 0 && (
-                    <div className="lg:col-span-4">
-                      <MyProjectsPanel
-                        projects={myProjects}
-                        unit={unit}
-                        onUnitChange={setUnit}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid gap-24 lg:grid-cols-12">
-                  <div className="lg:col-span-8">
-                    <QueryView
-                      query={recent}
-                      skeleton={<Skeleton className="h-[290px] w-full" />}
-                      error={
-                        <InlineError
-                          title="Recent weeks didn’t load."
-                          onRetry={() => recent.refetch()}
-                        />
-                      }
-                    >
-                      {(data) => (
-                        <RecentWeeksList rows={data.items.slice(0, 5)} />
-                      )}
-                    </QueryView>
-                  </div>
-                  <div className="lg:col-span-4">
-                    <QueryView
-                      query={summary}
-                      skeleton={<Skeleton className="h-[96px] w-full" />}
-                      error={
-                        <InlineError
-                          title="Your numbers didn’t load."
-                          onRetry={() => summary.refetch()}
-                        />
-                      }
-                    >
-                      {(data) => <PersonalStrip summary={data} />}
-                    </QueryView>
-                  </div>
-                </div>
-              </>
-            )}
+        <div className="flex flex-col gap-32">
+          <div className="flex flex-col gap-8">
+            <WeekStrip
+              dayStates={view.dayStates}
+              days={view.report?.days ?? []}
+              holidays={holidays.data ?? {}}
+              selected={firstWeek ? null : weekday}
+              onSelect={chooseDay}
+              panelId={PANEL_ID}
+            />
+            <OnLeaveStrip
+              names={otherNames}
+              holidays={holidays.data ?? {}}
+              isCurrentWeek={isCurrent}
+              meOnLeave={me.onLeave}
+              ending={setLeave.isPending}
+              error={setLeave.error ? errorCopy(setLeave.error) : null}
+              onEndLeave={() =>
+                setLeave.mutate({ userId: me._id, onLeave: false })
+              }
+            />
           </div>
-        </DayDraftsProvider>
+
+          {firstWeek ? (
+            <FirstWeekPanel
+              canPostToday={Boolean(today) && view.dayStates[today] === "today"}
+              onStart={() => chooseDay(today)}
+            />
+          ) : (
+            <>
+              <div id={PANEL_ID} ref={panelRef} role="tabpanel">
+                <DayPanel
+                  key={`${weekKey}:${weekday}`}
+                  week={view}
+                  weekday={weekday}
+                  isOwn
+                />
+              </div>
+
+              {view.report?.status === "needs_correction" && (
+                <CorrectionPanel week={view} />
+              )}
+
+              <div className="grid gap-24 lg:grid-cols-12">
+                <div className="lg:col-span-8">
+                  <CurrentWeekPanel week={view} />
+                </div>
+                {myProjects.length > 0 && (
+                  <div className="lg:col-span-4">
+                    <MyProjectsPanel
+                      projects={myProjects}
+                      unit={unit}
+                      onUnitChange={setUnit}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-24 lg:grid-cols-12">
+                <div className="lg:col-span-8">
+                  <QueryView
+                    query={recent}
+                    skeleton={<Skeleton className="h-[290px] w-full" />}
+                    error={
+                      <InlineError
+                        title="Recent weeks didn’t load."
+                        onRetry={() => recent.refetch()}
+                      />
+                    }
+                  >
+                    {(data) => (
+                      <RecentWeeksList rows={data.items.slice(0, 5)} />
+                    )}
+                  </QueryView>
+                </div>
+                <div className="lg:col-span-4">
+                  <QueryView
+                    query={summary}
+                    skeleton={<Skeleton className="h-[96px] w-full" />}
+                    error={
+                      <InlineError
+                        title="Your numbers didn’t load."
+                        onRetry={() => summary.refetch()}
+                      />
+                    }
+                  >
+                    {(data) => <PersonalStrip summary={data} />}
+                  </QueryView>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </PageContainer>
     </>
   );

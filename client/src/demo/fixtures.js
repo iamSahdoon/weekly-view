@@ -110,7 +110,8 @@ export function buildFixtures(now = new Date()) {
 
   // ---- Imali: last week, sent back
   const [mon1, tue1, wed1, thu1, fri1] = dates(lastWeek);
-  const sentBackAt = at(fri1, 3, 9);
+  // Friday evening, after the 17:00 submit: never in the future, even on a Monday morning.
+  const sentBackAt = at(fri1, 0, 18);
   const imaliLast = {
     _id: id("b1", 1),
     author: IMALI,

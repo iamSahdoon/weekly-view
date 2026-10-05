@@ -183,7 +183,8 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
     Boolean(initial && !initial.saved),
   );
   const [savedNote, setSavedNote] = useState(Boolean(initial?.saved));
-  useUnsavedGuard(isDirty || fromUnsaved);
+  // Leaving the page writes the composer to the drafts, so only tab close asks.
+  useUnsavedGuard(isDirty || fromUnsaved, { keepsOnNavigate: true });
 
   // Switching days unmounts the composer: what it holds goes to the drafts first.
   const latest = useRef({ isDirty, fromUnsaved, posted: false });
