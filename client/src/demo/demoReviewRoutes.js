@@ -58,7 +58,15 @@ function listTeamUpdates(store, { query }, actor) {
       ),
     );
   }
-  if (blockersOnly) entries = entries.filter((e) => e.day?.blockers.length > 0);
+  // Open blockers only: a resolved one doesn't keep a day in the feed.
+  if (blockersOnly) {
+    entries = entries.filter((e) => {
+      const resolved = new Set(
+        (e.report?.blockerResolutions ?? []).map((r) => r.blockerId),
+      );
+      return (e.day?.blockers ?? []).some((b) => !resolved.has(b._id));
+    });
+  }
 
   entries.sort((a, b) => {
     if (a.user._id === actor._id) return -1;

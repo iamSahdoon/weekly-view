@@ -846,8 +846,14 @@ export async function teamUpdates(
     entries = entries.filter((e) =>
       e.day?.lines?.some((l) => sameId(l.project, project)),
     );
+  // Open blockers only: one with a resolution doesn't keep a day in the feed.
   if (blockersOnly)
-    entries = entries.filter((e) => e.day?.blockers?.length > 0);
+    entries = entries.filter((e) => {
+      const resolved = new Set(
+        (e.report?.blockerResolutions ?? []).map((r) => String(r.blockerId)),
+      );
+      return (e.day?.blockers ?? []).some((b) => !resolved.has(String(b._id)));
+    });
 
   entries.sort((a, b) => {
     if (sameId(a.user._id, actor.id)) return -1;

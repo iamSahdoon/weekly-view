@@ -462,6 +462,21 @@ describe("14 · teammates read the days, never the content", () => {
     expect(res.body.data.items.map((i) => i.user.name)).toEqual(["Member Y."]);
     res = await feed("&blockersOnly=true");
     expect(res.body.data.items.map((i) => i.user.name)).toEqual(["Member X."]);
+    // Resolved, the blocker no longer keeps the day in "Only blockers"; reopened, it does.
+    const blockerId = res.body.data.items[0].day.blockers[0]._id;
+    const reportId = res.body.data.items[0].reportId;
+    await api
+      .put(`/api/reports/${reportId}/blockers/${blockerId}/resolution`)
+      .set(as(admin))
+      .expect(200);
+    res = await feed("&blockersOnly=true");
+    expect(res.body.data.items).toEqual([]);
+    await api
+      .delete(`/api/reports/${reportId}/blockers/${blockerId}/resolution`)
+      .set(as(admin))
+      .expect(200);
+    res = await feed("&blockersOnly=true");
+    expect(res.body.data.items.map((i) => i.user.name)).toEqual(["Member X."]);
     res = await feed("");
     expect(res.body.data.items.map((i) => [i.user.name, i.state])).toEqual([
       ["Admin D.", "not_posted"],

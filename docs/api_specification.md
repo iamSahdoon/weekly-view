@@ -848,7 +848,8 @@ Roles: any, with `canToggleTeamComments`: the author, or a manager or admin. Bod
 #### R12 · `GET /api/updates` — the team updates feed
 
 Roles: any. Mounted at `/api/updates`. Query: `weekKey` (required), `weekday` (required),
-`project` (optional, people with a line on it that day), `blockersOnly` (boolean).
+`project` (optional, people with a line on it that day), `blockersOnly` (boolean — keeps only
+days with an **open**, unresolved blocker; *owner decision, 2026-10-05, per design §3.16*).
 **200** `data: { items }` — one entry per person on the team that week, sorted by name
 with the viewer first:
 

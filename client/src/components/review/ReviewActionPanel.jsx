@@ -8,6 +8,7 @@ import {
   useNextInQueue,
   useSendBack,
 } from "../../hooks/useReviewQueries.js";
+import { cn } from "../../lib/cn.js";
 import { errorCopy } from "../../lib/errorCopy.js";
 import { firstNameOf } from "../../lib/format.js";
 import { qk } from "../../lib/queryKeys.js";
@@ -37,7 +38,12 @@ const PLACEHOLDER =
 const currentRevision = (revisions) =>
   revisions?.find((r) => r.isCurrent) ?? null;
 
-export function ReviewActionPanel({ report, revisions, deskSearch }) {
+export function ReviewActionPanel({
+  report,
+  revisions,
+  deskSearch,
+  className,
+}) {
   // What this person did here, so the panel can say so and offer the next report. A
   // report that was already reviewed when the page opened never sets it.
   const [acted, setActed] = useState(null);
@@ -47,7 +53,9 @@ export function ReviewActionPanel({ report, revisions, deskSearch }) {
   });
 
   if (report.status === "submitted" && acted === null) {
-    return <ReviewForm report={report} onDone={setActed} />;
+    return (
+      <ReviewForm report={report} onDone={setActed} className={className} />
+    );
   }
 
   const line =
@@ -55,11 +63,12 @@ export function ReviewActionPanel({ report, revisions, deskSearch }) {
     "This report hasn’t been submitted, so there is nothing to review yet.";
   return (
     <div
-      className={
+      className={cn(
         acted === null
           ? "flex flex-col gap-11 bg-tint2 px-14 py-14"
-          : "flex flex-col gap-14 border-t border-hair bg-tint px-14 py-14"
-      }
+          : "flex flex-col gap-14 border-t border-hair bg-tint px-14 py-14",
+        className,
+      )}
     >
       <p className="text-base text-ink">{line}</p>
       {acted !== null &&
@@ -79,7 +88,7 @@ export function ReviewActionPanel({ report, revisions, deskSearch }) {
   );
 }
 
-function ReviewForm({ report, onDone }) {
+function ReviewForm({ report, onDone, className }) {
   const queryClient = useQueryClient();
   const [readRevision, setReadRevision] = useState(report.revisionNumber);
   const [text, setText] = useState("");
@@ -152,7 +161,10 @@ function ReviewForm({ report, onDone }) {
   return (
     <section
       aria-label="Review"
-      className="flex flex-col gap-11 border-t border-hair bg-tint px-14 py-14"
+      className={cn(
+        "flex flex-col gap-11 border-t border-hair bg-tint px-14 py-14",
+        className,
+      )}
     >
       {behind && (
         <div className="flex flex-col items-start gap-8 bg-tint2 px-11 py-11 text-dense text-body">

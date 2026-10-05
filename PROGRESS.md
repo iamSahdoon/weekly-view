@@ -564,6 +564,32 @@ it and submit:
     the save state and "Ask for approval" on one line, `Save` and `Submit` below, with the reason
     Submit is disabled above it.
 
+### C6 owner answers (2026-10-05)
+- **Open blockers only.** "Only blockers" on Team updates now keeps only days with an **open**
+  (unresolved) blocker, as design §3.16 says. `reportService.teamUpdates` (R12) and the demo handler
+  both drop a day whose blockers are all resolved; `api_specification.md` R12 carries a one-line
+  owner-decision note. Tests: the R12 RBAC case resolves and reopens a blocker and sees the day
+  leave and re-enter the feed; `demoReview.test.js` does the same in the demo (Imali's Monday
+  blocker is resolved in the fixtures, Nadia's Thursday one is open). Also checked against the real
+  API in a browser run.
+- **The review action panel is pinned.** Wide (≥ 1024 px): the rail is a sticky column whose blocks
+  (person, status, versions, comments) scroll on their own while the panel stays at its foot. Narrow:
+  the blocks come first and the panel is the last child of the page grid, stuck to the bottom of
+  the screen. Checked with 14 overall comments on the report at **1440 × 900** and **360 × 780**:
+  `Approve` … `Comment only` are inside the viewport at the top of the page, scrolled down and at
+  the page bottom, no horizontal overflow, no page errors; screenshots looked at. At 360 px the
+  panel takes about a third of the screen height while it is pinned.
+- **Other C6 decisions accepted as built** (so decision 1's People note and decision 4 stand).
+- **For C10:** the demo's `fixtures.js` must include **at least one Submitted report that asks for
+  approval**, written by someone other than the demo's reviewing perspectives, so the demo's review
+  desk (default "Asked for approval" view) is not empty. Today only Nadia's W-1 report is Submitted,
+  and it did not ask, so Nadia sees "Nothing waiting." and the admin sees it only under "All
+  submitted". Add it with the cast in brand §10 and keep `demoReview.test.js` green (its desk cases
+  set `approvalRequested` themselves and assume the current fixtures otherwise).
+- Lint clean; client 241 green; server 377 of 381 here — the failures are `tests/seed/seed.test.js`
+  "Connection operation buffering timed out", the container issue recorded in C2 / C4 / C5; the same
+  two-to-five fail with my changes stashed, and nothing in the seed changed.
+
 ### C6 checks (2026-10-05)
 - `npm run lint`: clean (client and server, 0 warnings). Client `vite build`: OK. Client `npm test`:
   green — 241 (181 before C6, plus 60): `demoReview.test.js` 17 (the desk lists what asked and
@@ -631,13 +657,11 @@ it and submit:
   container blocks Google Fonts, so the fallback fonts were used.
 - **Not done / unverified:** the demo was exercised through its adapter in tests only (no chooser
   until C10; the demo's fixtures hold no approval-asked report, so its default desk reads "Nothing
-  waiting." — `All submitted` shows Nadia's). The week-range popover's *inner* week pickers were not
+  waiting." — `All submitted` shows Nadia's; see the C10 note above). The week-range popover's *inner* week pickers were not
   clicked (the `Choose a week` default and `Apply` were). Not clicked: the desk's `Role` filter
   through its popover, the mobile `Filters` sheet, `Reply` on a rail thread, the Team updates
   `Open to team comments` switch and `Resolve`. Hover / focus-visible looks, screen readers, real
-  fonts, Safari and Firefox are unverified. **The action panel is the last block of a rail that
-  scrolls inside the viewport (`max-h`), so with many comments the buttons sit below the fold of
-  the rail** — as the design lays it out; say if you want it pinned.
+  fonts, Safari and Firefox are unverified. (The action panel's position was settled in the owner answers: pinned.)
 
 ### Owner: test by hand (C6)
 Run `npm run seed` locally first; every seed account's password is `weekly-view-dev`. The seed's
@@ -1269,10 +1293,8 @@ last block.
      empties it. The rail's "Before you submit" heading over the checklist is new copy.
 
 ## Open questions for the owner
-- **C6, to confirm or change:** the ten decisions above, especially 1 (People is C8) and 4 (the
-  feed's optimistic toggles). **Gap found, not fixed:** `api_specification.md` R12's `blockersOnly`
-  keeps any day with a blocker (the server and the demo do), while design §3.16 says "an open
-  blocker" — a day whose only blockers are resolved still shows under "Only blockers".
+- ~~C6, to confirm or change~~ **Resolved (owner, 2026-10-05):** all ten decisions accepted; `blockersOnly` now means open blockers and the review panel is pinned — see *C6 owner answers*. (Was: the ten decisions above, especially 1 (People is C8) and 4 (the
+  feed's optimistic toggles); and the `blockersOnly` gap.)
 - ~~C5, to confirm or change~~ **Resolved (owner, 2026-10-05):** all seven C5 decisions accepted
   as built; "since W35" (decision 6) is deferred with no API change, a possible later addition —
   see *Decisions*.

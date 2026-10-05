@@ -251,13 +251,29 @@ describe("the team feed (R12)", () => {
     expect(
       (await feed({ project: clientA })).items.map((e) => e.user.name),
     ).toEqual(["Imali J."]);
-    // Imali's Monday has a blocker; Nadia's Monday has none.
-    const monday = await reportService.listTeamUpdates({
-      weekKey: LAST,
-      weekday: "mon",
-      blockersOnly: true,
-    });
-    expect(monday.items.map((e) => e.user.name)).toEqual(["Imali J."]);
+    // Only open blockers count. Imali's Monday blocker is resolved in the fixtures, so
+    // Monday has none; Nadia's Thursday blocker is open.
+    const day = (weekday) =>
+      reportService.listTeamUpdates({
+        weekKey: LAST,
+        weekday,
+        blockersOnly: true,
+      });
+    expect((await day("mon")).items).toEqual([]);
+    expect((await day("thu")).items.map((e) => e.user.name)).toEqual([
+      "Nadia F.",
+    ]);
+
+    // Reopened, Imali's blocker keeps her Monday in the feed; resolved again, it doesn't.
+    const report = reportOf("member", LAST);
+    const blockerId = report.days.find((d) => d.weekday === "mon").blockers[0]
+      ._id;
+    await reportService.clearResolution(report._id, blockerId);
+    expect((await day("mon")).items.map((e) => e.user.name)).toEqual([
+      "Imali J.",
+    ]);
+    await reportService.setResolution(report._id, blockerId);
+    expect((await day("mon")).items).toEqual([]);
   });
 
   it("marks a person on leave and a holiday", async () => {

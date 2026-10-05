@@ -148,40 +148,46 @@ function ReviewedWeek({ week, back, deskSearch }) {
             </div>
           </div>
 
+          {/* Wide: a sticky column whose blocks scroll while the action panel stays pinned at
+              its foot. Narrow: the blocks come first and the panel is the last child of the
+              page grid, stuck to the bottom of the screen. */}
           <aside
             aria-label="Person, status, versions, comments and review"
-            className="flex min-w-0 flex-col gap-24 max-lg:order-first lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px)] lg:self-start lg:overflow-y-auto"
+            className="flex min-w-0 flex-col max-lg:contents lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px)] lg:self-start"
           >
-            <RailBlock label="Person">
-              <ReviewPersonBlock author={report.author} projects={projects} />
-            </RailBlock>
-            <RailBlock label="Status">
-              <ReviewStatusBlock report={report} />
-            </RailBlock>
-            {readable && (
-              <RailBlock label="Versions">
-                <VersionsList
-                  revisions={revisions}
-                  selected={selected}
-                  onSelect={setSelected}
-                />
+            <div className="flex min-h-0 min-w-0 flex-col gap-24 max-lg:order-first lg:flex-1 lg:overflow-y-auto lg:pb-24">
+              <RailBlock label="Person">
+                <ReviewPersonBlock author={report.author} projects={projects} />
               </RailBlock>
-            )}
-            {report.weekComments && (
-              <RailBlock label="Overall comments">
-                <WeekComments
-                  reportId={report._id}
-                  threads={report.weekComments}
-                  canStart={false}
-                  canReply={canReply}
-                />
+              <RailBlock label="Status">
+                <ReviewStatusBlock report={report} />
               </RailBlock>
-            )}
+              {readable && (
+                <RailBlock label="Versions">
+                  <VersionsList
+                    revisions={revisions}
+                    selected={selected}
+                    onSelect={setSelected}
+                  />
+                </RailBlock>
+              )}
+              {report.weekComments && (
+                <RailBlock label="Overall comments">
+                  <WeekComments
+                    reportId={report._id}
+                    threads={report.weekComments}
+                    canStart={false}
+                    canReply={canReply}
+                  />
+                </RailBlock>
+              )}
+            </div>
             {!own && (
               <ReviewActionPanel
                 report={report}
                 revisions={revisions.data?.items}
                 deskSearch={deskSearch}
+                className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:order-last"
               />
             )}
           </aside>
