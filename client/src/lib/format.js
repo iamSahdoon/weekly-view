@@ -108,3 +108,23 @@ export function formatProgress(progress, unit = "days") {
     ? `overdue by ${plural(progress.overdueDays, "day")}`
     : `${plural(progress.daysLeft, "day")} left`;
 }
+
+/**
+ * The confirm before ending leave (owner decision, C4): yourself, or — for a manager or
+ * admin — someone else. `person` is a UserRef or Me.
+ */
+export function endLeaveCopy(person, isSelf) {
+  if (isSelf) {
+    return {
+      title: "Turn off your leave?",
+      body: "Today will need a daily update.",
+      confirmLabel: "Turn off leave",
+    };
+  }
+  const first = firstNameOf(person?.name) || "This person";
+  return {
+    title: `Turn off ${first}’s leave?`,
+    body: `${first} will need a daily update for today.`,
+    confirmLabel: "Turn off leave",
+  };
+}

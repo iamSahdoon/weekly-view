@@ -596,6 +596,7 @@ client/
 │   │   │   └── PlanModal.jsx          # set or extend a plan
 │   │   ├── holiday/                   # §3.17
 │   │   ├── user/                      # §3.10–3.11, §3.15
+│   │   │   ├── EndLeaveDialog.jsx     # added in C4 (owner decision): the confirm before ending leave — yours on This week, someone else's from C8's pages
 │   │   ├── auth/                      # §3.12 form bodies shared across the auth screens
 │   │   │   ├── AuthScreen.jsx         # added in C1: heading, --mut line, panel, footer link
 │   │   │   ├── AuthLink.jsx           # added in C1: the one secondary text link
@@ -698,7 +699,8 @@ client/
 │   │       ├── normalizeError.test.js # added in C1
 │   │       ├── routeParams.test.js    # added in C2
 │   │       ├── permissions.test.js    # added in C3: the week-thread gates (G1), comment window, version labels
-│   │       └── weekActions.test.js    # added in C4: the top-bar primary action's priority order
+│   │       ├── weekActions.test.js    # added in C4: the top-bar primary action's priority order
+│   │       └── endLeaveCopy.test.js   # added in C4: the wording of the confirm before ending leave
 │   ├── styles/
 │   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]

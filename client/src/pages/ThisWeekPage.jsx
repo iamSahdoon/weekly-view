@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CorrectionPanel } from "../components/report/CorrectionPanel.jsx";
 import { CurrentWeekPanel } from "../components/report/CurrentWeekPanel.jsx";
@@ -9,6 +9,7 @@ import { OnLeaveStrip } from "../components/report/OnLeaveStrip.jsx";
 import { PersonalStrip } from "../components/report/PersonalStrip.jsx";
 import { RecentWeeksList } from "../components/report/RecentWeeksList.jsx";
 import { WeekStrip } from "../components/report/WeekStrip.jsx";
+import { EndLeaveDialog } from "../components/user/EndLeaveDialog.jsx";
 import { PageContainer } from "../components/shell/PageContainer.jsx";
 import { PageHeader } from "../components/shell/PageHeader.jsx";
 import { Button } from "../components/ui/Button.jsx";
@@ -49,6 +50,8 @@ export default function ThisWeekPage() {
   const holidays = useHolidaysForWeek(weekKey);
   const onLeave = useOnLeave({ enabled: isCurrent });
   const setLeave = useSetLeave();
+  // Turning leave off asks first (owner decision, C4).
+  const [confirmEnd, setConfirmEnd] = useState(false);
   const projects = useProjects({ mine: true });
   const summary = useReportSummary(weekKey, format(new Date(), "yyyy-MM"));
 
@@ -170,8 +173,19 @@ export default function ThisWeekPage() {
               meOnLeave={me.onLeave}
               ending={setLeave.isPending}
               error={setLeave.error ? errorCopy(setLeave.error) : null}
-              onEndLeave={() =>
-                setLeave.mutate({ userId: me._id, onLeave: false })
+              onEndLeave={() => setConfirmEnd(true)}
+            />
+            <EndLeaveDialog
+              person={me}
+              isSelf
+              open={confirmEnd}
+              onOpenChange={setConfirmEnd}
+              pending={setLeave.isPending}
+              onConfirm={() =>
+                setLeave.mutate(
+                  { userId: me._id, onLeave: false },
+                  { onSettled: () => setConfirmEnd(false) },
+                )
               }
             />
           </div>

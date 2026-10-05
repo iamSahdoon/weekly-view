@@ -400,6 +400,8 @@
   and `components/ui/__tests__/QueryView.test.jsx` (2).
 
 ### C4 checks (2026-10-04)
+- **Owner answers, second round (2026-10-05):** lint clean; client 147 green; the leave confirm
+  walked in a browser (see *Decisions*). Server suite not re-run (no server change).
 - **Owner answers (2026-10-05):** `npm run lint` clean; client 145 green (after the fixture fix
   below). Server: 376–380 of 381 in this container, across runs. The failures are only in
   `tests/seed/seed.test.js` — `MongooseError: Connection operation buffering timed out` — the
@@ -999,6 +1001,24 @@
   10-minute window read as open and three demo tests failed — on `main` too. The send-back is now
   Friday 18:00, after the 17:00 submit.
 
+- C4, **owner decision (2026-10-05): turning leave off asks first.** `Turn off` on This week opens
+  `components/user/EndLeaveDialog.jsx` (the shared `ConfirmDialog`, not destructive): "Turn off your
+  leave?" / "Today will need a daily update." / `Turn off leave`; U9 is sent only on confirm, and the
+  dialog closes when it settles (a failure shows in the strip, as before). For a manager or admin
+  ending someone else's leave the same dialog reads "Turn off {first name}’s leave?" / "{First name}
+  will need a daily update for today." — that control lives on the people and users pages, so C8
+  must use `EndLeaveDialog` with `isSelf={false}`. Turning leave on does not ask. Noted in
+  `requirments_doc.md` §15. Test: `lib/__tests__/endLeaveCopy.test.js` (2) for the wording; the click
+  path was walked in a browser against the real API (Dinesh, on leave in the seed): `Turn off` → the
+  dialog → `Cancel` closes it and sends nothing; `Turn off` → `Turn off leave` sends U9 once and the
+  on-leave line goes away.
+- **For C8 (owner decision, 2026-10-05; not built in C4):** the person's profile (`/people/:userId`)
+  must show managers and admins a **leave history** — each leave period's start, end and who set
+  it. The data is already stored on the user's leave periods (`database_schema.md` §1.1); no API
+  endpoint serves it yet, so C8 must check the API spec for one or raise it before building.
+  Ending someone's leave from C8's pages uses `EndLeaveDialog` (above). Noted in
+  `requirments_doc.md` §15.
+
 ## Open questions for the owner
 - ~~C4, to confirm or change~~ **Resolved (owner, 2026-10-05):** saved drafts are kept until
   sign-out, and the sign-in and sign-up forms take the `onTouched` validation timing — see the two
@@ -1018,7 +1038,8 @@
 ## Departures from `docs/project_structure.md`
 - C4 added `components/shell/LeaveGuard.jsx`, `demo/demoDayRoutes.js`, `demo/demoCatalogRoutes.js`
   and four test files (`demo/__tests__/demoDays.test.js`, `lib/__tests__/weekActions.test.js`,
-  `schemas/__tests__/reportSchema.test.js`, `pages/__tests__/ThisWeekPage.test.jsx`);
+  `schemas/__tests__/reportSchema.test.js`, `pages/__tests__/ThisWeekPage.test.jsx`), and after the
+  owner's answers `components/user/EndLeaveDialog.jsx` and `lib/__tests__/endLeaveCopy.test.js`;
   `project_structure.md` §3.1 and §6 are updated. The C3 fix added
   `components/ui/__tests__/QueryView.test.jsx`. `projectService`, `holidayService` and
   `userService` hold reads only so far; `MetricCell` (C7) is not built — `PersonalStrip` draws

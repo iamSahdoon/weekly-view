@@ -588,6 +588,12 @@ they are on leave, and the product says so.
   expects updates and a report for the days worked.
 - The toggle starts leave now and ends it now. **Booking leave in advance is not in
   scope**; it would be a later addition, and the period model already supports it.
+- **Turning leave off asks first** *(owner decision, 2026-10-05)*. Ending your own leave
+  shows a confirmation ("Turn off your leave? Today will need a daily update."), and so does
+  a manager or admin ending someone else's. Turning leave on does not ask.
+- **The person's profile shows their leave history to managers and admins** *(owner
+  decision, 2026-10-05)*: each leave period's start, end and who set it — the data the
+  periods already store. Team members don't see it.
 
 **Not the same as leaving the company.** Someone who leaves the job is *removed* (§11)
 and may later be re-invited; that is recorded as work periods (§11.4), not as leave.
