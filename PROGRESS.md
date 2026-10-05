@@ -1119,7 +1119,7 @@ it and submit:
   Ending someone's leave from C8's pages uses `EndLeaveDialog` (above). Noted in
   `requirments_doc.md` §15.
 
-- **C5, to confirm or change** (also listed under *Open questions*):
+- **C5 decisions — all seven accepted as built (owner, 2026-10-05):**
   1. **Submit stays clickable while disabled.** It is `aria-disabled` (looks disabled, stays
      focusable) rather than `disabled`, so its tooltip can name what is missing (a native disabled
      button gets no hover or focus) and a click scrolls to and focuses the first problem without
@@ -1140,14 +1140,16 @@ it and submit:
   6. **"since W35"** (design §4.3, a task continued from an earlier week, with its total hours in
      a tooltip) is **not built**: the `Report.tasks` the form reads carries no first week or total
      (`api_specification.md` §1.10); T1 has `hoursTotal` and `lastWeekKey` but not the first week.
-     Needs an API decision.
+     **Owner decision (2026-10-05): deferred, no API change.** The form ships without the label;
+     it is a possible later addition, which would need a field on `Report.tasks` (first week,
+     total hours) decided in the API spec first.
   7. Empty lists (next week, achievements, links) open with one blank row; removing the last row
      empties it. The rail's "Before you submit" heading over the checklist is new copy.
 
 ## Open questions for the owner
-- **C5, to confirm or change:** the seven C5 decisions under *Decisions* — above all 1
-  (Submit clickable while disabled), 2 (what blocks leaving during autosave) and 6 ("since W35"
-  needs a field the API doesn't serve).
+- ~~C5, to confirm or change~~ **Resolved (owner, 2026-10-05):** all seven C5 decisions accepted
+  as built; "since W35" (decision 6) is deferred with no API change, a possible later addition —
+  see *Decisions*.
 - ~~C4, to confirm or change~~ **Resolved (owner, 2026-10-05):** saved drafts are kept until
   sign-out, and the sign-in and sign-up forms take the `onTouched` validation timing — see the two
   C4 owner decisions under *Decisions*. The other C4 decisions stand as built.
