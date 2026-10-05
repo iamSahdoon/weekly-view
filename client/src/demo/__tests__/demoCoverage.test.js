@@ -148,6 +148,31 @@ const CASES = {
         expect(monday.editedAt).not.toBeNull();
       },
     },
+    // The end-of-week content of the current week's Draft (R6).
+    saveContent: {
+      args: () => [
+        ctx.imaliNow._id,
+        {
+          tasks: [
+            { task: ctx.imaliNow.content.tasks[0].taskId, status: "done" },
+          ],
+          nextWeek: ["Shipping options"],
+          notes: "Saved by the demo",
+        },
+      ],
+      check: (view) => {
+        hasKeys(WEEK_VIEW_KEYS)(view);
+        expect(view.report.tasks[0].status).toBe("done");
+        expect(view.report.content.nextWeek).toEqual(["Shipping options"]);
+        expect(view.report.content.notes).toBe("Saved by the demo");
+      },
+    },
+    // Friday of the current week is never posted in the fixtures, so the submit rules
+    // refuse it with the server's code (the full submit: demoContent.test.js).
+    submitReport: {
+      args: () => [ctx.imaliNow._id, { requestApproval: false }],
+      ...rejects("VALIDATION_FAILED"),
+    },
   },
   taskService: {
     listTasks: {

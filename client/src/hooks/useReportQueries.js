@@ -99,6 +99,44 @@ export function usePutDay() {
   });
 }
 
+// R6 — the autosave. Quiet: the response goes into the week cache and nothing else is
+// touched (§5.7). The form is never reset from it (§6.2).
+export function useSaveContent() {
+  const queryClient = useQueryClient();
+  const { user: me } = useAuth();
+  return useMutation({
+    mutationFn: ({ reportId, body }) =>
+      reportService.saveContent(reportId, body),
+    onSuccess: (view) => {
+      queryClient.setQueryData(qk.week(me._id, view.weekKey), view);
+    },
+  });
+}
+
+// R7 — submit or resubmit. Not optimistic; the response replaces the week, and every
+// view that lists, counts or reviews reports is marked stale.
+export function useSubmitReport() {
+  const queryClient = useQueryClient();
+  const { user: me } = useAuth();
+  return useMutation({
+    mutationFn: ({ reportId, requestApproval }) =>
+      reportService.submitReport(reportId, { requestApproval }),
+    onSuccess: (view) => {
+      queryClient.setQueryData(qk.week(me._id, view.weekKey), view);
+      queryClient.invalidateQueries({ queryKey: qk.report(view.report._id) });
+      for (const key of [
+        qk.all.reports(),
+        qk.all.reviewDesk(),
+        qk.all.dashboard(),
+        qk.newMarks(),
+        qk.all.tasks(),
+      ]) {
+        queryClient.invalidateQueries({ queryKey: key });
+      }
+    },
+  });
+}
+
 // The two optimistic toggles of §5.7 — the only optimistic writes in the product. Each
 // flips its field in the week cache at once; on failure it restores the cache and raises
 // an error toast with `Retry`, which sends the same write again. Built as options so
