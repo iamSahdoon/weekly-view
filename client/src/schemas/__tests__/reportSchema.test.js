@@ -5,10 +5,15 @@ import {
   dayToForm,
   daySchema,
   formToDayBody,
+  linkProblem,
+  reportToForm,
+  submitServerFields,
+  toContentPayload,
+  weeklySchema,
 } from "../reportSchema.js";
 
-// The day panel's form (frontend_architecture.md §6.3): what it sends to R5, and what
-// it refuses before sending.
+// The two forms that write a week (frontend_architecture.md §6.3, §6.4): what each
+// sends to R5 or R6, and what it refuses or holds back before sending.
 
 const posted = {
   weekday: "tue",
@@ -125,6 +130,148 @@ describe("the day form", () => {
     expect(dayServerFields(error).fields).toEqual({
       "lines.1.task.name": "Too long",
       "lines.0.text": "Empty",
+    });
+  });
+});
+
+// ---------------------------------------------------------------- the weekly form
+
+const report = {
+  tasks: [
+    {
+      task: { _id: "t1", name: "Checkout", project: null },
+      hours: 5,
+      status: "in_progress",
+      note: "Payments wired",
+    },
+    {
+      task: { _id: "t2", name: "Login", project: null },
+      hours: 2,
+      status: null,
+      note: null,
+    },
+  ],
+  days: [
+    {
+      weekday: "tue",
+      blockers: [
+        { _id: "b1", text: "Keys", isKey: true },
+        { _id: "b2", text: "VPN", isKey: false },
+      ],
+    },
+  ],
+  content: {
+    nextWeek: [],
+    achievements: [{ _id: "a1", text: "Shipped", isKey: true }],
+    notes: "",
+    links: [],
+  },
+};
+
+const weeklyIssues = (values) => {
+  const result = weeklySchema.safeParse(values);
+  return result.success
+    ? {}
+    : Object.fromEntries(
+        result.error.issues.map((i) => [i.path.join("."), i.message]),
+      );
+};
+
+describe("the weekly form", () => {
+  it("opens from the report: statuses by task id, no default status, the key blocker", () => {
+    const values = reportToForm(report);
+    expect(values.taskStates).toEqual({
+      t1: { status: "in_progress", note: "Payments wired" },
+      t2: { status: "", note: "" },
+    });
+    expect(values.keyBlockerId).toBe("b1");
+    expect(values.achievements).toEqual([
+      { _id: "a1", text: "Shipped", isKey: true },
+    ]);
+    // Empty lists open with one blank row to type in.
+    expect(values.nextWeek).toEqual([{ text: "" }]);
+    expect(values.links).toEqual([{ label: "", url: "" }]);
+  });
+
+  it("sends the whole content, dropping empty rows", () => {
+    const values = reportToForm(report);
+    values.nextWeek = [{ text: "  Shipping  " }, { text: "" }];
+    values.notes = "  A note ";
+    expect(toContentPayload(values, report)).toEqual({
+      tasks: [
+        { task: "t1", status: "in_progress", note: "Payments wired" },
+        { task: "t2", note: "" },
+      ],
+      nextWeek: ["Shipping"],
+      achievements: [{ _id: "a1", text: "Shipped", isKey: true }],
+      notes: "A note",
+      links: [],
+      keyBlockerId: "b1",
+    });
+  });
+
+  it("holds back a half-typed link, so an autosave is never a 422", () => {
+    const values = reportToForm(report);
+    values.links = [
+      { label: "Spec", url: "https://example.com/spec" },
+      { label: "Draft", url: "https://exa" },
+      { label: "Half", url: "example.com" },
+      { label: "No link", url: "" },
+    ];
+    expect(toContentPayload(values, report).links).toEqual([
+      { label: "Spec", url: "https://example.com/spec" },
+      { label: "Draft", url: "https://exa" },
+    ]);
+    expect(linkProblem({ label: "Half", url: "example.com" })?.message).toBe(
+      "Use a link that starts with http:// or https://.",
+    );
+    expect(linkProblem({ label: "No link", url: "" })?.message).toBe(
+      "Enter the link.",
+    );
+    expect(linkProblem({ label: "", url: "" })).toBeNull();
+  });
+
+  it("sends a key blocker that a day edit removed as null, and one key achievement at most", () => {
+    const values = reportToForm(report);
+    values.keyBlockerId = "gone";
+    values.achievements = [
+      { text: "One", isKey: true },
+      { text: "Two", isKey: true },
+    ];
+    const body = toContentPayload(values, report);
+    expect(body.keyBlockerId).toBeNull();
+    expect(body.achievements.map((a) => a.isKey)).toEqual([true, false]);
+  });
+
+  it("sends only tasks the server lists, and only real statuses", () => {
+    const values = reportToForm(report);
+    values.taskStates.t9 = { status: "done", note: "" };
+    values.taskStates.t2 = { status: "", note: "x".repeat(2001) };
+    const tasks = toContentPayload(values, report).tasks;
+    expect(tasks.map((t) => t.task)).toEqual(["t1", "t2"]);
+    expect(tasks[1]).toEqual({ task: "t2" }); // too-long note held back
+  });
+
+  it("validates a task's status with the design's words; optional fields never block", () => {
+    const values = reportToForm(report);
+    values.links = [{ label: "Half", url: "example.com" }];
+    expect(weeklyIssues(values)).toEqual({
+      "taskStates.t2.status": "Choose a status.",
+      "links.0.url": "Use a link that starts with http:// or https://.",
+    });
+  });
+
+  it("maps R7's 422 onto the form: task statuses as fields, days as missing days", () => {
+    expect(
+      submitServerFields({
+        fields: {
+          "days.thu": "Thursday has no update.",
+          "tasks.t2.status": "Choose a status.",
+        },
+      }),
+    ).toEqual({
+      taskFields: { "taskStates.t2.status": "Choose a status." },
+      days: ["thu"],
     });
   });
 });

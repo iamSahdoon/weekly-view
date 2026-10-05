@@ -2,7 +2,7 @@ import { api } from "./apiClient.js";
 
 // Reports and days (api_specification.md §2.5). C3 holds the reads and the two
 // switches a reader can flip; C4 the day write and the This week lists (R1, R2, R5);
-// R6–R7 arrive with C5.
+// C5 the end-of-week content and submit (R6, R7).
 
 /** R1 → paginated ReportRow items, the caller's own. */
 export const listMyReports = (params) => api.get("/reports", { params });
@@ -17,6 +17,13 @@ export const getMyWeek = (weekKey) => api.get(`/reports/week/${weekKey}`);
 /** R5 → WeekView. The whole day: lines, blockers, openToTeam. */
 export const putDay = (weekKey, weekday, body) =>
   api.put(`/reports/week/${weekKey}/days/${weekday}`, body);
+
+/** R6 → WeekView. The whole content body, from toContentPayload. */
+export const saveContent = (id, body) => api.patch(`/reports/${id}`, body);
+
+/** R7 → WeekView. Submit, or resubmit after a send-back. */
+export const submitReport = (id, { requestApproval }) =>
+  api.post(`/reports/${id}/submit`, { requestApproval });
 
 /** R4 → WeekView */
 export const getReport = (id) => api.get(`/reports/${id}`);

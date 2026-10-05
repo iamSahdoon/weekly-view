@@ -1,4 +1,9 @@
-import { TASK_TYPES, WEEKDAYS } from "../lib/constants.js";
+import {
+  TASK_STATUSES,
+  TASK_TYPES,
+  WEEKDAYS,
+  WEEKDAY_LABELS,
+} from "../lib/constants.js";
 import {
   compareWeekKeys,
   currentWeekKey,
@@ -11,14 +16,16 @@ import { isObjectId } from "../lib/routeParams.js";
 import { fail, ok, withUser } from "./demoResponses.js";
 import {
   dayAvailability,
+  expectedDaysOf,
   projectRef,
   threadOut,
   weekViewOf,
 } from "./demoWeekView.js";
 
-// The demo's answers for writing a day and for This week's two lists
-// (api_specification.md §2.5 R1, R2, R5). R5 follows the server's order of checks, so
-// every refusal the day panel handles can be met here too.
+// The demo's answers for writing a week — a day, the end-of-week content, the submit —
+// and for This week's two lists (api_specification.md §2.5 R1, R2, R5–R7). Each write
+// follows the server's order of checks, so every refusal the day panel and the weekly
+// form handle can be met here too.
 
 const OPEN = ["draft", "needs_correction"];
 const invalid = (fields) =>
@@ -243,6 +250,189 @@ function putDay(store, { params, body }, actor) {
   return ok(weekViewOf(store, actor, actor, weekKey, report));
 }
 
+// ---------------------------------------------------------------- R6, R7
+
+const report404 = () =>
+  fail(404, "REPORT_NOT_FOUND", "That report doesn't exist.");
+
+// Load → 404; not the author → 403; not open → 409 (R6 and R7, steps 1).
+function loadForAuthorWrite(store, id, actor) {
+  const report = isObjectId(id)
+    ? store.reports.find((r) => r._id === id.toLowerCase())
+    : null;
+  if (!report) return { refusal: report404() };
+  if (report.author !== actor._id) {
+    return {
+      refusal: fail(403, "REPORT_FORBIDDEN", "You can't open this report."),
+    };
+  }
+  if (!OPEN.includes(report.status)) {
+    return {
+      refusal: fail(409, "REPORT_STATE_CHANGED", "This report changed.", {
+        status: report.status,
+      }),
+    };
+  }
+  return { report };
+}
+
+const isText = (value, max) =>
+  typeof value === "string" && value.trim().length <= max;
+
+// R6's validator (reportValidator.autosaveSchema), with its paths.
+function contentProblems(body) {
+  const fields = {};
+  const list = (name, max = 30) => {
+    const value = body?.[name];
+    if (value === undefined) return [];
+    if (!Array.isArray(value) || value.length > max) {
+      fields[name] = `Too big: expected at most ${max}`;
+      return [];
+    }
+    return value;
+  };
+  list("tasks", 200).forEach((t, i) => {
+    if (!isObjectId(t?.task)) fields[`tasks.${i}.task`] = "Not an id";
+    if (t?.status !== undefined && !TASK_STATUSES.includes(t.status))
+      fields[`tasks.${i}.status`] = "Invalid option";
+    if (t?.note !== undefined && !isText(t.note, 2000))
+      fields[`tasks.${i}.note`] = "Too big: expected at most 2000";
+  });
+  list("nextWeek").forEach((text, i) => {
+    if (!isText(text, 500)) fields[`nextWeek.${i}`] = "Too big";
+  });
+  const achievements = list("achievements");
+  achievements.forEach((a, i) => {
+    if (!isText(a?.text, 500)) fields[`achievements.${i}.text`] = "Too big";
+    if (a?._id !== undefined && !isObjectId(a._id))
+      fields[`achievements.${i}._id`] = "Not an id";
+  });
+  if (achievements.filter((a) => a?.isKey).length > 1)
+    fields.achievements = "Flag at most one key achievement";
+  if (body?.notes !== undefined && !isText(body.notes, 5000))
+    fields.notes = "Too big: expected at most 5000";
+  list("links").forEach((l, i) => {
+    if (l?.label !== undefined && !isText(l.label, 500))
+      fields[`links.${i}.label`] = "Too big";
+    const url = typeof l?.url === "string" ? l.url.trim() : "";
+    if (!/^https?:\/\/\S+$/i.test(url))
+      fields[`links.${i}.url`] = "Use an http or https link";
+  });
+  if (
+    body?.keyBlockerId !== undefined &&
+    body.keyBlockerId !== null &&
+    !isObjectId(body.keyBlockerId)
+  )
+    fields.keyBlockerId = "Not an id";
+  return Object.keys(fields).length ? fields : null;
+}
+
+function saveContent(store, { params, body }, actor) {
+  const problems = contentProblems(body);
+  if (problems) return invalid(problems);
+  const { report, refusal } = loadForAuthorWrite(store, params.id, actor);
+  if (refusal) return refusal;
+
+  const fields = {};
+  const listed = new Set(report.content.tasks.map((t) => t.taskId));
+  (body.tasks ?? []).forEach((t, i) => {
+    if (!listed.has(t.task.toLowerCase()))
+      fields[`tasks.${i}.task`] = "That task isn't in this week.";
+  });
+  const blockers = report.days.flatMap((d) => d.blockers);
+  if (body.keyBlockerId && !blockers.some((b) => b._id === body.keyBlockerId))
+    fields.keyBlockerId = "That blocker isn't in this week.";
+  if (Object.keys(fields).length) return invalid(fields);
+
+  const content = report.content;
+  for (const update of body.tasks ?? []) {
+    const entry = content.tasks.find(
+      (t) => t.taskId === update.task.toLowerCase(),
+    );
+    if (update.status !== undefined) entry.status = update.status;
+    if (update.note !== undefined) entry.note = update.note.trim();
+  }
+  // Empty rows are the form's business; only items with text are stored.
+  if (body.nextWeek)
+    content.nextWeek = body.nextWeek.map((t) => t.trim()).filter(Boolean);
+  if (body.achievements)
+    content.achievements = body.achievements
+      .filter((a) => a.text.trim() !== "")
+      .map((a) => ({
+        _id: a._id ?? store.nextId("a1"),
+        text: a.text.trim(),
+        isKey: Boolean(a.isKey),
+      }));
+  if (body.notes !== undefined) content.notes = body.notes.trim();
+  if (body.links)
+    content.links = body.links.map((l) => ({
+      label: (l.label ?? "").trim(),
+      url: l.url.trim(),
+    }));
+  if (body.keyBlockerId !== undefined) {
+    for (const b of blockers) b.isKey = b._id === body.keyBlockerId;
+  }
+  report.updatedAt = new Date().toISOString();
+  return ok(weekViewOf(store, actor, actor, report.weekKey, report));
+}
+
+// The shared submit rules (policies/submitRules.js): R7's 422 `fields`.
+function submitProblems(store, actor, report) {
+  const fields = {};
+  const posted = new Set(report.days.map((d) => d.weekday));
+  for (const day of expectedDaysOf(store, actor, report.weekKey)) {
+    if (!posted.has(day))
+      fields[`days.${day}`] = `${WEEKDAY_LABELS[day]} has no update.`;
+  }
+  for (const t of report.content.tasks.filter((t) => !t.status)) {
+    fields[`tasks.${t.taskId}.status`] = "Choose a status.";
+  }
+  return Object.keys(fields).length ? fields : null;
+}
+
+function submit(store, { params, body }, actor) {
+  if (
+    body?.requestApproval !== undefined &&
+    typeof body.requestApproval !== "boolean"
+  ) {
+    return invalid({ requestApproval: "Expected boolean" });
+  }
+  const { report, refusal } = loadForAuthorWrite(store, params.id, actor);
+  if (refusal) return refusal;
+  const problems = submitProblems(store, actor, report);
+  if (problems) return invalid(problems);
+
+  const now = new Date().toISOString();
+  const requestApproval = Boolean(body?.requestApproval);
+  report.revisionNumber += 1;
+  report.status = "submitted";
+  report.approvalRequested = requestApproval;
+  report.submittedAt = now;
+  report.lastActivityAt = now;
+  report.updatedAt = now;
+  report.latestComment = null;
+  report.revisions.push({
+    revisionNumber: report.revisionNumber,
+    approvalRequested: requestApproval,
+    submittedAt: now,
+    submittedBy: actor._id,
+    action: null,
+    comment: null,
+    reviewedBy: null,
+    reviewedAt: null,
+    content: structuredClone(report.content),
+    days: structuredClone(report.days).map((day) => ({ ...day, comments: [] })),
+  });
+  // Tasks' doneAt follows their status (taskService.syncDoneAt).
+  for (const t of report.content.tasks) {
+    const task = store.tasks.find((x) => x._id === t.taskId);
+    if (!task) continue;
+    if (t.status === "done") task.doneAt ??= now;
+    else task.doneAt = null;
+  }
+  return ok(weekViewOf(store, actor, actor, report.weekKey, report));
+}
+
 // ---------------------------------------------------------------- R1, R2
 
 function reportRow(store, actor, report) {
@@ -364,4 +554,6 @@ export const dayRoutes = [
   ["get", "/reports", withUser(listMyReports)], // R1
   ["get", "/reports/summary", withUser(summary)], // R2
   ["put", "/reports/week/:weekKey/days/:weekday", withUser(putDay)], // R5
+  ["patch", "/reports/:id", withUser(saveContent)], // R6
+  ["post", "/reports/:id/submit", withUser(submit)], // R7
 ];

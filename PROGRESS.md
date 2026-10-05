@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C5**
+**Next stage: C6**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -17,7 +17,7 @@
 | C2 | Shell, tables, filters, URL state | done |
 | C3 | Reading a week; comment components | done |
 | C4 | Writing: day panel, This week | done |
-| C5 | The weekly form | not started |
+| C5 | The weekly form | done |
 | C6 | History, team updates, review desk, review page | not started |
 | C7 | Dashboard and charts | not started |
 | C8 | Projects, users, holidays, people, profile, account | not started |
@@ -463,6 +463,106 @@
   cluster, and it takes precedence over `server/.env`. The first `npm run seed` tried it and
   could not connect (nothing was written). Every later run set `MONGODB_URI` to the local
   in-memory server explicitly.
+
+### C5 checks (2026-10-05)
+- `npm run lint`: clean (client and server). Client `npm test`: green — 181 (147 before C5, plus
+  34): `submitChecklist.test.js` 6, `useAutosave.test.js` 6 (the autosave's state machine on fake
+  timers: 1200 ms after the last change, one request in flight, one trailing save with the latest
+  values, `failed` keeps the edits and `Retry` sends them), 7 new cases in `reportSchema.test.js`
+  (form values from a report, no default status, empty rows dropped, a half-typed link held back,
+  a removed key blocker sent as null, one key achievement, R7's 422 mapping),
+  `demoContent.test.js` 7 (R6 and R7 in the demo with the server's checks and codes),
+  `ReportEditPage.test.jsx` 6 (static renders), and 2 new cases in `demoCoverage.test.js`.
+  Server: 380 of 381 in this container — the one failure is `tests/seed/seed.test.js`
+  "reseeding across a year boundary" with `MongooseError: Connection operation buffering timed
+  out`, the container issue recorded in C2 and C4. Nothing under `server/` changed.
+- **The done list, in a real browser against the real API** (Playwright's Chromium, headless;
+  the API on a local in-memory replica set; Vite dev server). **Per the owner, the seed was not
+  run and no Atlas / `MONGODB_URI` database was touched** — the container's `MONGODB_URI` (an
+  Atlas string) was overridden in-process. The data was written through the API by a scratch
+  script: an owner (Priya A.) and an invited member (Kamal M.), work periods backdated three
+  weeks in the in-memory database, Priya's W39 (Mon–Thu posted) and W40 (all five days, two
+  tasks, two blockers), Kamal's W40 submitted with approval asked and sent back by Priya. Today
+  was Monday, 5 Oct 2026. Every line below was asserted by the script, which exited 0 on a fresh
+  database:
+  - *Submit disabled with a named reason*: W39 — `Submit` is `aria-disabled`, its tooltip reads
+    "Friday has no update.", the rail's checklist has "Every working day has an update" unticked
+    with a `Friday` link. W40 — "2 tasks have no status.", then "One task has no status." after
+    one status.
+  - *A blocked submit scrolls to and focuses the first problem*: clicking the disabled `Submit`
+    on W39 focused the Friday cell of the week summary (it sits at 122 px — the page can't scroll
+    further up); on W40 it focused the first task's Select at exactly 140 px from the top,
+    `aria-invalid="true"`, with "Choose a status." under both tasks and the rail's `01 Tasks` in
+    the error colour. Choosing a status clears its message.
+  - *Enabled the moment the last status is set*: `aria-disabled` was gone while the indicator
+    still read "Unsaved changes" — before any autosave was sent.
+  - *Autosave, all four states, never a toast*: opens "Saved 08:00"; typing → "Unsaved changes";
+    after 1.2 s → "Saving…" (the request held open by the script) → "Saved HH:MM"; with R6
+    aborted → "Not saved" + `Retry`, no toast in the DOM; leaving then asks "Leave this page?"
+    and `Cancel` stays; `Retry` → "Saved", and the content was in the database. `Save` flushes.
+  - *Typing during a refetch changes nothing*: while a save was held open, the script added a task
+    to Friday through R5 and kept typing in Notes. When the save returned, the new task appeared
+    as a row with no status, the typed text and the two chosen statuses were untouched, a
+    trailing save stored the full text, and `Submit` went back to disabled ("One task has no
+    status.").
+  - Key blocker: radio semantics (choosing Thursday's unflags Tuesday's), stored by R6. Key
+    achievement: a second click clears it. A link "example.com/spec" shows "Use a link that starts
+    with http:// or https://." on blur and is held back (R6 never 422'd); once valid it is stored.
+  - *First submit with "Ask for approval"*: ticked → `/reports/2026-W40`, Submitted, rev 1,
+    `approvalRequested: true`, no toast. `/reports/2026-W40/edit` on a filed report → the
+    document; `/reports/2026-W38/edit` with no report → `/?week=2026-W38`.
+  - *Resubmit* (Kamal, Needs correction, via `Fix and resubmit` on This week): the correction
+    panel above section 01 without `Open and fix`, `Resubmit` enabled, statuses from the report,
+    "Ask for approval" unticked. A status and a note changed just before `Resubmit` were flushed
+    first: rev 2, Submitted, `approvalRequested: false`, the note stored.
+  - *A full week at 360 px*: no horizontal overflow; the rail is gone; tasks are cards with
+    full-width 44 px Selects at 16 px; the bar is 88 px with "Friday has no update." above it;
+    statuses, a planned item and a link saved. No page errors anywhere.
+- **Screenshots looked at** (1440 px and 360 px): the open form, the blocked submit, "Not saved",
+  the bar with "Ask for approval" ticked and its hint, the correction form, 360 px top and full.
+  The container blocks Google Fonts, so the fallback fonts were used. Found by looking and fixed:
+  the 140 px status Select cut "Choose a status" off — the placeholder is now "Set status"; the
+  hint had been inside the checkbox's label, so the box's name was the whole sentence — the hint
+  now sits outside the label and is wired by `aria-describedby`.
+- **Not done / unverified:** the R7 422 path (server disagrees with the client checklist) and the
+  409 toast are unit-tested in their mapping only, not provoked in the browser. The `online`
+  retry, the tab-close prompt and the IntersectionObserver's "current" row while scrolling were not
+  exercised (the current row was seen correct in screenshots only). The demo was exercised through
+  its adapter in tests only (no chooser until C10). Hover / focus-visible looks beyond the
+  approval hint, screen readers, real fonts, Safari and Firefox are unverified.
+
+### Owner: test by hand (C5)
+Run `npm run seed` locally first; every seed account's password is `weekly-view-dev`.
+**First submit** — Malith W. has a past week with no report (three weeks back), so he can fill
+it and submit:
+1. Sign in as `malith@example.com`.
+2. On This week, open the week picker in the top bar and choose the week three weeks back
+   (it has no report: every day shows as missing).
+3. Post each missing day: click the day in the strip, add a line (task, type, what you did,
+   hours), `Post update`. Do this for every day that isn't a holiday.
+4. Click `Review and submit` in the top bar. The form opens.
+5. Look at the bar at the bottom: `Submit` is greyed and hovering it says how many tasks have no
+   status. Click it anyway: the page scrolls to the first task and its status box turns red with
+   "Choose a status.".
+6. Choose a status for every task. `Submit` turns blue the moment the last one is chosen.
+7. Type in "Planned for next week" and watch the bottom-left: "Unsaved changes" → "Saving…" →
+   "Saved 14:32". No pop-up message should appear.
+8. **Check the "Ask for approval" box**: it sits left of `Save`, framed like a button; hovering
+   it shows the explanation; ticking it fills it blue. Tick it.
+9. Click `Submit`. You land on the filed week; it says Submitted, and the week should now be on
+   the review desk for Nadia F. / Ruwan P.
+**Resubmit** — Tharindu S.'s current week was sent back:
+10. Sign in as `tharindu@example.com`. This week shows the correction panel; click
+    `Fix and resubmit`.
+11. The panel "Sent back by Ruwan P." sits above section 01. The bottom bar says `Resubmit`, and
+    **"Ask for approval" starts unticked** even though the first version asked for it.
+12. Add a note to the CSV export task, tick "Ask for approval", click `Resubmit`. You land on the
+    filed week, Submitted.
+**Narrow screen**:
+13. In the browser's device toolbar choose a 360 px-wide phone and open any Draft's form (Ayesha C.,
+    `ayesha@example.com`, this week): tasks are cards, nothing scrolls sideways, and the bar shows
+    the save state and "Ask for approval" on one line, `Save` and `Submit` below, with the reason
+    Submit is disabled above it.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -1019,7 +1119,37 @@
   Ending someone's leave from C8's pages uses `EndLeaveDialog` (above). Noted in
   `requirments_doc.md` §15.
 
+- **C5 decisions — all seven accepted as built (owner, 2026-10-05):**
+  1. **Submit stays clickable while disabled.** It is `aria-disabled` (looks disabled, stays
+     focusable) rather than `disabled`, so its tooltip can name what is missing (a native disabled
+     button gets no hover or focus) and a click scrolls to and focuses the first problem without
+     sending anything — design §4.10's "blocked submit". R7's 422 does the same from the
+     server's `fields`. `Button`'s primary variant gained the `aria-disabled` look.
+  2. **Guards during autosave.** §6.4 says the form registers as unsaved while `pending` or
+     `failed`, and also that a route change flushes. Built: `failed` blocks in-app navigation
+     ("Leave this page?" — the C4 wording, "What you've written and not posted will be lost.");
+     `pending` / `saving` only arm the tab-close prompt, because leaving the page saves them
+     (the unmount flush).
+  3. **"Ask for approval" is unticked on every open, a resubmit included** (requirements §4: "may
+     ask for approval again"; design §4.9: "unticked by default"). It is framed like the buttons
+     beside it and turns `--acc-l` when ticked, for the owner's "easy to see".
+  4. **A 409 on submit** shows an error toast "This report is now Submitted." and refetches; the
+     page then moves to the filed document, so there is no form left to show it inline.
+  5. **The status placeholder reads "Set status"** — "Choose a status" does not fit design §4.3's
+     140 px Select. The error under it keeps §4.10's "Choose a status.".
+  6. **"since W35"** (design §4.3, a task continued from an earlier week, with its total hours in
+     a tooltip) is **not built**: the `Report.tasks` the form reads carries no first week or total
+     (`api_specification.md` §1.10); T1 has `hoursTotal` and `lastWeekKey` but not the first week.
+     **Owner decision (2026-10-05): deferred, no API change.** The form ships without the label;
+     it is a possible later addition, which would need a field on `Report.tasks` (first week,
+     total hours) decided in the API spec first.
+  7. Empty lists (next week, achievements, links) open with one blank row; removing the last row
+     empties it. The rail's "Before you submit" heading over the checklist is new copy.
+
 ## Open questions for the owner
+- ~~C5, to confirm or change~~ **Resolved (owner, 2026-10-05):** all seven C5 decisions accepted
+  as built; "since W35" (decision 6) is deferred with no API change, a possible later addition —
+  see *Decisions*.
 - ~~C4, to confirm or change~~ **Resolved (owner, 2026-10-05):** saved drafts are kept until
   sign-out, and the sign-in and sign-up forms take the `onTouched` validation timing — see the two
   C4 owner decisions under *Decisions*. The other C4 decisions stand as built.
@@ -1036,6 +1166,10 @@
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C5 added four test files (`hooks/__tests__/useAutosave.test.js`, `lib/__tests__/submitChecklist.test.js`,
+  `demo/__tests__/demoContent.test.js`, `pages/__tests__/ReportEditPage.test.jsx`) and R6/R7 to
+  `demo/demoDayRoutes.js`; `project_structure.md` §3.1 and §6 are updated. `TaskRow.jsx` also exports
+  the status and note fields `TaskCard` shares. `PendingPage` no longer serves the edit route.
 - C4 added `components/shell/LeaveGuard.jsx`, `demo/demoDayRoutes.js`, `demo/demoCatalogRoutes.js`
   and four test files (`demo/__tests__/demoDays.test.js`, `lib/__tests__/weekActions.test.js`,
   `schemas/__tests__/reportSchema.test.js`, `pages/__tests__/ThisWeekPage.test.jsx`), and after the

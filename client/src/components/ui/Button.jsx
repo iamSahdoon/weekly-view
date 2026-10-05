@@ -17,9 +17,11 @@ const ICON_SIZES = {
 };
 
 const VARIANTS = {
+  // `aria-disabled` looks disabled but stays focusable and clickable, so a tooltip can
+  // say why and a click can show the problem (the weekly form's Submit, design §4.9).
   primary:
-    "border-acc bg-acc text-on-acc enabled:hover:border-acc-d enabled:hover:bg-acc-d enabled:active:scale-[.985] " +
-    "disabled:border-tint2 disabled:bg-tint2 disabled:text-mut",
+    "border-acc bg-acc text-on-acc enabled:not-aria-disabled:hover:border-acc-d enabled:not-aria-disabled:hover:bg-acc-d enabled:not-aria-disabled:active:scale-[.985] " +
+    "disabled:border-tint2 disabled:bg-tint2 disabled:text-mut aria-disabled:cursor-not-allowed aria-disabled:border-tint2 aria-disabled:bg-tint2 aria-disabled:text-mut",
   secondary:
     "border-rule bg-card text-ink enabled:hover:border-hair2 enabled:hover:bg-tint enabled:active:bg-tint2 " +
     "disabled:border-hair disabled:text-mut",

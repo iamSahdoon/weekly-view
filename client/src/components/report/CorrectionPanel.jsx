@@ -7,8 +7,9 @@ import { Button } from "../ui/Button.jsx";
 // Shown on This week only while the report is Needs correction (design §3.1):
 // --st-corr-bg, 1px --st-corr-bd, a 2px --st-corr-fg left bar. Who sent it back and
 // when, the comment, `Open and fix`, and `Reply`, which opens the send-back thread.
+// The weekly form shows it above section 01 (`inForm`), without `Open and fix`.
 
-export function CorrectionPanel({ week }) {
+export function CorrectionPanel({ week, inForm = false }) {
   const report = week.report;
   const latest = report.latestComment;
   const [replying, setReplying] = useState(false);
@@ -32,9 +33,11 @@ export function CorrectionPanel({ week }) {
         {latest.text}
       </p>
       <div className="flex flex-wrap items-center gap-8">
-        <Button variant="secondary" asChild>
-          <Link to={`/reports/${week.weekKey}/edit`}>Open and fix</Link>
-        </Button>
+        {!inForm && (
+          <Button variant="secondary" asChild>
+            <Link to={`/reports/${week.weekKey}/edit`}>Open and fix</Link>
+          </Button>
+        )}
         {thread && !replying && (
           <Button variant="ghost" onClick={() => setReplying(true)}>
             Reply
