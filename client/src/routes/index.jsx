@@ -14,14 +14,18 @@ import SessionLayout from "./SessionLayout.jsx";
 // The route table (frontend_architecture.md §4.1): every path in the product, with
 // its guard. Routes that make no sense in the demo carry handle.realOnly.
 //
-// Pages that a later stage builds render PendingPage until then: C3 replaces the
-// report-reading routes (done in C3), C4 "/" (done, in IndexRoute), C5 the edit route (done), C6 history / updates / review,
-// C7 /team, C8 the rest.
+// Pages that a later stage builds render PendingPage until then: C7 /team, C8 the rest
+// (C3 the report-reading routes, C4 "/", C5 the edit route and C6 history, updates and
+// review are done).
 
 const SignInPage = lazy(() => import("../pages/SignInPage.jsx"));
 const SignUpPage = lazy(() => import("../pages/SignUpPage.jsx"));
 const ReportDetailPage = lazy(() => import("../pages/ReportDetailPage.jsx"));
 const ReportEditPage = lazy(() => import("../pages/ReportEditPage.jsx"));
+const ReportHistoryPage = lazy(() => import("../pages/ReportHistoryPage.jsx"));
+const TeamUpdatesPage = lazy(() => import("../pages/TeamUpdatesPage.jsx"));
+const ReviewDeskPage = lazy(() => import("../pages/ReviewDeskPage.jsx"));
+const ReviewPage = lazy(() => import("../pages/ReviewPage.jsx"));
 const AcceptInvitePage = lazy(() => import("../pages/AcceptInvitePage.jsx"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage.jsx"));
 // Defined in development only, so a production build has no /design chunk.
@@ -64,10 +68,7 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
             {
               element: <ProtectedRoute />,
               children: [
-                {
-                  path: "/reports",
-                  element: <PendingPage title="My reports" />,
-                },
+                { path: "/reports", element: page(<ReportHistoryPage />) },
                 {
                   path: "/reports/:week",
                   element: guarded(["week"], <ReportDetailPage />),
@@ -76,10 +77,7 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
                   path: "/reports/:week/edit",
                   element: guarded(["week"], <ReportEditPage />),
                 },
-                {
-                  path: "/updates",
-                  element: <PendingPage title="Team updates" />,
-                },
+                { path: "/updates", element: page(<TeamUpdatesPage />) },
                 {
                   path: "/people/:userId/reports/:week",
                   element: guarded(["userId", "week"], <ReportDetailPage />),
@@ -93,16 +91,10 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
             {
               element: <ProtectedRoute allow={["manager", "admin"]} />,
               children: [
-                {
-                  path: "/review",
-                  element: <PendingPage title="Review desk" />,
-                },
+                { path: "/review", element: page(<ReviewDeskPage />) },
                 {
                   path: "/review/:reportId",
-                  element: guarded(
-                    ["reportId"],
-                    <PendingPage title="Review" />,
-                  ),
+                  element: guarded(["reportId"], <ReviewPage />),
                 },
                 {
                   path: "/team",

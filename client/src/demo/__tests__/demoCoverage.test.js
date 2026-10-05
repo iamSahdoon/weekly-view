@@ -173,6 +173,26 @@ const CASES = {
       args: () => [ctx.imaliNow._id, { requestApproval: false }],
       ...rejects("VALIDATION_FAILED"),
     },
+    // Everyone sees everyone's day; the viewer comes first (the content: demoReview.test.js).
+    listTeamUpdates: {
+      args: () => [
+        {
+          weekKey: addWeeks(currentWeekKey(), -1),
+          weekday: "mon",
+          project: undefined,
+          blockersOnly: undefined,
+        },
+      ],
+      check: (data) => {
+        expect(data.items.map((e) => e.user._id)).toEqual([
+          PERSPECTIVES.member,
+          PERSPECTIVES.manager,
+          PERSPECTIVES.admin,
+        ]);
+        hasKeys(["user", "state", "reportId", "day"])(data.items[0]);
+        expect(data.items[0].state).toBe("posted");
+      },
+    },
   },
   taskService: {
     listTasks: {
@@ -202,6 +222,9 @@ const CASES = {
     },
   },
   userService: {
+    // The people list is for managers and admins; a member is refused (the content:
+    // demoReview.test.js).
+    listUsers: { args: [{ limit: 100 }], ...rejects("FORBIDDEN") },
     // A teammate's week: the days, and no end-of-week layer at all.
     getUserWeek: {
       args: () => [PERSPECTIVES.manager, addWeeks(currentWeekKey(), -1)],
@@ -226,6 +249,20 @@ const CASES = {
     },
   },
   reviewService: {
+    // The three review calls are for managers and admins; a member is refused (the
+    // content: demoReview.test.js).
+    approve: {
+      args: () => [ctx.imaliLast._id, { revisionNumber: 1 }],
+      ...rejects("FORBIDDEN"),
+    },
+    sendBack: {
+      args: () => [
+        ctx.imaliLast._id,
+        { revisionNumber: 1, comment: "Please add the missing notes." },
+      ],
+      ...rejects("FORBIDDEN"),
+    },
+    listReviewDesk: { args: [{ page: 1, limit: 20 }], ...rejects("FORBIDDEN") },
     commentOnDay: {
       args: () => [ctx.imaliLast._id, "mon", "Thanks for the note."],
       check: (day) => {

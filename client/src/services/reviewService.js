@@ -1,8 +1,22 @@
 import { api } from "./apiClient.js";
 
-// Comments (api_specification.md §2.6). The review actions and the desk (V1–V4)
-// arrive with C6. One path shape serves day and week threads: thread ids are unique
-// within a report.
+// Review and comments (api_specification.md §2.6, §2.7). V1–V3 are here; the desk's
+// count (V4) arrives with the sidebar's marker in C9. One path shape serves day and
+// week threads: thread ids are unique within a report.
+
+/** V1 → WeekView. `comment` is optional; `revisionNumber` is the version that was read. */
+export const approve = (id, { revisionNumber, comment }) =>
+  api.post(`/reports/${id}/review/approve`, {
+    revisionNumber,
+    ...(comment ? { comment } : {}),
+  });
+
+/** V2 → WeekView. `comment` is required, 10 to 2000 characters. */
+export const sendBack = (id, { revisionNumber, comment }) =>
+  api.post(`/reports/${id}/review/send-back`, { revisionNumber, comment });
+
+/** V3 → paginated review-desk items, never the caller's own. */
+export const listReviewDesk = (params) => api.get("/review-desk", { params });
 
 /** C1 → Day (201) */
 export const commentOnDay = (reportId, weekday, text) =>

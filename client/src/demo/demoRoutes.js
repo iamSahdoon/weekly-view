@@ -7,6 +7,8 @@
 import { fail, ok, withUser } from "./demoResponses.js";
 import { catalogRoutes } from "./demoCatalogRoutes.js";
 import { dayRoutes } from "./demoDayRoutes.js";
+import { reviewRoutes } from "./demoReviewRoutes.js";
+import { userRoutes } from "./demoUserRoutes.js";
 import { meOf } from "./demoWeekView.js";
 import { weekRoutes } from "./demoWeekRoutes.js";
 
@@ -51,11 +53,14 @@ const authRoutes = [
 ];
 
 // The day write and the This week lists come before weekRoutes, whose
-// `/reports/:id` would otherwise answer `/reports/summary`.
+// `/reports/:id` would otherwise answer `/reports/summary`; the review routes
+// (`/reports/:id/review/…`) share no path with it.
 const ROUTES = [
   ...authRoutes,
   ...dayRoutes,
   ...catalogRoutes,
+  ...userRoutes,
+  ...reviewRoutes,
   ...weekRoutes,
 ].map(([method, path, handler]) => ({
   method,

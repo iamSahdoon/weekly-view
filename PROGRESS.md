@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C6**
+**Next stage: C7**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -18,7 +18,7 @@
 | C3 | Reading a week; comment components | done |
 | C4 | Writing: day panel, This week | done |
 | C5 | The weekly form | done |
-| C6 | History, team updates, review desk, review page | not started |
+| C6 | History, team updates, review desk, review page | done |
 | C7 | Dashboard and charts | not started |
 | C8 | Projects, users, holidays, people, profile, account | not started |
 | C9 | "New" markers, system states, print | not started |
@@ -563,6 +563,128 @@ it and submit:
     `ayesha@example.com`, this week): tasks are cards, nothing scrolls sideways, and the bar shows
     the save state and "Ask for approval" on one line, `Save` and `Submit` below, with the reason
     Submit is disabled above it.
+
+### C6 checks (2026-10-05)
+- `npm run lint`: clean (client and server, 0 warnings). Client `vite build`: OK. Client `npm test`:
+  green — 241 (181 before C6, plus 60): `demoReview.test.js` 17 (the desk lists what asked and
+  `all` adds the rest; **your own report is never on your desk, under five filter combinations**;
+  person / role / project / week-range filters; a member is refused; approve with and without a
+  comment; send back with the 9-character 422 and the `send_back` thread; `SELF_REVIEW_FORBIDDEN`;
+  a report that isn't Submitted; **the pinned revision — sent back, resubmitted, a decision on the
+  old version is `REPORT_STATE_CHANGED`, and only one of two decisions on the same version wins**;
+  R12's order, filters, leave and holiday states; U1 and "no token in the list"),
+  `ReviewPages.test.jsx` 17 (the four pages as static renders over the demo's answers on a frozen
+  Wednesday: the review page for someone else's report, your own, an already approved one, a
+  sent-back one and a Draft; the desk's states and columns; history's rows, `Editable` hints,
+  first-time and filtered-empty states; Team updates' tabs, order and closed-to-teammates line),
+  `updatesDay.test.js` 9, `reviewDeskParams.test.js` 6, `reviewOutcome.test.js` 4, 2 new cases in
+  `useReportQueries.test.js` (the feed flips with the week and restores on failure), and 5 new
+  cases in `demoCoverage.test.js` (every new service function is answered by the demo). Server:
+  381 of 381 green in this container (nothing under `server/` changed).
+- **The done list, in a real browser against the real API** (Playwright's Chromium, headless; the
+  API on a local in-memory replica set; Vite dev server). **Per the owner, the seed was not run and
+  no Atlas / `MONGODB_URI` database was touched.** The data was written through the API by a scratch
+  script: an owner (Sanduni B.), managers Nadia F. and Ruwan P., members Imali J., Tharindu S. and
+  Ayesha C., work periods backdated eight weeks; W39 and W40 posted and submitted, Tharindu's W39
+  being the oldest request; Ruwan's W40 left a Draft. Three scripts asserted every line below and
+  exited 0 on a fresh database (walk 1, walk 2) and again for the 360 px pass:
+  - *The review desk never lists your own report.* Nadia's desk: three asked reports, oldest first
+    (Tharindu W39, Imali W40, Tharindu W40), Nadia's own W40 absent; `All submitted` adds Ayesha's
+    (who didn't ask) and still not Nadia's; `?approval=all&person=<Nadia>` is empty with the
+    header kept; person, week-range filters, the New markers (an opened request has none).
+  - *Approve pins the revision.* Approve with a comment → the panel becomes "Approved by Nadia F.
+    at HH:MM" with the chip Approved and the comment in the rail. **Stale version, 409 path:** with
+    Tharindu's W40 open at version 1, Ruwan sent it back and Tharindu resubmitted (version 2) through
+    the API; Nadia's `Approve` was refused, the banner "Tharindu submitted a new version. Reload to
+    review it." appeared, **both buttons disabled, the typed text kept**, the failure inline above
+    the buttons; `Reload` re-pinned (the page showed rev 2), `Approve` worked, the server held
+    Approved on rev 2. **Stale version, refetch path:** the same with Imali's W40 — `Comment only`
+    (which invalidates the report) refetched it and raised the banner.
+  - *Send back.* `Send back` is disabled with no comment and with 9 characters, enabled at 10; the
+    confirm names "Send week 40 back to Ayesha C.?" and shows the comment; `Cancel` kept the text;
+    confirming gave "Sent back by Nadia F. at …"; the server held Needs correction with a
+    `send_back` thread. `Comment only` added a thread, cleared the textarea and left the panel.
+  - *"Next in review desk".* From a desk filtered to Tharindu, Approve on W39 → Next went to
+    Tharindu's W40, not Imali's (the filters travel in the link's state); with nothing left the link
+    went to `/review` and its "Nothing waiting."; the back link in the top bar returns to the desk
+    with its filters.
+  - *Your own report on the review page:* the strip "You can't review your own report.", no action
+    panel in the page; the server also refuses it (`SELF_REVIEW_FORBIDDEN`). A member at `/review`
+    gets the 403 page.
+  - *C3's §9.4 table, finally by clicking.* Team updates → a name → Imali as a teammate sees
+    Nadia's week ("Weekly reports are shared with managers only.", days present); Nadia clicking
+    Imali's name sees the document; clicking Ruwan's Draft shows "Weekly report not submitted yet.";
+    your own name goes to `/reports/:week`.
+  - *My reports:* three weeks newest first, the eight columns of §3.3, `Editable` and the form link
+    on the Draft, `Approval asked`, sort and status / week-range filters in the URL, the filtered-
+    empty state with the header kept and `Clear filters`. *Team updates:* five tabs, Tue–Fri
+    disabled on a Monday, the viewer first, "Not posted yet" one-liners, the blocker, Nadia's
+    comment on Imali's day, `Only blockers` and the project filter in the URL.
+  - **At 360 px** history, Team updates, the desk and the review page have no horizontal overflow.
+    No page errors or failed API calls other than the ones the checks provoke (409, 403).
+- **Found by running it and fixed:** the review page asked for a Draft's versions, which the server
+  withholds (`403` on R8) — it now asks only when the content is readable, as the week page does; the
+  action panel's region was named "Overall comment" twice (now "Review"); the status column wrapped
+  "Approval asked" onto two lines (now `nowrap`, 230 px).
+- **Screenshots looked at** (1440 px and 360 px): history, the filtered-empty state, Team updates,
+  the desk, the review page with the stale banner, the send-back confirm, the mobile desk. The
+  container blocks Google Fonts, so the fallback fonts were used.
+- **Not done / unverified:** the demo was exercised through its adapter in tests only (no chooser
+  until C10; the demo's fixtures hold no approval-asked report, so its default desk reads "Nothing
+  waiting." — `All submitted` shows Nadia's). The week-range popover's *inner* week pickers were not
+  clicked (the `Choose a week` default and `Apply` were). Not clicked: the desk's `Role` filter
+  through its popover, the mobile `Filters` sheet, `Reply` on a rail thread, the Team updates
+  `Open to team comments` switch and `Resolve`. Hover / focus-visible looks, screen readers, real
+  fonts, Safari and Firefox are unverified. **The action panel is the last block of a rail that
+  scrolls inside the viewport (`max-h`), so with many comments the buttons sit below the fold of
+  the rail** — as the design lays it out; say if you want it pinned.
+
+### Owner: test by hand (C6)
+Run `npm run seed` locally first; every seed account's password is `weekly-view-dev`. The seed's
+current week holds: Nadia F. Submitted and **asked**, Ruwan P. Submitted (not asked), Tharindu S.
+Needs correction, Imali J. and Sanduni B. Approved, Ayesha C. Draft; earlier weeks hold some
+Submitted-and-unreviewed reports. Use two browsers (or one normal and one private window) for the
+last block.
+**My reports** (as Ayesha):
+1. Sign in as `ayesha@example.com` and click **My reports**. The newest week is a Draft; it shows
+   `Editable` beside its chip. Click it: the weekly form opens. Go back.
+2. Click the **Week** column header twice: the order flips and the address bar gains `sort=…&dir=…`.
+3. Click **Status**, tick **Approved**, **Apply**: only approved weeks stay. Click **Weeks**, choose
+   a week for **From week**, **Apply**. Click **Clear (n)** at the right of the bar to reset.
+4. Set a filter nothing matches (e.g. Status: Draft plus a week range ending before this week):
+   the header stays and **Clear filters** appears.
+**Team updates and a person's week** (the teammate and manager views, §9.4):
+5. Sign in as `imali@example.com`, click **Team updates**. You are listed first, then the others by
+   name; people who haven't posted today are one line. Days after today are greyed.
+6. Click the week picker's **‹** to go to last week and click **Mon**. Click **Nadia F.**: you land on
+   her week and see her daily updates plus "Weekly reports are shared with managers only."
+7. Back on Team updates, click your own name: you go to your own week page.
+8. Tick **Only blockers** and pick a project in the project box: the list narrows and both are in
+   the address bar.
+9. Sign out, sign in as `nadia@example.com`, **Team updates**, last week, click **Imali J.**: you see
+   the whole document (tasks, next week, hours by type). Do the same for **Ayesha C.** on the current
+   week (a Draft): you see her days and "Weekly report not submitted yet."
+   (The **People** page — the other way to reach a person's week — is built in C8; it will link to
+   the same address.)
+**Review desk and review page** (as Ruwan P.):
+10. Sign in as `ruwan@example.com`, click **Review desk**. You see requests oldest first, Nadia F.'s
+    current week among them, and **no row for Ruwan P.** Click **All submitted**: still none of your own.
+11. Click the Nadia F. row. Look at the right-hand column: person, status, versions, and the box at
+    the bottom. Type `short` — **Send back** stays grey. Type ten or more characters — it turns on.
+12. Click **Send back**: a window asks "Send week N back to Nadia F.?" and repeats your comment.
+    Click **Cancel** (your text is still there). Click **Approve** instead: the box is replaced by
+    "Approved by Ruwan P. at …" and a **Next in review desk** link. Click it: you go to the next
+    request (or back to the desk's empty state).
+13. Use the desk's **Person** filter to pick one person, open a row from there and approve it: **Next
+    in review desk** respects that person filter.
+**A report that changes while you read it** (two windows):
+14. Window 1: sign in as `sanduni@example.com`, open **Review desk**, open Nadia F.'s current-week
+    request (or any Submitted one) and type a comment — don't click anything.
+15. Window 2: sign in as `ruwan@example.com`, open the same request, type 10+ characters and **Send
+    back** → confirm. Then sign in as `nadia@example.com` (a third window, or sign out), **This week**
+    → **Fix and resubmit** → **Resubmit**.
+16. Window 1: click **Approve**. A banner says "Nadia submitted a new version. Reload to review it.",
+    both buttons are grey and your text is still in the box. Click **Reload**, then **Approve**.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -1147,6 +1269,10 @@ it and submit:
      empties it. The rail's "Before you submit" heading over the checklist is new copy.
 
 ## Open questions for the owner
+- **C6, to confirm or change:** the ten decisions above, especially 1 (People is C8) and 4 (the
+  feed's optimistic toggles). **Gap found, not fixed:** `api_specification.md` R12's `blockersOnly`
+  keeps any day with a blocker (the server and the demo do), while design §3.16 says "an open
+  blocker" — a day whose only blockers are resolved still shows under "Only blockers".
 - ~~C5, to confirm or change~~ **Resolved (owner, 2026-10-05):** all seven C5 decisions accepted
   as built; "since W35" (decision 6) is deferred with no API change, a possible later addition —
   see *Decisions*.
@@ -1166,6 +1292,7 @@ it and submit:
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C6 added `components/report/WeekDocument.jsx`, `components/ui/WeekRangeFilter.jsx`, `demo/demoReviewRoutes.js`, `demo/demoUserRoutes.js`, `lib/reviewDeskParams.js`, `lib/reviewOutcome.js`, `lib/updatesDay.js` and five test files (`pages/__tests__/ReviewPages.test.jsx`, `demo/__tests__/demoReview.test.js`, `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`); `project_structure.md` §3.1 and §6 are updated. `WeekComments.jsx` (built in C3) is reused by the review page unchanged. `hooks/useNewMarks.js` and the desk's count are C9's.
 - C5 added four test files (`hooks/__tests__/useAutosave.test.js`, `lib/__tests__/submitChecklist.test.js`,
   `demo/__tests__/demoContent.test.js`, `pages/__tests__/ReportEditPage.test.jsx`) and R6/R7 to
   `demo/demoDayRoutes.js`; `project_structure.md` §3.1 and §6 are updated. `TaskRow.jsx` also exports
