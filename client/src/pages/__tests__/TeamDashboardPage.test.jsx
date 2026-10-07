@@ -20,6 +20,7 @@ import {
   UpdatesCell,
   UpdatesLegend,
 } from "../../components/dashboard/UpdatesCell.jsx";
+import { updatesSentence } from "../../lib/dashboardData.js";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { PageChromeProvider } from "../../context/PageChromeContext.jsx";
 import { createDemoAdapter } from "../../demo/demoAdapter.js";
@@ -390,76 +391,119 @@ describe("the five-day strip", () => {
     expect(html).toContain("size-[14px]");
   });
 
-  it("gives every state its own look: a solid fill, a red × on a tint, a thick blue edge, a hatch", () => {
+  const allSix = {
+    mon: "posted",
+    tue: "missing",
+    wed: "leave",
+    thu: "holiday",
+    fri: "future",
+  };
+
+  it("draws each state in the product's own palette: cobalt, the correction red, cool neutrals", () => {
     const html = renderToStaticMarkup(
-      <UpdatesCell
-        dayStates={{ ...states, thu: "leave", fri: "holiday", tue: "today" }}
-      />,
+      <UpdatesCell dayStates={{ ...allSix, fri: "today" }} />,
     );
-    // Posted: solid success colour.
-    expect(cell(html, "posted")).toContain("background:var(--st-appr-fg)");
-    // Missing: a tint, a 2px red edge — not a hairline — and a cross of two diagonals.
+    // Posted: solid cobalt, the accent — not green.
+    expect(cell(html, "posted")).toContain("background:var(--acc)");
+    // Missing: the Needs-correction red — a tint, a 2px edge (not a hairline) and an ×.
     const missing = cell(html, "missing");
     expect(missing).toContain("var(--st-corr-bg)");
     expect(missing).toContain("border:2px solid var(--st-corr-fg)");
     expect(missing.match(/linear-gradient/g)).toHaveLength(2);
-    // Today: hollow with a 2px accent edge.
+    // Today: a cobalt outline.
     expect(cell(html, "today")).toContain("border:2px solid var(--acc)");
-    // Leave and holiday: a hatch of stripes in a colour no other state uses.
+    // Leave and holiday: neutral tones, on a --tint2 fill.
     for (const state of ["leave", "holiday"]) {
-      expect(cell(html, state)).toContain("repeating-linear-gradient");
-      expect(cell(html, state)).toContain("var(--c6)");
+      expect(cell(html, state)).toContain("var(--tint2)");
+      expect(cell(html, state)).toContain("var(--mut)");
     }
+    // Nothing is green or purple any more.
+    expect(html).not.toMatch(/--st-appr|--c\d/);
   });
 
-  it("tells the states apart without colour: solid, ×, hollow, hatched differ in pattern", () => {
-    const html = renderToStaticMarkup(
-      <UpdatesCell
-        dayStates={{
-          mon: "posted",
-          tue: "missing",
-          wed: "leave",
-          thu: "today",
-          fri: "future",
-        }}
-      />,
+  it("keeps leave and holiday apart: a diagonal hatch against a dot grid", () => {
+    const html = renderToStaticMarkup(<UpdatesCell dayStates={allSix} />);
+    const leave = cell(html, "leave");
+    const holiday = cell(html, "holiday");
+    expect(leave).toContain("repeating-linear-gradient(45deg");
+    expect(leave).not.toContain("radial-gradient");
+    expect(holiday).toContain("radial-gradient");
+    expect(holiday).not.toContain("linear-gradient");
+    expect(leave).not.toBe(holiday);
+    expect(updatesSentence(allSix)).toBe(
+      "Posted Mon; missing Tue; on leave Wed; holiday Thu",
     );
-    const patterns = ["posted", "missing", "leave", "today", "future"].map(
-      (state) => {
-        const css = cell(html, state);
-        return [
-          /background-image/.test(css)
-            ? css.includes("repeating")
-              ? "hatch"
-              : "cross"
-            : "plain",
-          css.includes("background:var(--st-appr-fg)") ? "solid" : "hollow",
-        ].join("/");
-      },
-    );
-    // posted solid/plain, missing cross, leave hatch; today and future are the two plain
-    // hollow cells, told apart by the edge's weight (2px against 1px).
-    expect(patterns.slice(0, 3)).toEqual([
-      "plain/solid",
-      "cross/hollow",
-      "hatch/hollow",
+  });
+
+  it("tells every state apart without colour: its pattern or its edge differs", () => {
+    const six = {
+      mon: "posted",
+      tue: "missing",
+      wed: "leave",
+      thu: "holiday",
+      fri: "today",
+    };
+    const html =
+      renderToStaticMarkup(<UpdatesCell dayStates={six} />) +
+      renderToStaticMarkup(<UpdatesCell dayStates={{ mon: "future" }} />);
+    // Strip every colour: what is left is the pattern kind, the fill and the edge width.
+    const shape = (state) => {
+      const css = cell(html, state);
+      const image = /repeating-linear/.test(css)
+        ? "hatch"
+        : /radial/.test(css)
+          ? "dots"
+          : /linear-gradient/.test(css)
+            ? "cross"
+            : "none";
+      const solid = /background:var\(--acc\)/.test(css) ? "solid" : "open";
+      const edge = css.match(/border:(\d)px/)[1];
+      return `${image}/${solid}/${edge}px`;
+    };
+    const shapes = [
+      "posted",
+      "missing",
+      "leave",
+      "holiday",
+      "today",
+      "future",
+    ].map(shape);
+    expect(shapes).toEqual([
+      "none/solid/1px",
+      "cross/open/2px",
+      "hatch/open/1px",
+      "dots/open/1px",
+      "none/open/2px",
+      "none/open/1px",
     ]);
-    expect(cell(html, "today")).toContain("2px");
-    expect(cell(html, "future")).toContain("1px");
+    // Six states, and the strings differ except where the pattern does: posted (solid)
+    // and the two hollow outlines (today 2px, later 1px) are separated by fill and edge.
+    expect(new Set(shapes).size).toBe(6);
   });
 
-  it("has a legend with the same cells and their words", () => {
+  it("has a legend with the same six cells and their words", () => {
     const html = renderToStaticMarkup(<UpdatesLegend />);
     for (const words of [
       "Posted",
       "Missing",
       "Not posted yet today",
-      "Leave or holiday",
+      "On leave",
+      "Holiday",
       "Later this week",
     ]) {
       expect(html).toContain(words);
     }
-    expect(html.match(/data-state=/g)).toHaveLength(5);
+    expect(html.match(/data-state=/g)).toHaveLength(6);
+    for (const state of [
+      "posted",
+      "missing",
+      "today",
+      "leave",
+      "holiday",
+      "future",
+    ]) {
+      expect(html).toContain(`data-state="${state}"`);
+    }
   });
 
   it("is under the team table", async () => {

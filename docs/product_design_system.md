@@ -74,7 +74,7 @@ chart colors. The dark theme needs more than that. These eight values are new:
 | `--c1` (dark)         | `#6E86EE` | `#1C39BB` is illegible as a chart series on `--card #14171B`                                                       | **needs sign-off**             |
 | `--c4` (dark)         | `#9A9D96` | Lightened Documentation grey                                                                                       | **needs sign-off**             |
 | `--c6` (dark)         | `#9E82AB` | Lightened Other                                                                                                    | **needs sign-off**             |
-| `--c7` (both)         | `#9A7B2F` / `#D1AE63` | Research & study, the seventh task type added by the project owner. An ochre, clear of cobalt, pine and the corrections red | **needs sign-off** |
+| `--c7` (both)         | `#9A7B2F` / `#D1AE63` (now `#D49A0C` / `#F2B932`, see §9.3's vibrancy note) | Research & study, the seventh task type added by the project owner. An ochre, clear of cobalt, pine and the corrections red | **approved by the owner as built, 2026-10-07** |
 | `--st-none-bd` (dark) | `#242A31` | §3.4 specifies `--d-line`; named explicitly so the chip doesn't depend on a surface token                          | —                              |
 
 `--c3` and `--c5` use the lightened alternates the brand document already supplies
@@ -719,15 +719,19 @@ among approved people is always 100% (`requirments_doc.md` §6).
   filter** — a Secondary `sm` multi-select, `Status: Draft, Not started` when set — so it
   visibly filters this table and nothing else. Row click → the review page if Submitted
   and reviewable by you, otherwise that person's week (§3.4).
-- **The updates column** is the five-day strip at table scale: five `14×14px` cells, each
-  with a *shape* as well as a colour so no state depends on colour alone. *(Owner decision,
-  C7 feedback, 2026-10-07 — supersedes the hairline version.)* **Posted:** solid `--st-appr-fg`
-  fill. **Missing:** a `--st-corr-bg` fill, a 2px `--st-corr-fg` edge and a `×` through it.
-  **Today, not posted:** a hollow cell with a 2px `--acc` edge. **Leave or holiday:** `--tint2`
-  with a diagonal hatch of 2px `--c6` stripes (a colour no other state uses) and a `--hair2` edge.
-  **Later this week:** a hollow cell with a 1px `--hair` edge. A small legend (the same cells
-  with their words) sits under the table, and a visually-hidden text equivalent ("Posted Mon,
-  Tue; missing Wed") is always present.
+- **The updates column** is the five-day strip at table scale: five square `14×14px` cells,
+  in the product's own palette (cobalt, the Needs-correction red, cool neutrals), each with a
+  *shape or pattern* as well as a colour so no state depends on colour alone. *(Owner decision,
+  C7 feedback, 2026-10-07 — twice amended: the first version used green and purple, which sat
+  outside the system; this is the second.)* **Posted:** solid `--acc` (cobalt). **Missing:** a
+  `--st-corr-bg` tint, a 2px `--st-corr-fg` edge and a `×` through it — the same danger as a
+  Needs correction chip. **Today, not posted yet:** hollow, a 2px `--acc` outline. **On leave**
+  and **Holiday** are two indicators, never one: leave is a `--tint2` cell with a diagonal
+  hatch of `--mut` stripes, holiday a `--tint2` cell with a grid of `--mut` dots, both with a
+  1px `--hair2` edge. **Later this week:** hollow, a faint 1px `--hair` outline. (A day before
+  the person joined is a dashed `--hair2` outline.) A legend of the six cells with their words
+  sits under the table, and a visually-hidden text equivalent ("Posted Mon, Tue; missing Wed;
+  on leave Thu; holiday Fri") is always present.
 - **Hours come from the daily work lines**, so every row shows them, Drafts included —
   they are shared as posted. A Draft row shows `—` only for what is still private:
   task statuses, and so the "tasks done" figure.
@@ -2155,7 +2159,7 @@ Inline in `<head>` before the app bundle, to prevent a theme flash.
   --c4: #7a8794; /* Documentation */
   --c5: #d6342b; /* Review        */
   --c6: #8f3fb5; /* Other         */
-  --c7: #d49a0c; /* Research & study — needs sign-off (§0.3) */
+  --c7: #d49a0c; /* Research & study — approved by the owner (§0.3) */
 
   /* ── Elevation (floating layers only) ─────────────────── */
   --shadow-pop:
@@ -2239,7 +2243,7 @@ Inline in `<head>` before the app bundle, to prevent a theme flash.
   --c4: #9aa7b5;
   --c5: #ff6b5e;
   --c6: #b979e0;
-  --c7: #f2b932; /* needs sign-off (§0.3) */
+  --c7: #f2b932; /* approved by the owner (§0.3) */
 
   --shadow-pop:
     0 12px 28px -14px rgba(0, 0, 0, 0.68), 0 2px 8px -4px rgba(0, 0, 0, 0.5);

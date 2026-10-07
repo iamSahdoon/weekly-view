@@ -63,7 +63,7 @@
   --c4: #7a8794; /* Documentation */
   --c5: #d6342b; /* Review        */
   --c6: #8f3fb5; /* Other         */
-  --c7: #d49a0c; /* Research & study — needs sign-off (§0.3) */
+  --c7: #d49a0c; /* Research & study — approved by the owner (§0.3) */
 
   /* ── Elevation (floating layers only) ─────────────────── */
   --shadow-pop:
@@ -147,7 +147,7 @@
   --c4: #9aa7b5;
   --c5: #ff6b5e;
   --c6: #b979e0;
-  --c7: #f2b932; /* needs sign-off (§0.3) */
+  --c7: #f2b932; /* approved by the owner (§0.3) */
 
   --shadow-pop:
     0 12px 28px -14px rgba(0, 0, 0, 0.68), 0 2px 8px -4px rgba(0, 0, 0, 0.5);

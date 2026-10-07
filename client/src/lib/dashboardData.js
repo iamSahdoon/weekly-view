@@ -29,7 +29,7 @@ export function updatesSentence(dayStates) {
     ["Posted", named("posted")],
     ["missing", named("missing")],
     ["not yet today", named("today")],
-    ["leave", named("leave")],
+    ["on leave", named("leave")],
     ["holiday", named("holiday")],
   ]
     .filter(([, days]) => days)

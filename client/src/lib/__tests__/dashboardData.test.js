@@ -68,7 +68,7 @@ describe("the five-day strip in words", () => {
         thu: "holiday",
         fri: "future",
       }),
-    ).toBe("Posted Mon; not yet today Tue; leave Wed; holiday Thu");
+    ).toBe("Posted Mon; not yet today Tue; on leave Wed; holiday Thu");
   });
   it("says so when nothing has been posted", () => {
     expect(

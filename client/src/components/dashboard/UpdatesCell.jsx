@@ -2,28 +2,30 @@ import { WEEKDAYS } from "../../lib/constants.js";
 import { updatesSentence } from "../../lib/dashboardData.js";
 
 // The five-day strip at table scale (design §3.7, as amended by the owner after C7): five
-// 14×14px cells that read at a glance and never by colour alone — each state has a shape.
-//   posted        solid --st-appr-fg (the success green)
-//   missing       --st-corr-bg fill, a 2px --st-corr-fg edge and an × through it
-//   today         hollow, a 2px --acc edge (not posted yet)
-//   leave, holiday  --tint2 with a diagonal hatch of --c6 stripes, a --hair2 edge
-//   future        hollow, a 1px --hair edge
+// 14×14px square cells in the product's own palette — cobalt, cool neutrals and the
+// Needs-correction red — that read at a glance and never by colour alone: every state
+// has its own shape or pattern.
+//   posted        solid --acc (cobalt)
+//   missing       --st-corr-bg fill, a 2px --st-corr-fg edge and an × through it — the same
+//                 danger as a Needs correction chip
+//   today         hollow, a 2px --acc outline (not posted yet)
+//   leave         --tint2 with a diagonal hatch of --mut stripes
+//   holiday       --tint2 with a dot grid of --mut dots — a different pattern from leave
+//   future        hollow, a faint 1px --hair outline
 // A hidden sentence says the same in words ("Posted Mon, Tue; missing Wed"), and
-// `UpdatesLegend` shows the cells with their words under the table.
+// `UpdatesLegend` shows the six cells with their words under the table.
 
 const CROSS = (color) =>
   `linear-gradient(45deg, transparent calc(50% - 1px), ${color} calc(50% - 1px), ${color} calc(50% + 1px), transparent calc(50% + 1px)), ` +
   `linear-gradient(-45deg, transparent calc(50% - 1px), ${color} calc(50% - 1px), ${color} calc(50% + 1px), transparent calc(50% + 1px))`;
 const HATCH =
-  "repeating-linear-gradient(45deg, var(--c6) 0 2px, transparent 2px 4px)";
+  "repeating-linear-gradient(45deg, var(--mut) 0 1.5px, transparent 1.5px 4px)";
+const DOTS = "radial-gradient(circle, var(--mut) 1.1px, transparent 1.6px)";
 
-// One style per state, tokens only. The hatch and the × are background images, so they
-// scale with the cell and need no extra elements.
+// One style per state, tokens only. The hatch, the dots and the × are background images,
+// so they scale with the cell and need no extra elements.
 const STATES = {
-  posted: {
-    background: "var(--st-appr-fg)",
-    border: "1px solid var(--st-appr-fg)",
-  },
+  posted: { background: "var(--acc)", border: "1px solid var(--acc)" },
   missing: {
     backgroundColor: "var(--st-corr-bg)",
     backgroundImage: CROSS("var(--st-corr-fg)"),
@@ -35,10 +37,17 @@ const STATES = {
     backgroundImage: HATCH,
     border: "1px solid var(--hair2)",
   },
+  holiday: {
+    backgroundColor: "var(--tint2)",
+    backgroundImage: DOTS,
+    backgroundSize: "4px 4px",
+    backgroundPosition: "center",
+    border: "1px solid var(--hair2)",
+  },
   future: { background: "var(--card)", border: "1px solid var(--hair)" },
+  // Before they joined: not a day anyone was expected, drawn as a dashed outline.
+  not_on_team: { background: "var(--card)", border: "1px dashed var(--hair2)" },
 };
-STATES.holiday = STATES.leave;
-STATES.not_on_team = STATES.leave;
 
 function Cell({ state }) {
   return (
@@ -66,11 +75,12 @@ const LEGEND = [
   ["posted", "Posted"],
   ["missing", "Missing"],
   ["today", "Not posted yet today"],
-  ["leave", "Leave or holiday"],
+  ["leave", "On leave"],
+  ["holiday", "Holiday"],
   ["future", "Later this week"],
 ];
 
-/** The cells with their words, for under the table. */
+/** The six cells with their words, for under the table. */
 export function UpdatesLegend() {
   return (
     <ul

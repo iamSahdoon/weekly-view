@@ -832,12 +832,14 @@ correction, Imali J. and Sanduni B. Approved, Ayesha C. Draft; one person on lea
 2. In the **Team** table, click the **Person** column header once: the order reverses and the address gains `dir=desc`.
    Click **Status** (the button above the table, right side), tick **Draft**, **Apply**. Only the table
    changes; the four numbers do not. Reload: the filter is still there. Open the button again, **Clear**.
-3. In the **Updates** column a solid green square is a posted day, a red square with a thick edge and
-   an × is a missing day, a hollow blue-edged one is today (not posted yet), a purple diagonal hatch is
-   leave or a holiday and a thin grey hollow one is later in the week; the legend is under the table.
-   Squint (or use a greyscale filter): solid, ×, hollow and hatched still differ. Click any row: a
-   Submitted report that isn't yours opens the review page; your own row and anyone else's go to that
-   person's week.
+3. In the **Updates** column a solid cobalt square is a posted day, a red-tinted square with a thick red
+   edge and an × is a missing day (the same red as a Needs correction chip), a hollow cobalt-outlined
+   one is today (not posted yet), a diagonal grey hatch is **on leave**, a grey dot grid is a
+   **holiday**, and a faint hollow one is later in the week; the six-entry legend is under the table.
+   Squint (or use a greyscale filter): solid, ×, hollow-thick, hatch, dots and hollow-faint still differ.
+   (Dinesh K. is on leave and every person has the seed's holiday on Wednesday, so all six show.)
+   Check dark mode and a 360 px phone too. Click any row: a Submitted report that isn't yours opens the
+   review page; your own row and anyone else's go to that person's week.
 4. **Projects:** click **Hours**, then **Days**. Click a project's name: it opens to show who worked on
    it, with hours this week and in total. "overdue by N days" is red.
 5. **Tasks completed:** open **8 weeks** and choose **4 weeks**: the line has four points. Open **Team
@@ -871,10 +873,8 @@ Owner testing on their machine produced six requests, all done on this branch.
    upgrade (`npm audit fix --force` would install vitest 5, a breaking change). They are test-runner
    dependencies, not shipped in the client bundle. `npm audit` now reports 3 findings (those two and
    `vitest`, which depends on them).
-2. **Updates squares readable at a glance** — posted = solid success green; missing = red tint, **2px**
-   red edge and an **×**; today = hollow with a 2px blue edge; leave or holiday = a purple (`--c6`)
-   diagonal hatch; later = hollow with a hairline. Shape differs for every state, so none relies on
-   colour; all are tokens, light and dark. A **legend** under the table shows the cells with their words.
+2. **Updates squares readable at a glance** — *first version (green and purple), superseded by the
+   second round below.* Shape differed for every state, all tokens, with a legend under the table.
    (Design §3.7 amended with an owner-decision note.)
 3. **Vibrancy (owner decision).** More saturated status chips and chart colours, same hue per task type,
    in both themes; the four metric numbers are coloured (Filed blue, Compliance green, Open blockers
@@ -885,7 +885,7 @@ Owner testing on their machine produced six requests, all done on this branch.
    app-wide**, so every chip and `--st-corr-*` strip in the app is stronger too; the seven values for
    light (and dark): Development `#1f44d6` (`#7b93ff`), Testing `#2e9ad8` (`#4fb4f0`), Meetings `#1e8f43`
    (`#52c27a`), Documentation `#7a8794` (`#9aa7b5`), Review `#d6342b` (`#ff6b5e`), Other `#8f3fb5`
-   (`#b979e0`), Research & study `#d49a0c` (`#f2b932`) — `--c7` still needs sign-off (§0.3).
+   (`#b979e0`), Research & study `#d49a0c` (`#f2b932`) — `--c7` was approved by the owner as built (second round, below).
 4. **Value labels.** Each bar in Hours by task type and each row in Workload by project ends in its total
    (bold, `--ink`, 12 px mono) and the line under each title says "Each number is that … total", so the
    axis top (90 h, 105 h) can't be read as a target. The trend's last week label is no longer clipped.
@@ -901,6 +901,31 @@ Owner testing on their machine produced six requests, all done on this branch.
   failures, no hex or default tooltip, fixed heights, no overflow) ended **ALL PASSED** again, and
   screenshots at **1440 and 360 px, light and dark** were looked at. Unverified: real fonts (blocked
   here), a greyscale view of the squares by eye (checked by their patterns in a test), other browsers.
+
+### C7 owner feedback, round two (2026-10-07): squares and legend in the system's palette
+The green and the purple of round one felt outside the design system, so the Updates squares and their
+legend now use only the product's own palette (cobalt, the Needs-correction red, cool neutrals), square
+corners, 1–2px edges. Design §3.7 carries the owner-decision note (and says this is the second
+version).
+- **Posted:** solid `--acc` (cobalt). **Missing:** `--st-corr-bg` tint, 2px `--st-corr-fg` edge and an ×,
+  consistent with the Needs correction chip. **Not posted yet today:** hollow, 2px `--acc` outline.
+  **Later this week:** hollow, faint 1px `--hair` outline.
+- **Leave and holiday are two separate indicators** (they were one in round one): **on leave** = a
+  diagonal hatch of `--mut` stripes on `--tint2`; **holiday** = a grid of `--mut` dots on `--tint2`. Both
+  are neutral, with a 1px `--hair2` edge, and differ from each other and from every other state by
+  pattern, so they read at a glance and without colour. (A day before the person joined is a dashed
+  `--hair2` outline; it is not in the legend since it is rare.)
+- **Legend, six entries:** Posted · Missing · Not posted yet today · On leave · Holiday · Later this
+  week, the same cells as the table, under it. The hidden sentence now says "on leave Wed; holiday Thu".
+- **`--c7` (Research & study) approved by the owner as built** — `tokens.css` and design §0.3 / §9.3 no
+  longer say "needs sign-off" for it (the three dark chart colours `--c1`, `--c4`, `--c6` still do; the
+  vibrancy values replaced their old ones).
+- **Checks:** lint clean; client **345** tests (the squares' tests rewritten: cobalt, the red ×, the
+  cobalt outline, hatch against dots, no green or purple left, six distinct shapes without colour, the
+  six-entry legend and its place under the table). Browser (headless Chromium, real API on a local
+  in-memory database, repo seed): all six states appear in the real table, the legend reads as listed,
+  **no overflow and no errors at 1440 and 360 px, light and dark**; screenshots of all four looked at.
+  Unverified: a greyscale rendering by eye (the six shapes are asserted by a test), other browsers.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
