@@ -37,8 +37,9 @@ export function useWeekParam() {
       const params = new URLSearchParams(searchParams);
       if (next === currentWeekKey()) params.delete("week");
       else params.set("week", next);
-      // A day belongs to the week it was chosen in.
+      // A day, and a page of a table, belong to the week they were chosen in.
       params.delete("day");
+      params.delete("page");
       setSearchParams(params);
     },
     [searchParams, setSearchParams],

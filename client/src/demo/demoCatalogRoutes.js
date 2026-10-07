@@ -62,7 +62,7 @@ function daysUsed(store, startDate) {
   return n;
 }
 
-function progressOf(store, project) {
+export function progressOf(store, project) {
   if (!project.plan) return null;
   const used = daysUsed(store, project.plan.startDate);
   const projectTasks = new Set(

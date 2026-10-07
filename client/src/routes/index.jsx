@@ -14,9 +14,9 @@ import SessionLayout from "./SessionLayout.jsx";
 // The route table (frontend_architecture.md §4.1): every path in the product, with
 // its guard. Routes that make no sense in the demo carry handle.realOnly.
 //
-// Pages that a later stage builds render PendingPage until then: C7 /team, C8 the rest
-// (C3 the report-reading routes, C4 "/", C5 the edit route and C6 history, updates and
-// review are done).
+// Pages that a later stage builds render PendingPage until then: C8 the rest (C3 the
+// report-reading routes, C4 "/", C5 the edit route, C6 history, updates and review and
+// C7 /team are done).
 
 const SignInPage = lazy(() => import("../pages/SignInPage.jsx"));
 const SignUpPage = lazy(() => import("../pages/SignUpPage.jsx"));
@@ -26,6 +26,7 @@ const ReportHistoryPage = lazy(() => import("../pages/ReportHistoryPage.jsx"));
 const TeamUpdatesPage = lazy(() => import("../pages/TeamUpdatesPage.jsx"));
 const ReviewDeskPage = lazy(() => import("../pages/ReviewDeskPage.jsx"));
 const ReviewPage = lazy(() => import("../pages/ReviewPage.jsx"));
+const TeamDashboardPage = lazy(() => import("../pages/TeamDashboardPage.jsx"));
 const AcceptInvitePage = lazy(() => import("../pages/AcceptInvitePage.jsx"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage.jsx"));
 // Defined in development only, so a production build has no /design chunk.
@@ -96,10 +97,7 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
                   path: "/review/:reportId",
                   element: guarded(["reportId"], <ReviewPage />),
                 },
-                {
-                  path: "/team",
-                  element: <PendingPage title="Team dashboard" />,
-                },
+                { path: "/team", element: page(<TeamDashboardPage />) },
                 { path: "/people", element: <PendingPage title="People" /> },
                 {
                   path: "/people/:userId",

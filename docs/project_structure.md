@@ -260,7 +260,8 @@ server/
 │   └── server.js                      # connects Mongo, then listens
 ├── tests/
 │   ├── helpers/
-│   │   ├── testDb.js                  # mongodb-memory-server start/stop
+│   │   ├── globalSetup.js             # added after C6: downloads mongod once before the workers start
+│   │   ├── testDb.js                  # mongodb-memory-server start/stop; keeps the connection ready under a frozen clock
 │   │   ├── testAuth.js                # signs a token for a seeded actor
 │   │   └── testWeeks.js               # added in S4: a frozen clock, day bodies, posting and filing a week; S5: review and comment calls
 │   ├── rbac/                          # api_specification.md §6
@@ -285,8 +286,9 @@ server/
 │       ├── middleware.test.js         # validate, authenticate, authorize, errorHandler duplicate-key mapping
 │       ├── indexes.test.js            # every index in database_schema.md §6 exists, and no others
 │       ├── models.test.js             # schema-level validation of the seven models
+│       ├── testDb.test.js             # added after C6: the test connection stays ready while a suite freezes `Date` in the past
 │       └── weeks.test.js              # utils/weeks.js and utils/paginate.js
-├── vitest.config.js                   # setupFiles → tests/helpers/testDb.js
+├── vitest.config.js                   # globalSetup → tests/helpers/globalSetup.js; setupFiles → tests/helpers/testDb.js
 ├── eslint.config.js                   # added in S0: flat config, @eslint/js + globals.node + eslint-config-prettier (the lint script needs one)
 ├── .env.example
 └── package.json
@@ -514,6 +516,7 @@ client/
 │   │   │   ├── Skeleton.jsx
 │   │   │   ├── EmptyState.jsx
 │   │   │   ├── Avatar.jsx
+│   │   │   ├── AvatarStack.jsx        # added in C7: overlapping 22px initials, `+N` (the projects table's people)
 │   │   │   ├── DropdownMenu.jsx
 │   │   │   ├── Breadcrumb.jsx
 │   │   │   ├── FilterBar.jsx
@@ -617,6 +620,7 @@ client/
 │   │   ├── demoDayRoutes.js           # added in C4: R1, R2 and R5 (writing a day) for the demo; C5 adds R6 and R7 (autosave, submit)
 │   │   ├── demoCatalogRoutes.js       # added in C4: T1, P1, HD1, U9, U10 for the demo
 │   │   ├── demoReviewRoutes.js        # added in C6: R12 (the team feed) and V1–V3 (approve, send back, the review desk) for the demo
+│   │   ├── demoDashboardRoutes.js     # added in C7: D1–D6 and D8 for the demo, by the server's rules (D7 arrives with the profile, C8)
 │   │   ├── demoUserRoutes.js          # added in C6: U1 (the people list) for the demo; C8 adds the rest of the user routes
 │   │   ├── demoStore.js               # builds the in-memory store; rebuilt on refresh or Start over
 │   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates
@@ -625,7 +629,8 @@ client/
 │   │       ├── demoWeeks.test.js      # added in C3: the demo's layers, comment rules, ten-minute window and "new" markers
 │   │       ├── demoDays.test.js       # added in C4: writing a day, holidays, leave, projects, R1/R2 on a frozen Wednesday
 │   │       ├── demoContent.test.js    # added in C5: R6 autosave and R7 submit / resubmit, with the server's codes
-│   │       └── demoReview.test.js     # added in C6: the desk never lists your own report, the pinned revision, the 10-character send-back, R12's filters, U1
+│   │       ├── demoReview.test.js     # added in C6: the desk never lists your own report, the pinned revision, the 10-character send-back, R12's filters, U1
+│   │       └── demoDashboard.test.js  # added in C7: D1–D6 and D8 — people-first rows, `status` on D2 only, I11, I13, the eight-event feed
 │   ├── hooks/
 │   │   ├── useAuth.js                 # reads AuthContext
 │   │   ├── useAuthQueries.js          # bootstrap status, link preview, login, signup, accept
@@ -701,6 +706,8 @@ client/
 │   │   ├── updatesDay.js              # added in C6: which days Team updates can show, and the default one
 │   │   ├── format.js                  # hours, dates, relative times
 │   │   ├── chartTheme.js              # chart colours and axis props as token strings
+│   │   ├── dashboardParams.js         # added in C7: the dashboard's URL spec and the API params of each block (`status` in D2's only)
+│   │   ├── dashboardData.js           # added in C7: the pure shaping of D1–D8 answers — chart rows, empty texts, progress words, row links
 │   │   └── __tests__/
 │   │       ├── constants.parity.test.js
 │   │       ├── dates.test.js          # added in C1
@@ -713,7 +720,10 @@ client/
 │   │       ├── submitChecklist.test.js  # added in C5: the two submit rules and their words
 │   │       ├── reviewDeskParams.test.js # added in C6
 │   │       ├── reviewOutcome.test.js    # added in C6
-│   │       └── updatesDay.test.js       # added in C6
+│   │       ├── updatesDay.test.js       # added in C6
+│   │       ├── dashboardParams.test.js  # added in C7
+│   │       ├── dashboardData.test.js    # added in C7
+│   │       └── chartTheme.test.js       # added in C7: no hex, the seven category colours = the day panel's and the form's
 │   ├── styles/
 │   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]
@@ -955,7 +965,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

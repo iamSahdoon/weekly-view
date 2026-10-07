@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
+    globalSetup: ["./tests/helpers/globalSetup.js"],
     setupFiles: ["./tests/helpers/testDb.js"],
     // config/env.js parses these at import. MONGODB_URI is a placeholder that nothing
     // connects to: testDb.js connects Mongoose to an in-memory replica set, so tests

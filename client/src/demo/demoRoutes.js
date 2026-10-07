@@ -6,6 +6,7 @@
 
 import { fail, ok, withUser } from "./demoResponses.js";
 import { catalogRoutes } from "./demoCatalogRoutes.js";
+import { dashboardRoutes } from "./demoDashboardRoutes.js";
 import { dayRoutes } from "./demoDayRoutes.js";
 import { reviewRoutes } from "./demoReviewRoutes.js";
 import { userRoutes } from "./demoUserRoutes.js";
@@ -59,6 +60,7 @@ const ROUTES = [
   ...authRoutes,
   ...dayRoutes,
   ...catalogRoutes,
+  ...dashboardRoutes,
   ...userRoutes,
   ...reviewRoutes,
   ...weekRoutes,
