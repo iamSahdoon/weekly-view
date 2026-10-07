@@ -536,6 +536,29 @@ in the product that is typographically a document.
   comment threads (§6.23). Missing days show "Missing" in `--st-corr-fg`; leave and
   holiday days show their label. Each day carries its "Open to team comments" state as a
   small label, and a switch for the author and managers.
+  > **Owner decision (2026-10-07) — daily updates are day cards.** The block was read as
+  > flat, cluttered and demotivating, so each day is now its own card, and the bullet above
+  > is read through this note. A card is `--card` with a 1px `--hair` border, square, no
+  > shadow; cards are `20px` apart (the heading sits `16px` above the first). A **posted day**
+  > has a header on the card (weekday in full in Chivo 700 17px with the date beside it in
+  > mono 11px `--mut`, the day's hours in mono 13px `--ink`; at the right the comment count
+  > with a small speech-bubble icon, then the "Open to team comments" switch; they wrap below
+  > the title under 640px), a `--hair` rule, then up to three sections separated by `--hair`
+  > rules, each `20px` side padding and `14px` top and bottom: the **work lines** (a table with
+  > a 11px `--mut` header row; task over project, the type with its §4.6 swatch, what was done,
+  > hours right-aligned in mono; stacked under 640px), the **blockers** (under a "Blockers"
+  > label, §4.5 rows) and the **comments**. Comment threads on a day read as a conversation, not
+  > a block: no `--tint` fill; the first comment sits flush with the card's padding, replies
+  > hang off a 1px `--hair2` line under the first avatar, `Reply` and `Comment` follow. (The
+  > `--tint` thread of §6.23 stays on the overall comments.) A day with **no update** is a
+  > short card, one row, no table: **Holiday** and **On leave** sit on `--tint` ("No update
+  > needed." in `--mut`, then the word `Holiday` in `--ink` or the `On leave` chip);
+  > **Missing** keeps `--st-corr-fg`, with a 2px `--st-corr-fg` bar on the card's left edge;
+  > "Not posted yet", "Not yet" and "Not on the team yet" are plain `--mut` on `--card`. The same card is used for the
+  > day panel on This week (its header keeps the date, hours, posted time and `Edit`; the count
+  > and switch sit in a strip beneath it; a holiday or leave day is `--tint`) and for each
+  > person's posted day on Team updates (the person's heading, the strip, then the same
+  > sections), `16px` apart.
 - **When a manager or admin opens a teammate's Draft week**, the daily updates render in
   full and the document is replaced by a `--tint` panel: "Weekly report not submitted
   yet." / "You can read and comment on the daily updates. The rest of the report appears
