@@ -3,8 +3,9 @@ import { InlineError } from "../ui/InlineError.jsx";
 import { QueryView } from "../ui/QueryView.jsx";
 import { Skeleton } from "../ui/Skeleton.jsx";
 
-// A chart's panel (design §7.2, frontend_architecture.md §10): a 44px header with a 1px
-// --hair bottom — the title (Chivo 700, 15px) on the left, a scope control or the legend
+// A chart's panel (design §7.2, frontend_architecture.md §10): a 44px-or-taller header with a
+// 1px --hair bottom — the title (Chivo 700, 15px) on the left, with an optional one-line
+// `subtitle` in --mut under it (what the chart counts), a scope control or the legend
 // on the right — and a plot with 20px 24px 16px padding. The plot's height is fixed by
 // the caller (260 trend, 240 bars), so a row never jumps as data arrives. The legend is
 // built from the series list, never the library's; a single series has none.
@@ -15,7 +16,14 @@ import { Skeleton } from "../ui/Skeleton.jsx";
 // over them. `summary(data)` is the chart's data as a short table, visually hidden, for
 // people who can't see the plot (FA15).
 
-export function ChartContainer({ title, legend, scope, className, children }) {
+export function ChartContainer({
+  title,
+  subtitle,
+  legend,
+  scope,
+  className,
+  children,
+}) {
   return (
     <section
       aria-label={title}
@@ -25,9 +33,12 @@ export function ChartContainer({ title, legend, scope, className, children }) {
       )}
     >
       <header className="flex min-h-[44px] flex-wrap items-center justify-between gap-x-14 gap-y-6 border-b border-hair px-24 py-6">
-        <h2 className="font-display text-panel-sm font-bold text-ink">
-          {title}
-        </h2>
+        <div className="min-w-0">
+          <h2 className="font-display text-panel-sm font-bold text-ink">
+            {title}
+          </h2>
+          {subtitle && <p className="text-caption text-mut">{subtitle}</p>}
+        </div>
         <div className="flex flex-wrap items-center gap-x-14 gap-y-6">
           {legend && <Legend items={legend} />}
           {scope}
@@ -41,6 +52,7 @@ export function ChartContainer({ title, legend, scope, className, children }) {
 export function ChartBlock({
   query,
   title,
+  subtitle,
   legend,
   scope,
   height,
@@ -52,6 +64,7 @@ export function ChartBlock({
   return (
     <ChartContainer
       title={title}
+      subtitle={subtitle}
       legend={legend}
       scope={scope}
       className={className}

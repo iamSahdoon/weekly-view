@@ -54,6 +54,7 @@ export function HoursByTypeChart({ query, weekKey }) {
     <ChartBlock
       query={query}
       title="Hours by task type"
+      subtitle="Hours logged this week. Each number is that type’s total."
       height={BARS_HEIGHT}
       className="min-[1200px]:col-span-4"
       empty={(data) => hoursEmptyText(data, weekKey)}
@@ -70,7 +71,7 @@ export function HoursByTypeChart({ query, weekKey }) {
             layout="vertical"
             barSize={MAX_BAR}
             barCategoryGap="40%"
-            margin={{ top: 0, right: 56, bottom: 0, left: 0 }}
+            margin={{ top: 0, right: 64, bottom: 0, left: 0 }}
           >
             <CartesianGrid {...gridProps} />
             <XAxis
@@ -112,8 +113,9 @@ export function HoursByTypeChart({ query, weekKey }) {
                 position="right"
                 formatter={endLabel}
                 fontFamily="var(--font-mono)"
-                fontSize={11}
-                fill="var(--body)"
+                fontSize={12}
+                fontWeight={600}
+                fill="var(--ink)"
               />
             </Bar>
           </BarChart>

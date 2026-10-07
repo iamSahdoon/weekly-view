@@ -719,11 +719,15 @@ among approved people is always 100% (`requirments_doc.md` §6).
   filter** — a Secondary `sm` multi-select, `Status: Draft, Not started` when set — so it
   visibly filters this table and nothing else. Row click → the review page if Submitted
   and reviewable by you, otherwise that person's week (§3.4).
-- **The updates column** is the five-day strip at table scale: five `14×14px` cells.
-  Posted: `--acc` fill. Missing: 1px `--st-corr-fg` border. Today, not posted: 1px
-  `--acc` border. Leave or holiday: `--tint2` with a diagonal hairline. Future: 1px
-  `--hair` border. A visually-hidden text equivalent ("Posted Mon, Tue; missing Wed") is
-  always present.
+- **The updates column** is the five-day strip at table scale: five `14×14px` cells, each
+  with a *shape* as well as a colour so no state depends on colour alone. *(Owner decision,
+  C7 feedback, 2026-10-07 — supersedes the hairline version.)* **Posted:** solid `--st-appr-fg`
+  fill. **Missing:** a `--st-corr-bg` fill, a 2px `--st-corr-fg` edge and a `×` through it.
+  **Today, not posted:** a hollow cell with a 2px `--acc` edge. **Leave or holiday:** `--tint2`
+  with a diagonal hatch of 2px `--c6` stripes (a colour no other state uses) and a `--hair2` edge.
+  **Later this week:** a hollow cell with a 1px `--hair` edge. A small legend (the same cells
+  with their words) sits under the table, and a visually-hidden text equivalent ("Posted Mon,
+  Tue; missing Wed") is always present.
 - **Hours come from the daily work lines**, so every row shows them, Drafts included —
   they are shared as posted. A Draft row shows `—` only for what is still private:
   task statuses, and so the "tasks done" figure.
@@ -1878,7 +1882,11 @@ and a label, in the charting library's default colors._ The replacement:
 - **Cell padding** `20px 24px`, min-height `92px`.
 - **No color on a metric cell** except where the number _is_ a status count:
   `Needs correction` renders its number in `--st-corr-fg`. That is the only colored
-  number on the dashboard, which is what makes it land.
+  number on the dashboard, which is what makes it land. *(Owner decision, C7 feedback,
+  2026-10-07, for the dashboard's strip only: the four numbers are coloured — Filed
+  `--acc-txt`, Compliance `--st-appr-fg`, Needs correction `--st-corr-fg` (still the red
+  alarm), Open blockers `--st-draft-fg` — because the strip read flat. The profile's strip
+  and This week's keep this rule.)*
 
 ```
 ┌──────────────────┬──────────────────┬──────────────────┬──────────────────┐
@@ -2071,6 +2079,18 @@ Inline in `<head>` before the app bundle, to prevent a theme flash.
 
 ### 9.3 `src/styles/tokens.css`
 
+> **Owner decision (C7 feedback, 2026-10-07) — vibrancy.** The dashboard read as flat, so the
+> status and chart colours below are more saturated, each keeping its hue, in both themes. The
+> status chips (`--st-draft-*` is now amber, `--st-subm-*` blue, `--st-corr-*` red, `--st-appr-*`
+> green) are stronger, and `--st-corr-*` stays the red alarm. The seven chart colours `--c1`…`--c7`
+> are the same hue per task type, more saturated; because the day panel, the weekly form and every
+> chart read the same tokens, their swatches change together and still match (the parity is the
+> token, not a copy). Values changed: every `--st-draft|subm|corr|appr-fg|bg|bd` and `--c1`…`--c7`,
+> light and dark; nothing else in this block. On the dashboard the four metric numbers are coloured
+> (Filed blue, Compliance green, Needs correction red, Open blockers amber) — §7.1's "no colour but
+> Needs correction" is superseded for the dashboard — and the team table's five-day squares follow
+> §3.7 as amended there. A whole-app visual-polish session is planned after C10 (`PROGRESS.md`).
+
 ```css
 :root {
   color-scheme: light;
@@ -2110,18 +2130,18 @@ Inline in `<head>` before the app bundle, to prevent a theme flash.
   --acc-on-d: #8aa0f2;
 
   /* ── Status ───────────────────────────────────────────── */
-  --st-draft-fg: #4a463e;
-  --st-draft-bg: #efefea;
-  --st-draft-bd: #dbdbd3;
-  --st-subm-fg: #204760;
-  --st-subm-bg: #e7edf2;
-  --st-subm-bd: #c3d3de;
-  --st-corr-fg: #7c211c;
-  --st-corr-bg: #f6e9e7;
-  --st-corr-bd: #e6c7c3;
-  --st-appr-fg: #26502f;
-  --st-appr-bg: #e8efe9;
-  --st-appr-bd: #c7d8ca;
+  --st-draft-fg: #6a4f00;
+  --st-draft-bg: #fcf0c4;
+  --st-draft-bd: #ecd16b;
+  --st-subm-fg: #10458f;
+  --st-subm-bg: #dbe9ff;
+  --st-subm-bd: #8fb7f5;
+  --st-corr-fg: #a3150e;
+  --st-corr-bg: #fde0dc;
+  --st-corr-bd: #f0847b;
+  --st-appr-fg: #0f6b2c;
+  --st-appr-bg: #d6f3df;
+  --st-appr-bd: #75cc92;
   --st-none-fg: #7c838a;
   --st-none-bg: transparent;
   --st-none-bd: #cbd1d3;
@@ -2129,13 +2149,13 @@ Inline in `<head>` before the app bundle, to prevent a theme flash.
      has no deadline, so lateness is not computable (§0.4). */
 
   /* ── Chart sequence (fixed by category) ───────────────── */
-  --c1: #1c39bb; /* Development   */
-  --c2: #6fa3c7; /* Testing       */
-  --c3: #35603f; /* Meetings      */
-  --c4: #8a8d86; /* Documentation */
-  --c5: #9e2b25; /* Review        */
-  --c6: #6b4e77; /* Other         */
-  --c7: #9a7b2f; /* Research & study — needs sign-off (§0.3) */
+  --c1: #1f44d6; /* Development   */
+  --c2: #2e9ad8; /* Testing       */
+  --c3: #1e8f43; /* Meetings      */
+  --c4: #7a8794; /* Documentation */
+  --c5: #d6342b; /* Review        */
+  --c6: #8f3fb5; /* Other         */
+  --c7: #d49a0c; /* Research & study — needs sign-off (§0.3) */
 
   /* ── Elevation (floating layers only) ─────────────────── */
   --shadow-pop:
@@ -2197,29 +2217,29 @@ Inline in `<head>` before the app bundle, to prevent a theme flash.
   --acc-txt: #8aa0f2;
   --on-acc: #ffffff;
 
-  --st-draft-fg: #b6b2a8;
-  --st-draft-bg: rgba(255, 255, 255, 0.05);
-  --st-draft-bd: rgba(255, 255, 255, 0.14);
-  --st-subm-fg: #9cc3e0;
-  --st-subm-bg: rgba(44, 93, 124, 0.18);
-  --st-subm-bd: rgba(120, 175, 210, 0.3);
-  --st-corr-fg: #ec9188;
-  --st-corr-bg: rgba(158, 43, 37, 0.2);
-  --st-corr-bd: rgba(220, 120, 110, 0.32);
-  --st-appr-fg: #9fd3a8;
-  --st-appr-bg: rgba(53, 96, 63, 0.22);
-  --st-appr-bd: rgba(120, 190, 135, 0.3);
+  --st-draft-fg: #f2cf62;
+  --st-draft-bg: rgba(242, 200, 70, 0.16);
+  --st-draft-bd: rgba(242, 200, 70, 0.4);
+  --st-subm-fg: #8fbcff;
+  --st-subm-bg: rgba(60, 120, 230, 0.22);
+  --st-subm-bd: rgba(110, 160, 250, 0.45);
+  --st-corr-fg: #ff8f84;
+  --st-corr-bg: rgba(230, 50, 40, 0.24);
+  --st-corr-bd: rgba(255, 120, 110, 0.45);
+  --st-appr-fg: #6fe09a;
+  --st-appr-bg: rgba(40, 180, 90, 0.2);
+  --st-appr-bd: rgba(90, 210, 130, 0.42);
   --st-none-fg: #727a83;
   --st-none-bg: transparent;
   --st-none-bd: #242a31;
 
-  --c1: #6e86ee; /* §0.3 extension */
-  --c2: #6fa3c7;
-  --c3: #7fb889; /* brand alternate */
-  --c4: #9a9d96; /* §0.3 extension */
-  --c5: #e0685e; /* brand alternate */
-  --c6: #9e82ab; /* §0.3 extension */
-  --c7: #d1ae63; /* §0.3 extension — needs sign-off */
+  --c1: #7b93ff; /* vivid in both themes — owner decision, C7 */
+  --c2: #4fb4f0;
+  --c3: #52c27a;
+  --c4: #9aa7b5;
+  --c5: #ff6b5e;
+  --c6: #b979e0;
+  --c7: #f2b932; /* needs sign-off (§0.3) */
 
   --shadow-pop:
     0 12px 28px -14px rgba(0, 0, 0, 0.68), 0 2px 8px -4px rgba(0, 0, 0, 0.5);

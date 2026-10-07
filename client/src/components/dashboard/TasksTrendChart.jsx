@@ -73,6 +73,7 @@ export function TasksTrendChart({
     <ChartBlock
       query={query}
       title="Tasks completed"
+      subtitle="Tasks marked Done in submitted reports."
       legend={legend}
       height={TREND_HEIGHT}
       className="min-[1200px]:col-span-8"
@@ -121,7 +122,7 @@ export function TasksTrendChart({
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={rows}
-              margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
+              margin={{ top: 4, right: 18, bottom: 0, left: 0 }}
             >
               <CartesianGrid {...gridProps} />
               <XAxis

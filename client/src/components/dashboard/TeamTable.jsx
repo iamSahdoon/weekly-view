@@ -12,7 +12,7 @@ import { QueryView } from "../ui/QueryView.jsx";
 import { RoleChip } from "../ui/RoleChip.jsx";
 import { StatusChip } from "../ui/StatusChip.jsx";
 import { Table } from "../ui/Table.jsx";
-import { UpdatesCell } from "./UpdatesCell.jsx";
+import { UpdatesCell, UpdatesLegend } from "./UpdatesCell.jsx";
 
 // The team table (design §3.7): everyone who files is a row — managers and admins too.
 // Its own header carries the status filter, so it visibly filters this table and nothing
@@ -175,6 +175,7 @@ export function TeamTable({
               }
               caption={`Team, week ${weekKey}`}
             />
+            <UpdatesLegend />
             <Pagination meta={data.meta} onPage={onPage} onLimit={onLimit} />
           </>
         )}

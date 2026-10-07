@@ -60,6 +60,7 @@ export function WorkloadByProjectChart({ query, weekKey }) {
     <ChartBlock
       query={query}
       title="Workload by project"
+      subtitle="Hours logged this week. Each number is that project’s total."
       legend={LEGEND}
       height={BARS_HEIGHT}
       className="min-[1200px]:col-span-6"
@@ -85,7 +86,7 @@ export function WorkloadByProjectChart({ query, weekKey }) {
             layout="vertical"
             barSize={MAX_BAR}
             barCategoryGap="40%"
-            margin={{ top: 0, right: 56, bottom: 0, left: 0 }}
+            margin={{ top: 0, right: 64, bottom: 0, left: 0 }}
           >
             <CartesianGrid {...gridProps} />
             <XAxis
@@ -139,8 +140,9 @@ export function WorkloadByProjectChart({ query, weekKey }) {
                 valueAccessor={(entry) => entry.payload.totalHours}
                 formatter={endLabel}
                 fontFamily="var(--font-mono)"
-                fontSize={11}
-                fill="var(--body)"
+                fontSize={12}
+                fontWeight={600}
+                fill="var(--ink)"
               />
             </Bar>
           </BarChart>

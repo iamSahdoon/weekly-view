@@ -827,31 +827,80 @@ Run `npm run seed` locally first (**local database only**); every seed account's
 correction, Imali J. and Sanduni B. Approved, Ayesha C. Draft; one person on leave, one not started.
 **The page** (as Nadia, a manager):
 1. Sign in as `nadia@example.com` and click **Team dashboard**. From the top: four numbers in one panel
-   (filed, compliance, needs correction — the only red number — and open blockers), the **Team** table,
+   (Filed blue, Compliance green, Needs correction red, Open blockers amber), the **Team** table,
    **Projects**, then two charts and the activity list.
 2. In the **Team** table, click the **Person** column header once: the order reverses and the address gains `dir=desc`.
    Click **Status** (the button above the table, right side), tick **Draft**, **Apply**. Only the table
    changes; the four numbers do not. Reload: the filter is still there. Open the button again, **Clear**.
-3. In the **Updates** column a filled square is a posted day, an empty red-edged one a missing day, a
-   hatched one leave or a holiday. Click any row: a Submitted report that isn't yours
-   opens the review page; your own row and anyone else's go to that person's week.
+3. In the **Updates** column a solid green square is a posted day, a red square with a thick edge and
+   an × is a missing day, a hollow blue-edged one is today (not posted yet), a purple diagonal hatch is
+   leave or a holiday and a thin grey hollow one is later in the week; the legend is under the table.
+   Squint (or use a greyscale filter): solid, ×, hollow and hatched still differ. Click any row: a
+   Submitted report that isn't yours opens the review page; your own row and anyone else's go to that
+   person's week.
 4. **Projects:** click **Hours**, then **Days**. Click a project's name: it opens to show who worked on
    it, with hours this week and in total. "overdue by N days" is red.
 5. **Tasks completed:** open **8 weeks** and choose **4 weeks**: the line has four points. Open **Team
    only**, choose a person: a second line and a legend appear. Hover the line: a dark box names the
    week and the numbers.
-6. **Hours by task type** and **Workload by project:** hover a bar. The seven colours (Development blue,
-   Testing light blue, Meetings green, Documentation grey, Review red, Research & study gold, Other
-   purple) are the ones on the weekly form's hours grid — open **This week** → the form to compare.
+6. **Hours by task type** and **Workload by project:** each bar and each row ends in its total in bold
+   ("92.5 h"); the line under each title says so, and the axis top is only the scale. Hover a bar. The
+   seven colours (Development blue, Testing sky blue, Meetings green, Documentation slate, Review red,
+   Research & study amber, Other purple) are the ones on the weekly form's hours grid — open **This
+   week** → the form to compare. **Tasks completed** says "Tasks marked Done in submitted reports."
+   under its title.
 7. Click the top bar's week **‹**: every block but **Recent activity** changes. Click **Person** in the
    filter bar at the top, tick one person, **Apply**: the numbers, table and charts narrow; **Projects** and
    **Recent activity** do not. **Clear (1)** resets it.
-8. Switch to dark (the theme button in the sidebar): charts and the tooltip stay readable.
+8. Switch to dark (the theme button in the sidebar): charts, the tooltip, the chips and the squares
+   stay readable. Also look at the status chips (Draft amber, Submitted blue, Needs correction red,
+   Approved green) on the other pages — the tokens are app-wide.
 **Narrow screen and a member:**
 9. In the browser's device toolbar choose a 360 px phone: the table is cards, nothing scrolls sideways,
    the charts are one column.
 10. Sign out, sign in as `imali@example.com` (a member): there is no **Team dashboard** in the nav and
     typing `/team` shows the "You don't have access" page inside the shell.
+
+### C7 owner feedback (2026-10-07)
+Owner testing on their machine produced six requests, all done on this branch.
+1. **Audit (client).** `npm audit fix` (no `--force`) updated `seroval` and `seroval-plugins` 1.5.6 → 1.6.8
+   (and `solid-js` 1.9.15 → 1.9.16, which they pull in through the Query devtools); only
+   `package-lock.json` changed. **Left alone, as asked:** `tinypool` (≤ 2.1.1, critical, prototype
+   pollution → RCE in its worker options) and `@vitest/mocker` (2.1.0 – 4.1.10, moderate, path traversal
+   in its redirect mock). Both are reached only through `vitest` 3, so they wait for the planned vitest
+   upgrade (`npm audit fix --force` would install vitest 5, a breaking change). They are test-runner
+   dependencies, not shipped in the client bundle. `npm audit` now reports 3 findings (those two and
+   `vitest`, which depends on them).
+2. **Updates squares readable at a glance** — posted = solid success green; missing = red tint, **2px**
+   red edge and an **×**; today = hollow with a 2px blue edge; leave or holiday = a purple (`--c6`)
+   diagonal hatch; later = hollow with a hairline. Shape differs for every state, so none relies on
+   colour; all are tokens, light and dark. A **legend** under the table shows the cells with their words.
+   (Design §3.7 amended with an owner-decision note.)
+3. **Vibrancy (owner decision).** More saturated status chips and chart colours, same hue per task type,
+   in both themes; the four metric numbers are coloured (Filed blue, Compliance green, Open blockers
+   amber, Needs correction red). The values are in `tokens.css` **and** in `product_design_system.md`
+   §9.3 (with the owner-decision note and amended §3.7 / §7.1). The day panel, the weekly form and every
+   chart read the same `--c1`…`--c7`, so their swatches changed together and still match (checked: the
+   dashboard legend and the form's swatches have the same computed colour). **The status tokens are
+   app-wide**, so every chip and `--st-corr-*` strip in the app is stronger too; the seven values for
+   light (and dark): Development `#1f44d6` (`#7b93ff`), Testing `#2e9ad8` (`#4fb4f0`), Meetings `#1e8f43`
+   (`#52c27a`), Documentation `#7a8794` (`#9aa7b5`), Review `#d6342b` (`#ff6b5e`), Other `#8f3fb5`
+   (`#b979e0`), Research & study `#d49a0c` (`#f2b932`) — `--c7` still needs sign-off (§0.3).
+4. **Value labels.** Each bar in Hours by task type and each row in Workload by project ends in its total
+   (bold, `--ink`, 12 px mono) and the line under each title says "Each number is that … total", so the
+   axis top (90 h, 105 h) can't be read as a target. The trend's last week label is no longer clipped.
+5. **"Tasks completed"** has the one-line explanation under its title: "Tasks marked Done in submitted
+   reports." All three charts have a one-line subtitle, so the panels' headers line up.
+6. **Note for after C10 — one "visual polish" session for the whole app** (colour tokens, contrast,
+   emphasis, the squares and chips in context), **reviewed with the owner** before it is merged. C7's
+   vibrancy change is a first pass on the dashboard and the shared tokens only.
+- **Checks:** lint clean; client **344** tests (339 + 5: the strip's four colours, the squares' shapes and
+  how they differ without colour, the legend and its place, and the chart subtitles); client build OK.
+  Re-walked in headless Chromium against the real API on a local in-memory database (not Atlas; the
+  repo's seed on that database): the earlier walk (status only on D2, the page-level filters, independent
+  failures, no hex or default tooltip, fixed heights, no overflow) ended **ALL PASSED** again, and
+  screenshots at **1440 and 360 px, light and dark** were looked at. Unverified: real fonts (blocked
+  here), a greyscale view of the squares by eye (checked by their patterns in a test), other browsers.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -1436,6 +1485,7 @@ correction, Imali J. and Sanduni B. Approved, Ayesha C. Draft; one person on lea
      empties it. The rail's "Before you submit" heading over the checklist is new copy.
 
 ## Open questions for the owner
+- **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.
 - ~~C6, to confirm or change~~ **Resolved (owner, 2026-10-05):** all ten decisions accepted; `blockersOnly` now means open blockers and the review panel is pinned — see *C6 owner answers*. (Was: the ten decisions above, especially 1 (People is C8) and 4 (the
   feed's optimistic toggles); and the `blockersOnly` gap.)

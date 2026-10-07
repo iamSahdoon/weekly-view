@@ -16,7 +16,10 @@ import { HoursByTypeChart } from "../../components/dashboard/HoursByTypeChart.js
 import { MetricStrip } from "../../components/dashboard/MetricStrip.jsx";
 import { ProjectsTable } from "../../components/dashboard/ProjectsTable.jsx";
 import { TeamTable } from "../../components/dashboard/TeamTable.jsx";
-import { UpdatesCell } from "../../components/dashboard/UpdatesCell.jsx";
+import {
+  UpdatesCell,
+  UpdatesLegend,
+} from "../../components/dashboard/UpdatesCell.jsx";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { PageChromeProvider } from "../../context/PageChromeContext.jsx";
 import { createDemoAdapter } from "../../demo/demoAdapter.js";
@@ -206,6 +209,13 @@ describe("the dashboard page", () => {
     expect(headerOf("Tasks completed")).not.toContain("Legend"); // no one to compare yet
   });
 
+  it("explains what each chart counts, one line under its title, and the labels are totals", async () => {
+    const html = renderPage("manager", await primed());
+    expect(html).toContain("Tasks marked Done in submitted reports.");
+    expect(html).toContain("Each number is that type’s total.");
+    expect(html).toContain("Each number is that project’s total.");
+  });
+
   it("shows the designed skeletons while every block loads, with the filter bar live", () => {
     const html = renderPage("manager", newClient());
     expect(html.match(/wv-skeleton/g).length).toBeGreaterThan(20);
@@ -360,18 +370,18 @@ describe("the team table", () => {
 });
 
 describe("the five-day strip", () => {
+  const states = {
+    mon: "posted",
+    tue: "posted",
+    wed: "missing",
+    thu: "today",
+    fri: "future",
+  };
+  const cell = (html, state) =>
+    html.match(new RegExp(`data-state="${state}" style="([^"]*)"`))[1];
+
   it("is five cells with the state on each, and the same in words", () => {
-    const html = renderToStaticMarkup(
-      <UpdatesCell
-        dayStates={{
-          mon: "posted",
-          tue: "posted",
-          wed: "missing",
-          thu: "today",
-          fri: "future",
-        }}
-      />,
-    );
+    const html = renderToStaticMarkup(<UpdatesCell dayStates={states} />);
     expect(html.match(/data-state=/g)).toHaveLength(5);
     for (const state of ["posted", "missing", "today", "future"]) {
       expect(html).toContain(`data-state="${state}"`);
@@ -380,20 +390,87 @@ describe("the five-day strip", () => {
     expect(html).toContain("size-[14px]");
   });
 
-  it("hatches leave and holiday with a hairline from a token", () => {
+  it("gives every state its own look: a solid fill, a red × on a tint, a thick blue edge, a hatch", () => {
+    const html = renderToStaticMarkup(
+      <UpdatesCell
+        dayStates={{ ...states, thu: "leave", fri: "holiday", tue: "today" }}
+      />,
+    );
+    // Posted: solid success colour.
+    expect(cell(html, "posted")).toContain("background:var(--st-appr-fg)");
+    // Missing: a tint, a 2px red edge — not a hairline — and a cross of two diagonals.
+    const missing = cell(html, "missing");
+    expect(missing).toContain("var(--st-corr-bg)");
+    expect(missing).toContain("border:2px solid var(--st-corr-fg)");
+    expect(missing.match(/linear-gradient/g)).toHaveLength(2);
+    // Today: hollow with a 2px accent edge.
+    expect(cell(html, "today")).toContain("border:2px solid var(--acc)");
+    // Leave and holiday: a hatch of stripes in a colour no other state uses.
+    for (const state of ["leave", "holiday"]) {
+      expect(cell(html, state)).toContain("repeating-linear-gradient");
+      expect(cell(html, state)).toContain("var(--c6)");
+    }
+  });
+
+  it("tells the states apart without colour: solid, ×, hollow, hatched differ in pattern", () => {
     const html = renderToStaticMarkup(
       <UpdatesCell
         dayStates={{
-          mon: "leave",
-          tue: "holiday",
-          wed: "future",
-          thu: "future",
+          mon: "posted",
+          tue: "missing",
+          wed: "leave",
+          thu: "today",
           fri: "future",
         }}
       />,
     );
-    expect(html.match(/linear-gradient/g)).toHaveLength(2);
-    expect(html).toContain("var(--hair2)");
+    const patterns = ["posted", "missing", "leave", "today", "future"].map(
+      (state) => {
+        const css = cell(html, state);
+        return [
+          /background-image/.test(css)
+            ? css.includes("repeating")
+              ? "hatch"
+              : "cross"
+            : "plain",
+          css.includes("background:var(--st-appr-fg)") ? "solid" : "hollow",
+        ].join("/");
+      },
+    );
+    // posted solid/plain, missing cross, leave hatch; today and future are the two plain
+    // hollow cells, told apart by the edge's weight (2px against 1px).
+    expect(patterns.slice(0, 3)).toEqual([
+      "plain/solid",
+      "cross/hollow",
+      "hatch/hollow",
+    ]);
+    expect(cell(html, "today")).toContain("2px");
+    expect(cell(html, "future")).toContain("1px");
+  });
+
+  it("has a legend with the same cells and their words", () => {
+    const html = renderToStaticMarkup(<UpdatesLegend />);
+    for (const words of [
+      "Posted",
+      "Missing",
+      "Not posted yet today",
+      "Leave or holiday",
+      "Later this week",
+    ]) {
+      expect(html).toContain(words);
+    }
+    expect(html.match(/data-state=/g)).toHaveLength(5);
+  });
+
+  it("is under the team table", async () => {
+    const html = renderPage("manager", await primed());
+    const legend = html.indexOf("What the update squares mean");
+    expect(legend).toBeGreaterThan(html.indexOf('aria-label="Team"'));
+    expect(legend).toBeLessThan(html.indexOf('aria-label="Pagination"'));
+  });
+
+  it("uses tokens only", () => {
+    const html = renderToStaticMarkup(<UpdatesCell dayStates={states} />);
     expect(html).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 });
@@ -429,12 +506,21 @@ describe("the metric strip", () => {
     expect(words).toContain("raised by 3 people");
   });
 
-  it("colours only the Needs correction number", () => {
+  it("colours the four numbers by what they measure, and Needs correction stays the red one", () => {
     const html = renderToStaticMarkup(
       <MetricStrip query={loaded(makeSummary())} />,
     );
-    expect(html.match(/text-st-corr-fg/g)).toHaveLength(1);
-    expect(html).toMatch(/text-st-corr-fg[^>]*>2</);
+    const colourOf = (value) =>
+      html.match(
+        new RegExp(
+          `class="[^"]*(text-(?:acc-txt|st-[a-z]+-fg))[^"]*"[^>]*>${value}<`,
+        ),
+      )?.[1];
+    expect(colourOf("9")).toBe("text-acc-txt"); // Filed
+    expect(colourOf("75%")).toBe("text-st-appr-fg"); // Compliance
+    expect(colourOf("2")).toBe("text-st-corr-fg"); // Needs correction
+    expect(colourOf("3")).toBe("text-st-draft-fg"); // Open blockers
+    expect(html.match(/text-st-corr-fg/g)).toHaveLength(1); // only one is the alarm
   });
 
   it("is one panel: a single section with hairline gaps, not four cards", () => {

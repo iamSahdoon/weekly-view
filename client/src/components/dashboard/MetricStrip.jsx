@@ -22,6 +22,7 @@ function metricsOf(summary, now = new Date()) {
   return [
     {
       label: "Filed this week",
+      tone: "acc",
       value: String(summary.filed),
       unit: `/ ${summary.expected}`,
       sub: (
@@ -38,6 +39,7 @@ function metricsOf(summary, now = new Date()) {
     },
     {
       label: "Compliance",
+      tone: "ok",
       value: formatPercent(summary.compliance),
       sub: trailing ? (
         <>
@@ -62,6 +64,7 @@ function metricsOf(summary, now = new Date()) {
     },
     {
       label: "Open blockers",
+      tone: "warn",
       value: String(openBlockers.count),
       sub:
         openBlockers.count > 0 ? (
