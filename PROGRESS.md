@@ -791,7 +791,7 @@ The fix, with no test skipped or weakened:
   blocks Google Fonts), Safari, Firefox and screen readers are unverified. The chart's *animation* (320 ms
   on a filter change, none on mount) is configured and source-checked, not seen.
 
-### C7 decisions (to confirm or change)
+### C7 decisions — all twelve accepted as built (owner, 2026-10-07)
 1. **`Extend plan` is not in the projects table yet.** Design §3.7 puts it in the row menu and opens
    `PlanModal`, which is C8's. `ProjectsTable` takes `onExtend` and shows the button only when the page
    passes it; C8 wires it.
@@ -1436,7 +1436,7 @@ correction, Imali J. and Sanduni B. Approved, Ayesha C. Draft; one person on lea
      empties it. The rail's "Before you submit" heading over the checklist is new copy.
 
 ## Open questions for the owner
-- C7, to confirm or change: the twelve decisions under *C7 decisions* — especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).
+- ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.
 - ~~C6, to confirm or change~~ **Resolved (owner, 2026-10-05):** all ten decisions accepted; `blockersOnly` now means open blockers and the review panel is pinned — see *C6 owner answers*. (Was: the ten decisions above, especially 1 (People is C8) and 4 (the
   feed's optimistic toggles); and the `blockersOnly` gap.)
 - ~~C5, to confirm or change~~ **Resolved (owner, 2026-10-05):** all seven C5 decisions accepted
