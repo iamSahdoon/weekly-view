@@ -138,7 +138,7 @@ export default function TeamUpdatesPage() {
               {(data) => (
                 <ul
                   aria-label="Updates for the chosen day"
-                  className="flex flex-col gap-11"
+                  className="flex flex-col gap-16"
                 >
                   {data.items.map((entry) => (
                     <PersonUpdate

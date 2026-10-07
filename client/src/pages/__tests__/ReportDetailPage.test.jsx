@@ -181,6 +181,48 @@ describe("A week in full — frontend_architecture.md §9.4", () => {
     expect(html).not.toContain("Mark this blocker as resolved.");
   });
 
+  it("each day is its own card; a day with no update is a short, labelled one", () => {
+    const { client, key, markup } = setup({
+      viewer: "member",
+      owner: "manager",
+      weekKey: LAST,
+    });
+    const quiet = {
+      tue: "leave",
+      wed: "holiday",
+      thu: "missing",
+      fri: "future",
+    };
+    client.setQueryData(key, (view) => ({
+      ...view,
+      dayStates: { ...view.dayStates, ...quiet },
+      report: {
+        ...view.report,
+        days: view.report.days.filter((d) => d.weekday === "mon"),
+      },
+    }));
+    const html = markup();
+    // Five cards, one list item per weekday, each titled with the full weekday.
+    for (const day of [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+    ]) {
+      expect(html).toContain(day);
+    }
+    expect(html.match(/<ol class="[^"]*gap-20/g)).toHaveLength(1);
+    // Leave is the chip, a holiday its word, Missing keeps its colour, the rest are plain.
+    expect(html).toContain("On leave");
+    expect(html).toContain("No update needed.");
+    expect(html).toContain("Holiday");
+    expect(html).toContain("Missing");
+    expect(html).toContain("Not yet");
+    // Only the posted day has a header with the comment count.
+    expect(html.match(/data-testid="day-comment-count"/g)).toHaveLength(1);
+  });
+
   it("a failed background refetch keeps the loaded week on screen", async () => {
     const options = { viewer: "member", owner: "member", weekKey: LAST };
     const { client, key, markup } = setup(options);

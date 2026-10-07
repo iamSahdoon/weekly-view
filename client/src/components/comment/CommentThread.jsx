@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth.js";
 import { useCommentActions } from "../../hooks/useReviewQueries.js";
+import { cn } from "../../lib/cn.js";
 import { errorCopy } from "../../lib/errorCopy.js";
 import { Button } from "../ui/Button.jsx";
 import { NewMarker } from "../ui/NewMarker.jsx";
@@ -16,6 +17,9 @@ import { CommentComposer } from "./CommentComposer.jsx";
 //
 //   target      { kind: "day", reportId, weekday } | { kind: "week", reportId }
 //   ownerName   the day's author, for the "limited to …" line a refused comment shows
+//   variant     "tint" (default: the grey block of §6.23) or "conversation": no fill, the
+//               replies hang off a hairline under the first avatar. Daily updates use it,
+//               because there the thread sits on a white day card (design §3.4, 2026-10-07).
 
 function messageFor(error, target, ownerName) {
   if (error.code === "COMMENT_NOT_ALLOWED" && target.kind === "day") {
@@ -27,7 +31,13 @@ function messageFor(error, target, ownerName) {
   return errorCopy(error);
 }
 
-export function CommentThread({ thread, target, canReply, ownerName }) {
+export function CommentThread({
+  thread,
+  target,
+  canReply,
+  ownerName,
+  variant = "tint",
+}) {
   const { user: me } = useAuth();
   const actions = useCommentActions(target);
   const [replying, setReplying] = useState(false);
@@ -48,12 +58,25 @@ export function CommentThread({ thread, target, canReply, ownerName }) {
   const errorAt = (key) => (failure?.key === key ? failure.message : undefined);
 
   const hasReplies = thread.replies.length > 0;
+  const conversation = variant === "conversation";
   const isWriter = (comment) => comment.author?._id === me._id;
 
   return (
-    <div className="flex flex-col gap-14 bg-tint px-14 py-11">
+    <div
+      className={cn(
+        "flex flex-col",
+        conversation ? "gap-11" : "gap-14 bg-tint px-14 py-11",
+      )}
+    >
       <div className="relative">
-        {thread.isNew && <NewMarker className="absolute top-[7px] -left-11" />}
+        {thread.isNew && (
+          <NewMarker
+            className={cn(
+              "absolute top-[7px]",
+              conversation ? "-left-14" : "-left-11",
+            )}
+          />
+        )}
         <Comment
           comment={thread}
           isWriter={isWriter(thread)}
@@ -68,7 +91,12 @@ export function CommentThread({ thread, target, canReply, ownerName }) {
       </div>
 
       {hasReplies && (
-        <div className="ml-24 flex flex-col gap-14 border-l border-hair pl-14">
+        <div
+          className={cn(
+            "flex flex-col gap-14 border-l border-hair2",
+            conversation ? "ml-[10px] pl-16" : "ml-24 pl-14",
+          )}
+        >
           {thread.replies.map((item) => (
             <Comment
               key={item._id}
@@ -106,7 +134,7 @@ export function CommentThread({ thread, target, canReply, ownerName }) {
             }}
           />
         ) : (
-          <div>
+          <div className={conversation ? "-ml-8" : undefined}>
             <Button size="sm" variant="ghost" onClick={() => setReplying(true)}>
               Reply
             </Button>

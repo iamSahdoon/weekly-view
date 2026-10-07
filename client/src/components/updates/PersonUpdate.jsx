@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
 import { formatHours } from "../../lib/format.js";
-import { PostedUpdate } from "../report/DailyUpdatesBlock.jsx";
+import { DayControls, PostedUpdate } from "../report/DailyUpdatesBlock.jsx";
 import { Avatar } from "../ui/Avatar.jsx";
 import { RoleChip } from "../ui/RoleChip.jsx";
 import { StatusChip } from "../ui/StatusChip.jsx";
@@ -62,17 +62,22 @@ export function PersonUpdate({ entry, weekKey }) {
   const week = { user, weekKey, report: { _id: reportId, author: user } };
   const projects = projectNames(day);
   return (
-    <li className="flex flex-col gap-14 border border-hair bg-card px-20 py-14">
-      <Heading
-        user={user}
-        weekKey={weekKey}
-        meta={
-          <span className="font-mono text-caption text-mut">
-            {formatHours(day.hours)} h
-            {projects.length > 0 && ` · ${projects.join(", ")}`}
-          </span>
-        }
-      />
+    <li className="border border-hair bg-card">
+      <div className="px-20 py-14">
+        <Heading
+          user={user}
+          weekKey={weekKey}
+          meta={
+            <span className="font-mono text-caption text-mut">
+              {formatHours(day.hours)} h
+              {projects.length > 0 && ` · ${projects.join(", ")}`}
+            </span>
+          }
+        />
+      </div>
+      <div className="border-y border-hair px-20 py-8">
+        <DayControls week={week} day={day} />
+      </div>
       <PostedUpdate week={week} day={day} />
     </li>
   );

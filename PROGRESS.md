@@ -1509,6 +1509,57 @@ version).
   7. Empty lists (next week, achievements, links) open with one blank row; removing the last row
      empties it. The rail's "Before you submit" heading over the checklist is new copy.
 
+### Polish: daily updates as day cards (2026-10-07)
+Not a stage; **C8 is still next.** The owner found the Daily updates block on the week page flat,
+cluttered and demotivating. Redesigned inside the design system (cobalt, cool neutrals, square
+corners, hairlines, existing tokens, no hex in components). Recorded as an owner-decision note in
+`product_design_system.md` §3.4 (the "Daily updates block" bullet).
+- **Each day is a card** on `--card`, 20px apart. A posted day has a header (weekday and date, hours,
+  comment count, the "Open to team comments" switch), then work lines, blockers and comments as
+  hairline-separated sections. Work lines: task over project, type with its colour mark, what was
+  done, hours right-aligned in mono (stacked under 640px). Comments read as a conversation
+  (`CommentThread` `variant="conversation"`: no grey fill, replies hang off a hairline); the
+  overall comments keep the §6.23 tint. Holiday and leave are short tinted cards, Missing keeps its
+  red with a left bar, the rest are plain one-row cards.
+- **Same cards elsewhere:** the day panel on This week (header unchanged, count and switch in a strip
+  under it, holiday/leave tinted) and the posted days on Team updates (gap 16px). `PostedUpdate` is now
+  the card body only; new `DayControls` is the count and switch. No behaviour changed: comments,
+  edit window, toggles and error toasts are the same code.
+- **Checks:** `npm run lint` clean; client tests 346 green (one new in `ReportDetailPage.test.jsx`
+  for the five cards and the quiet days); server untouched. Looked at in a real browser (Chromium,
+  local in-memory Mongo, seeded; Atlas and `MONGODB_URI` never used) at 1440 and 360 px, light and
+  dark: W41 as Imali (thread, reply, resolved blocker, holiday), This week (a posted day and a
+  holiday), Team updates as Nadia, Lakmal's W41 (posted, Missing, Holiday, today, future), and a
+  walkthrough at 360 px (post a comment, toggle the switch, edit window shown). **Not looked at:**
+  the "On leave" chip card (the seed has no week with both a report and a leave day; covered by the
+  new test only), and the demo (same components, not opened).
+- The dark theme is the Appearance switch in the sidebar's user menu; it is stored per device
+  (`wv.theme`), not taken from the operating system.
+
+**Owner: how to check it** (local, on your machine)
+1. `npm install` in the repo root's `server/` and `client/`; copy `client/.env.example` to
+   `client/.env` and `server/.env.example` to `server/.env` (your Atlas `MONGODB_URI` is fine for
+   `server/.env`, but seeding **wipes** that database; use a local Mongo or a throw-away Atlas
+   database for this check).
+2. `npm run seed`, then in two terminals `npm --prefix server run dev` and `npm --prefix client run dev`.
+3. Open http://localhost:5173/signin and sign in as `imali@example.com`, password `weekly-view-dev`.
+4. Open **My reports**, then **Week 41**. Check: five separate cards; Tuesday's thread reads as a
+   conversation with Imali's reply indented under a line; Wednesday is a short grey Holiday card;
+   Thursday has a Blockers section.
+5. Click **Comment** on Monday, write something, **Post comment**. It appears at once with `Edit`
+   and `Delete` and a minutes-left counter. The count in Monday's header becomes "1 comment".
+6. Switch **Open to team comments** on Monday on and off.
+7. Open **This week**, pick **Tue** in the strip: the same card, with the count and switch under
+   the header. Pick **Wed**: the holiday card.
+8. Sign out, sign in as `nadia@example.com` (manager), open **Team updates**: each person's day is a card,
+   16px apart; **Mon 5** shows posted days, Dinesh (on leave) a short row.
+9. On **Team updates**, on **Mon 5**, click **Lakmal H.**'s name: his Week 41 opens. Monday is posted,
+   Tuesday **Missing** with a red bar, Wednesday Holiday, Thursday "Not posted yet", Friday "Not yet".
+10. Dark theme: click your name at the bottom of the sidebar, choose **Dark** under Appearance, and
+    repeat steps 4 and 8.
+11. Narrow the browser to about 360 px (or use the device toolbar) and repeat step 4: the header wraps
+    (title, then count, then the switch) and the work lines stack.
+
 ## Open questions for the owner
 - **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.

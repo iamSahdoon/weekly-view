@@ -10,6 +10,7 @@ import { useProjects } from "../../hooks/useProjectQueries.js";
 import { usePutDay } from "../../hooks/useReportQueries.js";
 import { useMyTasks } from "../../hooks/useTaskQueries.js";
 import { useUnsavedGuard } from "../../hooks/useUnsavedGuard.js";
+import { cn } from "../../lib/cn.js";
 import { WEEKDAY_LABELS } from "../../lib/constants.js";
 import { weekDays } from "../../lib/dates.js";
 import { errorCopy } from "../../lib/errorCopy.js";
@@ -27,7 +28,7 @@ import {
 import { Button } from "../ui/Button.jsx";
 import { Checkbox } from "../ui/Checkbox.jsx";
 import { Input } from "../ui/Input.jsx";
-import { PostedUpdate } from "./DailyUpdatesBlock.jsx";
+import { DayControls, PostedUpdate } from "./DailyUpdatesBlock.jsx";
 import { WorkLineRow } from "./WorkLineRow.jsx";
 
 // The day panel (design §4.11, frontend_architecture.md §6.3): the selected day of
@@ -77,7 +78,12 @@ export function DayPanel({ week, weekday, isOwn }) {
   return (
     <section
       aria-labelledby={`day-${weekday}`}
-      className="border border-hair bg-card"
+      className={cn(
+        "border border-hair",
+        !day && (state === "holiday" || state === "leave")
+          ? "bg-tint"
+          : "bg-card",
+      )}
     >
       <DayHeader
         id={`day-${weekday}`}
@@ -103,18 +109,21 @@ export function DayPanel({ week, weekday, isOwn }) {
           )
         }
       />
-      <div className="px-20 py-16">
-        {day ? (
+      {day ? (
+        <>
+          <div className="border-b border-hair px-20 py-8">
+            <DayControls week={week} day={day} />
+          </div>
           <PostedUpdate week={week} day={day} />
-        ) : (
-          <p className="text-dense text-body">
-            {BLOCKED_LINES[state] ??
-              (weekOpen
-                ? "Nothing posted for this day."
-                : "No update was posted for this day.")}
-          </p>
-        )}
-      </div>
+        </>
+      ) : (
+        <p className="px-20 py-16 text-dense text-body">
+          {BLOCKED_LINES[state] ??
+            (weekOpen
+              ? "Nothing posted for this day."
+              : "No update was posted for this day.")}
+        </p>
+      )}
     </section>
   );
 }
