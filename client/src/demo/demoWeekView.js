@@ -1,6 +1,13 @@
 import { addMinutes, parseISO } from "date-fns";
 import { TASK_TYPES, WEEKDAYS, WEEKDAY_LABELS } from "../lib/constants.js";
-import { addWeeks, toCalendarDate, weekDays } from "../lib/dates.js";
+import {
+  addWeeks,
+  compareWeekKeys,
+  currentWeekKey,
+  toCalendarDate,
+  weekDays,
+  weekKeyOf,
+} from "../lib/dates.js";
 
 // The demo's WeekView: what the API computes from stored documents, computed from the
 // store (frontend_architecture.md §11.3 — the adapter computes every derived field the
@@ -301,8 +308,32 @@ export function dayAvailability(store, user, weekKey, weekday) {
   const key = toCalendarDate(date);
   if (holidayDates(store).has(key)) return "holiday";
   if (key < toCalendarDate(new Date(user.joinedAt))) return "not_on_team";
+  if (user.removedAt && key > toCalendarDate(new Date(user.removedAt)))
+    return "not_on_team";
   if (user.leaveFrom && key >= user.leaveFrom) return "leave";
   return "expected";
+}
+
+/**
+ * Every week `user` was on the team, oldest first, up to the current one (the history
+ * list of U7 and the D7 strip walk these). One work period: from `joinedAt` to
+ * `removedAt`, or to now.
+ */
+export function personWeekKeys(user, now = new Date()) {
+  if (!user.joinedAt) return [];
+  const last = currentWeekKey(now);
+  const end = user.removedAt
+    ? [weekKeyOf(new Date(user.removedAt)), last].sort(compareWeekKeys)[0]
+    : last;
+  const keys = [];
+  for (
+    let key = weekKeyOf(new Date(user.joinedAt));
+    compareWeekKeys(key, end) <= 0;
+    key = addWeeks(key, 1)
+  ) {
+    keys.push(key);
+  }
+  return keys;
 }
 
 export const expectedDaysOf = (store, user, weekKey) =>

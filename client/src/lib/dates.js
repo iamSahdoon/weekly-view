@@ -83,3 +83,41 @@ export function weekdayOf(date) {
   const index = (date.getDay() + 6) % 7;
   return WEEKDAYS[index] ?? null;
 }
+
+/**
+ * The date of the `days`-th working day of a plan that starts on `start` (a weekday,
+ * which counts as day 1), skipping weekends and the given holidays (a Set of
+ * YYYY-MM-DD). Mirrors the server's count (database_schema.md §5.3); the PlanModal's
+ * "Ends Fri 16 Oct" line uses it. Null when the inputs can't make a date.
+ */
+export function addWorkingDays(start, days, holidays = new Set()) {
+  const first = typeof start === "string" ? parseCalendarDate(start) : start;
+  if (!first || !Number.isInteger(days) || days < 1) return null;
+  const isWorking = (date) =>
+    weekdayOf(date) !== null && !holidays.has(toCalendarDate(date));
+  let date = first;
+  let counted = 0;
+  // A plan can run to 1000 working days; 3 calendar days per working day is a safe stop.
+  for (let guard = 0; guard < days * 3 + 14; guard += 1) {
+    if (isWorking(date)) counted += 1;
+    if (counted === days) return date;
+    date = addDays(date, 1);
+  }
+  return null;
+}
+
+/** How many of `holidays` fall on a weekday from `start` to `end` inclusive. */
+export function holidaysWithin(start, end, holidays = new Set()) {
+  let n = 0;
+  for (let date = start; date <= end; date = addDays(date, 1)) {
+    if (weekdayOf(date) !== null && holidays.has(toCalendarDate(date))) n += 1;
+  }
+  return n;
+}
+
+/** The next Monday to Friday on or after `from`, as YYYY-MM-DD — a new plan's start. */
+export function nextWeekday(from = new Date()) {
+  let date = from;
+  while (weekdayOf(date) === null) date = addDays(date, 1);
+  return toCalendarDate(date);
+}

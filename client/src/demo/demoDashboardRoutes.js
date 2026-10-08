@@ -6,6 +6,7 @@ import {
   dayAvailability,
   dayStatesOf,
   expectedDaysOf,
+  personWeekKeys,
   projectRef,
   userRef,
   weekStateOf,
@@ -15,7 +16,7 @@ import {
 // rules are the server's: the team is built people-first, so someone who filed nothing is
 // a row; `status` filters D2 and nothing else; D6 is not week-scoped; hours come from the
 // week's lines at every status; Done tasks count in submitted reports and, for a report
-// that was sent back, in the sent-back version (I13). D7 arrives with the profile (C8).
+// that was sent back, in the sent-back version (I13). D7 is the profile's strip.
 
 const isManager = (user) => user.role === "manager" || user.role === "admin";
 const FILED = ["submitted", "needs_correction", "approved"];
@@ -417,6 +418,43 @@ function projects(store, { query }) {
   return ok({ items });
 }
 
+// ---------------------------------------------------------------- D7
+
+// Every week the person was on the team, leave and holiday weeks left out; hours are the
+// lines' at every status, corrections the revisions sent back.
+function personMetrics(store, { params }) {
+  const user = store.users.find((u) => u._id === params.userId);
+  if (!user) return fail(404, "USER_NOT_FOUND", "That person doesn't exist.");
+  const reports = store.reports.filter((r) => r.author === user._id);
+  let expected = 0;
+  let filed = 0;
+  let totalHours = 0;
+  for (const weekKey of personWeekKeys(user)) {
+    const report = reports.find((r) => r.weekKey === weekKey) ?? null;
+    const state = weekStateOf(
+      store,
+      report,
+      weekKey,
+      expectedDaysOf(store, user, weekKey),
+    );
+    if (NOT_EXPECTED.includes(state)) continue;
+    expected += 1;
+    if (FILED.includes(state)) filed += 1;
+    totalHours += sum(linesOf(store, report).map((l) => l.hours));
+  }
+  return ok({
+    reportsFiled: filed,
+    compliance: rate(filed, expected),
+    avgHoursPerWeek: expected === 0 ? null : totalHours / expected,
+    corrections: sum(
+      reports.map(
+        (r) =>
+          r.revisions.filter((v) => v.action === "changes_requested").length,
+      ),
+    ),
+  });
+}
+
 export const dashboardRoutes = [
   ["get", "/dashboard/summary", guarded(summary)], // D1
   ["get", "/dashboard/team", guarded(team)], // D2
@@ -424,5 +462,6 @@ export const dashboardRoutes = [
   ["get", "/dashboard/hours", guarded(hours)], // D4
   ["get", "/dashboard/workload", guarded(workload)], // D5
   ["get", "/dashboard/activity", guarded(activity, { week: false })], // D6
+  ["get", "/dashboard/people/:userId", guarded(personMetrics, { week: false })], // D7
   ["get", "/dashboard/projects", guarded(projects)], // D8
 ];

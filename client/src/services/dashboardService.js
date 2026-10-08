@@ -2,8 +2,7 @@ import { api } from "./apiClient.js";
 
 // The team dashboard (api_specification.md §2.9, managers and admins only). One function
 // per block; each takes the API params its hook built. `status` goes to D2 alone — it
-// must never reach the metric strip (requirements §6). D7, the person profile's strip,
-// arrives with that page (C8).
+// must never reach the metric strip (requirements §6).
 
 /** D1 → the metric strip: filed, compliance, needs correction, open blockers. */
 export const getSummary = (params) => api.get("/dashboard/summary", { params });
@@ -27,3 +26,7 @@ export const getActivity = () => api.get("/dashboard/activity");
 /** D8 → { items } — every active project with a plan. */
 export const getProjects = (params) =>
   api.get("/dashboard/projects", { params });
+
+/** D7 → { reportsFiled, compliance, avgHoursPerWeek, corrections } — the profile's strip. */
+export const getPersonMetrics = (userId) =>
+  api.get(`/dashboard/people/${userId}`);

@@ -36,6 +36,8 @@ export const STATUS_MAPS = Object.freeze({
   user: {
     active: { label: "Active", tone: TONES.approved },
     invited: { label: "Invited", tone: TONES.draft },
+    // The removed marker (design §3.15): a quiet chip beside the name, never a strike.
+    removed: { label: "Removed", tone: TONES.neutral },
   },
 });
 

@@ -622,6 +622,7 @@ describe("U1 and U2 — the people list", () => {
       isOwner: false,
       onLeave: false,
       leaveSince: null,
+      leaveHistory: [],
     });
     expect((await call("U2", managerA, ghost)).body.error).toEqual({
       code: "USER_NOT_FOUND",
@@ -765,6 +766,38 @@ describe("U9 and U10 — leave", () => {
       .send({ onLeave: false });
     expect(denied.status).toBe(403);
     expect(denied.body.error).toEqual({ code: "FORBIDDEN" });
+  });
+
+  it("U2 serves the leave history, newest first, with who set each period; U1 does not", async () => {
+    for (const [by, onLeave] of [
+      [managerA, true],
+      [admin, false],
+      [memberY, true],
+    ])
+      await api
+        .put(`/api/users/${memberY._id}/leave`)
+        .set(as(by))
+        .send({ onLeave });
+    const { leaveHistory, ...rest } = (await call("U2", managerA, memberY._id))
+      .body.data;
+    expect(rest).toMatchObject({ onLeave: true });
+    expect(leaveHistory).toHaveLength(2);
+    expect(leaveHistory[0]).toEqual({
+      from: expect.any(String),
+      to: null,
+      setBy: {
+        _id: String(memberY._id),
+        name: memberY.name,
+        role: "member",
+        status: "active",
+        onLeave: true,
+      },
+    });
+    expect(leaveHistory[1].to).toEqual(expect.any(String));
+    expect(leaveHistory[1].setBy._id).toBe(String(managerA._id));
+    const list = (await api.get("/api/users").set(as(admin))).body.data.items;
+    for (const row of list) expect(row).not.toHaveProperty("leaveHistory");
+    expect((await call("U2", memberX, memberY._id)).status).toBe(403);
   });
 
   it("the target must be active", async () => {

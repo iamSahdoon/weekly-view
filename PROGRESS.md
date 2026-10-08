@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C8**
+**Next stage: C9**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -20,7 +20,7 @@
 | C5 | The weekly form | done |
 | C6 | History, team updates, review desk, review page | done |
 | C7 | Dashboard and charts | done |
-| C8 | Projects, users, holidays, people, profile, account | not started |
+| C8 | Projects, users, holidays, people, profile, account | done |
 | C9 | "New" markers, system states, print | not started |
 | C10 | Demo chooser and bar, landing page | not started |
 | C11 | Verification, deployment, README | not started |
@@ -927,6 +927,107 @@ version).
   **no overflow and no errors at 1440 and 360 px, light and dark**; screenshots of all four looked at.
   Unverified: a greyscale rendering by eye (the six shapes are asserted by a test), other browsers.
 
+### C8 checks (2026-10-08)
+- `npm run lint`: clean. `npm test`: green — server 383 (adminRoutes gained the U2 leave-history
+  test), client 434 (was 346; new: `pages/__tests__/PeoplePages.test.jsx` 19,
+  `demo/__tests__/demoPeople.test.js` 25, `hooks/__tests__/useUserQueries.test.jsx` 3, and
+  `permissions`, `dates`, `peopleParams`, `passwordStrength` tests; `demoCoverage.test.js` has a case
+  for each of the 17 new service functions, run as the perspective that may call them).
+- **Done list:** a link never appears in a cache after its modal closes — `useUserQueries.test.jsx`
+  runs the three link mutations and checks no mutation or query holds the URL once the caller has
+  read it and reset; in the browser the URL was in no page DOM, storage or request URL after `Done`.
+  Admin-vs-owner rows match §11.2–§11.3 — `permissions.test.js` (`userActions`) and, in a browser, a
+  non-owner admin sees the owner's and another admin's controls disabled with their reasons. **Make
+  owner** works and the actor's `Me` refreshes — seen in a browser: Sanduni made Nadia the owner, the
+  `Owner` chip moved, `Make owner` left Sanduni's menus and her Account page then named Nadia.
+- **Walked in a real browser** (Chromium; the real API and Vite client; a *local in-memory* MongoDB
+  replica set, seeded; Atlas and `MONGODB_URI` were never used) at 1440 px and 360 px (no horizontal
+  overflow on Projects, Users, People, Holidays, Account or a profile), as Sanduni (owner/admin),
+  Nadia (manager), Imali (member): Projects (extend a plan and see "Earlier plans", the finish line,
+  new project with a taken name, delete, Days | Hours in the URL), the dashboard's `Extend plan`,
+  Holidays (add, duplicate date, delete, year), Users (inline role change with `Saved`, row menus and
+  their reasons, invite → link state → `Copied` → `Done`, re-issue, reset link, edit email with an
+  address in use, leave on / off with the confirm, remove, filters), People (week links, the search
+  override and its note), a profile (header, This week squares, figures, leave history, every week
+  with non-clickable rows, the leave toggle with its confirm), Account (name, password with the meter
+  and every error, Appearance, the Leave switch with its confirm). Console: no errors but the missing
+  `favicon.ico` (it was there before C8) and the expected 409/422s.
+- **Not looked at:** the dark theme on the new pages beyond Account (tokens only, no hex); a real
+  clipboard on a machine without permission (the URL is selectable text then); the demo (the
+  handlers are tested; the demo bar and chooser are C10).
+
+### C8 decisions (to confirm or change)
+1. **U2 serves the leave history** (`leaveHistory`, newest first, `{ from, to, setBy: UserRef }`) — the
+   owner asked for it and no endpoint had it, so this adds one field to U2 only (not to U1's rows),
+   in `userService.getUser`, in `api_specification.md` §2.2, tested in `adminRoutes.test.js` and the
+   demo. It is additive and manager-only like the rest of U2; remove the field to undo it.
+2. **The profile's top bar** holds the leave toggle and, for an admin, `Manage` → `/users?q={email}`.
+   The status and week-range filters sit in the history table's own header, not in a filter bar above
+   the person's header (they filter that table only).
+3. **This week on the profile** (new, small): the five Updates squares and the week chip from U8, with
+   `Open W41` to the same address Team updates uses. It is where the C7 squares appear in C8; History
+   rows carry only the status chip, because a `ReportRow` knows which days were posted but not why the
+   others weren't (missing, holiday or leave), so squares there would mislead.
+4. **No per-day content in C8's pages**, so the day-card style has nothing to be applied to: People and
+   the profile link to the week page, which already shows the days as cards.
+5. **People:** a `This week` column (not in design §3.15) holds the link to each active person's
+   week; status is a single Select (Active default · Invited · Removed · All) rather than a multi.
+   `Reports filed` / `Last activity` / name sort from the headers.
+6. **Users:** no status filter value means all three statuses (removed people included, with the
+   `Removed` chip, no menu and no role Select); the design gives no default. Only the owner can pick
+   `Admin` in a role Select or an invite (the option is disabled for other admins).
+7. **A disabled menu item prints its reason** beneath it instead of a tooltip (a disabled item gets no
+   hover); a disabled role Select has the reason as a tooltip and as hidden text.
+8. **Project edit** sends only what changed — P3 for name, description and people, then P4 for a
+   changed plan — one after the other; if the second fails the first has already been saved and the
+   modal stays open with the error. A project with no plan edits and sets one in the same modal.
+9. **The projects list shows overdue like the dashboard** (the figure in `--st-corr-fg`), where design
+   §3.9 says `--ink`; one look for one fact across the two tables. Change in `ProjectsListTable.jsx`.
+10. **New shared pieces:** `ui/DropdownMenu` (Radix, in the §3.1 tree), `ui/DatePicker` (Monday–Friday
+    calendar built on date-fns, in the tree), `ui/Meter`, `lib/passwordStrength.js` (a length-first
+    heuristic; the server's only rule is 8–72 characters), and a fix to `inputClasses.js` so the
+    read-only dashed look no longer applies to a `<button>` (the date field).
+11. **The demo's links are sample URLs** (`weeklyview.example/invite/…`) that open nothing; the demo has
+    no email and `/invite` is not a demo route. Its leave history, plan history and holidays are kept
+    in the store like the rest.
+12. `PendingPage.jsx` is deleted — C8 was the last stage with a route on it.
+
+**Owner: how to test C8 by hand** (local; the seed **wipes** the database it points at — use a local
+Mongo or a throw-away Atlas database, never one you want to keep)
+1. `npm run seed`, then `npm --prefix server run dev` and `npm --prefix client run dev`.
+2. Sign in at http://localhost:5173/signin as `sanduni@example.com` (admin, the owner), password
+   `weekly-view-dev`.
+3. **Projects:** open **Projects**. On **Client A** click **Extend plan**, change **Working days** to
+   25: "From 20 to 25 working days." appears and the finish line moves. **Save plan**; the row now reads
+   "of 25". Open **Extend plan** again: **Earlier plans** lists the old plan with your name.
+4. Click **New project**, type `Client A` as the name and **Create project**: a field error says the name
+   is taken. Use `Atlas rebuild`, 10 working days, create it, then **Delete** it and read the confirm.
+5. Open **Team dashboard**, and in the projects table click **Extend plan** on **R&D**: the same modal.
+6. **Holidays:** **Add holiday**, pick Wed 7 Oct (already a holiday): the error shows on the date. Pick a
+   free weekday, name it, add it, then **Delete** it. Change the year in the top bar.
+7. **Users:** change **Ayesha C.**'s role to Manager (`Saved` shows for a moment), then back. Open the **⋯**
+   menu on **Nadia F.**: Edit email, Password reset link, Mark as on leave, Make owner, Remove.
+8. **Invite person**: `new.hire@example.com`, role Manager, **Create invite link**. The modal swaps to the
+   link with **Copy link** (it reads **Copied** briefly). Click **Done**. Re-open **⋯ → Re-issue invite**
+   on that row: confirm, and a different link appears.
+9. **⋯ → Password reset link** on **Imali J.**: confirm, link, **Done**. **⋯ → Edit email** on
+   **Tharindu S.** with `imali@example.com`: "Someone on the team already uses that email."
+10. **⋯ → Mark as on leave** on **Ayesha C.** (the chip appears at once), then **⋯ → End leave**: a confirm
+    asks first; **Cancel** keeps her on leave.
+11. **People:** open **People**. Click **W41** on Imali's row: her week opens (yours opens at /reports/…).
+    Type `chamari` in the search: Chamari L. (removed) appears with "Showing matches in all statuses."
+    and the Status control still says Active; clear the search and she goes.
+12. Click **Dinesh K.**: the profile shows **On leave since …**, This week's squares, the four figures,
+    **Leave** (each period's start, end and who set it) and **Every week**; away and holiday weeks are
+    not links. Click **End leave**: the confirm names Dinesh; **Turn off leave**; the period gets an end
+    date. **Mark as on leave** starts a new one at the top.
+13. **Make owner (last — it moves your protection):** **Users → ⋯ → Make owner** on **Nadia F.**, read
+    the confirm, **Make owner**. The **Owner** chip moves to Nadia; **Account** now says to ask Nadia.
+14. Sign in as `imali@example.com`: **Account** — change the name, set a new password (watch the meter and
+    the errors), switch **Dark**, then the **I'm on leave** switch (turning it off asks first).
+15. As `nadia@example.com` (manager now, or admin after step 13), **People** has no `Manage users` button
+    for a manager; as an admin it does. A member visiting `/people` or `/users` gets the forbidden page.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -1475,7 +1576,7 @@ version).
   path was walked in a browser against the real API (Dinesh, on leave in the seed): `Turn off` → the
   dialog → `Cancel` closes it and sends nothing; `Turn off` → `Turn off leave` sends U9 once and the
   on-leave line goes away.
-- **For C8 (owner decision, 2026-10-05; not built in C4):** the person's profile (`/people/:userId`)
+- **For C8 (owner decision, 2026-10-05; built in C8 — see *C8 decisions*):** the person's profile (`/people/:userId`)
   must show managers and admins a **leave history** — each leave period's start, end and who set
   it. The data is already stored on the user's leave periods (`database_schema.md` §1.1); no API
   endpoint serves it yet, so C8 must check the API spec for one or raise it before building.
@@ -1561,6 +1662,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- **C8, to confirm or change:** the twelve decisions under *C8 decisions*, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).
 - **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.
 - ~~C6, to confirm or change~~ **Resolved (owner, 2026-10-05):** all ten decisions accepted; `blockersOnly` now means open blockers and the review panel is pinned — see *C6 owner answers*. (Was: the ten decisions above, especially 1 (People is C8) and 4 (the
@@ -1585,6 +1687,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C8 added `pages/{ProjectsPage,HolidaysPage,UsersPage,PeoplePage,PersonProfilePage,AccountPage}.jsx` (all in the tree), `components/project/{ProjectModal,ProjectsListTable}.jsx`, `components/holiday/HolidayModal.jsx`, ten files in `components/user/` (see the tree), `ui/{DropdownMenu,DatePicker,Meter}.jsx` (in the tree), `schemas/{projectSchema,userSchema}.js`, `lib/{peopleParams,passwordStrength}.js` and five test files; it deleted `pages/PendingPage.jsx`. `project_structure.md` §3.1 and §6 are updated.
 - C7 added `lib/dashboardParams.js`, `lib/dashboardData.js`, `demo/demoDashboardRoutes.js`, `components/ui/AvatarStack.jsx` (in the tree of §3.1 as `AvatarStack` of the `ui/` list, now a file) and five test files (`pages/__tests__/TeamDashboardPage.test.jsx`, `demo/__tests__/demoDashboard.test.js`, `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`); `project_structure.md` §3.1 and §6 are updated. `MetricCell` is built (`PersonalStrip` still draws its own three cells). `typeColor` in `chartTheme.js` is `TASK_TYPE_COLORS` itself, not a second copy.
 - C6 added `components/report/WeekDocument.jsx`, `components/ui/WeekRangeFilter.jsx`, `demo/demoReviewRoutes.js`, `demo/demoUserRoutes.js`, `lib/reviewDeskParams.js`, `lib/reviewOutcome.js`, `lib/updatesDay.js` and five test files (`pages/__tests__/ReviewPages.test.jsx`, `demo/__tests__/demoReview.test.js`, `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`); `project_structure.md` §3.1 and §6 are updated. `WeekComments.jsx` (built in C3) is reused by the review page unchanged. `hooks/useNewMarks.js` and the desk's count are C9's.
 - C5 added four test files (`hooks/__tests__/useAutosave.test.js`, `lib/__tests__/submitChecklist.test.js`,

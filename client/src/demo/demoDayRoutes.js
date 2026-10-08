@@ -435,7 +435,7 @@ function submit(store, { params, body }, actor) {
 
 // ---------------------------------------------------------------- R1, R2
 
-function reportRow(store, actor, report) {
+export function reportRow(store, actor, report) {
   const lines = linesOf(report);
   const projectIds = [
     ...new Set(

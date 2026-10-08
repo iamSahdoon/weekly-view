@@ -637,7 +637,7 @@ describe("the projects table", () => {
     expect(html).toContain("Open projects");
   });
 
-  it("has `Extend plan` only when the page passes `onExtend` (PlanModal is C8's)", async () => {
+  it("has `Extend plan` only when the page passes `onExtend`", async () => {
     const data = await projectsData();
     const without = inRouter(
       <ProjectsTable query={loaded(data)} unit="days" onUnitChange={noop} />,

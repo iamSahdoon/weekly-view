@@ -4,7 +4,6 @@ import AuthLayout from "../layouts/AuthLayout.jsx";
 import RootLayout from "../layouts/RootLayout.jsx";
 import DevOnlyRoute from "./DevOnlyRoute.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
-import PendingPage from "../pages/PendingPage.jsx";
 import IndexRoute from "./IndexRoute.jsx";
 import ParamGuard from "./ParamGuard.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
@@ -14,9 +13,7 @@ import SessionLayout from "./SessionLayout.jsx";
 // The route table (frontend_architecture.md §4.1): every path in the product, with
 // its guard. Routes that make no sense in the demo carry handle.realOnly.
 //
-// Pages that a later stage builds render PendingPage until then: C8 the rest (C3 the
-// report-reading routes, C4 "/", C5 the edit route, C6 history, updates and review and
-// C7 /team are done).
+// Every page is built; each is lazy-loaded behind `page(...)`.
 
 const SignInPage = lazy(() => import("../pages/SignInPage.jsx"));
 const SignUpPage = lazy(() => import("../pages/SignUpPage.jsx"));
@@ -27,6 +24,12 @@ const TeamUpdatesPage = lazy(() => import("../pages/TeamUpdatesPage.jsx"));
 const ReviewDeskPage = lazy(() => import("../pages/ReviewDeskPage.jsx"));
 const ReviewPage = lazy(() => import("../pages/ReviewPage.jsx"));
 const TeamDashboardPage = lazy(() => import("../pages/TeamDashboardPage.jsx"));
+const ProjectsPage = lazy(() => import("../pages/ProjectsPage.jsx"));
+const HolidaysPage = lazy(() => import("../pages/HolidaysPage.jsx"));
+const UsersPage = lazy(() => import("../pages/UsersPage.jsx"));
+const AccountPage = lazy(() => import("../pages/AccountPage.jsx"));
+const PeoplePage = lazy(() => import("../pages/PeoplePage.jsx"));
+const PersonProfilePage = lazy(() => import("../pages/PersonProfilePage.jsx"));
 const AcceptInvitePage = lazy(() => import("../pages/AcceptInvitePage.jsx"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage.jsx"));
 // Defined in development only, so a production build has no /design chunk.
@@ -83,10 +86,7 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
                   path: "/people/:userId/reports/:week",
                   element: guarded(["userId", "week"], <ReportDetailPage />),
                 },
-                {
-                  path: "/account",
-                  element: <PendingPage title="Account" />,
-                },
+                { path: "/account", element: page(<AccountPage />) },
               ],
             },
             {
@@ -98,25 +98,19 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
                   element: guarded(["reportId"], <ReviewPage />),
                 },
                 { path: "/team", element: page(<TeamDashboardPage />) },
-                { path: "/people", element: <PendingPage title="People" /> },
+                { path: "/people", element: page(<PeoplePage />) },
                 {
                   path: "/people/:userId",
-                  element: guarded(["userId"], <PendingPage title="Person" />),
+                  element: guarded(["userId"], <PersonProfilePage />),
                 },
-                {
-                  path: "/projects",
-                  element: <PendingPage title="Projects" />,
-                },
+                { path: "/projects", element: page(<ProjectsPage />) },
               ],
             },
             {
               element: <ProtectedRoute allow={["admin"]} />,
               children: [
-                { path: "/users", element: <PendingPage title="Users" /> },
-                {
-                  path: "/holidays",
-                  element: <PendingPage title="Holidays" />,
-                },
+                { path: "/users", element: page(<UsersPage />) },
+                { path: "/holidays", element: page(<HolidaysPage />) },
               ],
             },
             // Inside the shell if signed in, standalone if not.

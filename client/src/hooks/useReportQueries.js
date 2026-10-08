@@ -39,6 +39,15 @@ export function useMyReports(filters) {
   });
 }
 
+/** U7 — someone's history: every week they were on the team. Managers and admins. */
+export function useUserReports(userId, filters) {
+  return useQuery({
+    queryKey: qk.reportsOf(userId, filters),
+    queryFn: () => userService.listUserReports(userId, filters),
+    placeholderData: keepPreviousData,
+  });
+}
+
 /** R2 — the personal strip. */
 export function useReportSummary(weekKey, month) {
   return useQuery({

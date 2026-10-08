@@ -33,6 +33,7 @@ const rejects = (code) => ({ rejects: code });
 // The fixtures' ids change per run (their dates are relative), so a case whose
 // arguments name a report or a thread takes them from the store: `args(ctx)`.
 let ctx = null;
+let store = null;
 const WEEK_VIEW_KEYS = [
   "user",
   "weekKey",
@@ -214,11 +215,56 @@ const CASES = {
         );
       },
     },
+    createProject: {
+      as: PERSPECTIVES.manager,
+      args: [{ name: "Created in the demo", description: "", memberIds: [] }],
+      check: (project) => {
+        hasKeys(["_id", "name", "memberIds", "taskCount"])(project);
+        expect(project.name).toBe("Created in the demo");
+      },
+    },
+    updateProject: {
+      as: PERSPECTIVES.manager,
+      args: () => [ctx.project._id, { description: "Edited" }],
+      check: (project) => expect(project.description).toBe("Edited"),
+    },
+    setPlan: {
+      as: PERSPECTIVES.manager,
+      args: () => [
+        ctx.project._id,
+        { startDate: "2099-01-05", plannedDays: 10, plannedHours: null },
+      ],
+      check: (project) => expect(project.progress.plan.plannedDays).toBe(10),
+    },
+    deactivateProject: {
+      as: PERSPECTIVES.manager,
+      args: () => [ctx.project._id],
+      check: (project) => expect(project.status).toBe("inactive"),
+    },
   },
   holidayService: {
     listHolidays: {
-      args: [{ from: "2026-01-01", to: "2026-12-31" }],
-      check: (data) => expect(data.items).toEqual([]),
+      args: [{ from: "2099-01-01", to: "2099-12-31" }],
+      check: (data) =>
+        expect(data.items.map((h) => h.name)).toEqual(["Scratch day"]),
+    },
+    createHoliday: {
+      as: PERSPECTIVES.admin,
+      args: [{ date: "2099-02-03", name: "Founders day" }],
+      check: (holiday) => {
+        hasKeys(["_id", "date", "name", "createdBy"])(holiday);
+        expect(holiday.createdBy._id).toBe(PERSPECTIVES.admin);
+      },
+    },
+    updateHoliday: {
+      as: PERSPECTIVES.admin,
+      args: () => [ctx.holiday._id, { name: "Renamed day" }],
+      check: (holiday) => expect(holiday.name).toBe("Renamed day"),
+    },
+    deleteHoliday: {
+      as: PERSPECTIVES.admin,
+      args: () => [ctx.holiday._id],
+      check: (holiday) => expect(holiday.name).toBe("Renamed day"),
     },
   },
   userService: {
@@ -246,6 +292,65 @@ const CASES = {
     listOnLeave: {
       args: [],
       check: (data) => expect(Array.isArray(data.items)).toBe(true),
+    },
+    // The people endpoints are managers' and admins' (the content: demoPeople.test.js).
+    getUser: {
+      as: PERSPECTIVES.manager,
+      args: [PERSPECTIVES.member],
+      check: (user) => {
+        hasKeys(["_id", "email", "role", "status", "leaveHistory"])(user);
+        expect(user.leaveHistory).toEqual([]);
+      },
+    },
+    listUserReports: {
+      as: PERSPECTIVES.manager,
+      args: [PERSPECTIVES.member, { limit: 20, sort: "weekKey", dir: "desc" }],
+      check: (data) => {
+        expect(data.items[0].weekKey).toBe(currentWeekKey());
+        expect(data.meta.total).toBeGreaterThan(3);
+      },
+    },
+    inviteUser: {
+      as: PERSPECTIVES.admin,
+      args: [{ email: "new.person@example.com", role: "member" }],
+      check: (data) => {
+        hasKeys(["user", "linkUrl", "expiresAt"])(data);
+        expect(data.user.status).toBe("invited");
+      },
+    },
+    reissueInvite: {
+      as: PERSPECTIVES.admin,
+      args: () => [ctx.scratch(6)],
+      check: hasKeys(["linkUrl", "expiresAt"]),
+    },
+    changeRole: {
+      as: PERSPECTIVES.admin,
+      args: () => [ctx.scratch(1), "manager"],
+      check: (user) => expect(user.role).toBe("manager"),
+    },
+    removeUser: {
+      as: PERSPECTIVES.admin,
+      args: () => [ctx.scratch(2)],
+      check: (user) => expect(user.status).toBe("removed"),
+    },
+    changeEmail: {
+      as: PERSPECTIVES.admin,
+      args: () => [ctx.scratch(3), "changed@example.com"],
+      check: (user) => expect(user.email).toBe("changed@example.com"),
+    },
+    createResetLink: {
+      as: PERSPECTIVES.admin,
+      args: () => [ctx.scratch(4)],
+      check: hasKeys(["linkUrl", "expiresAt"]),
+    },
+    // Last: it moves the ownership off the admin perspective.
+    transferOwnership: {
+      as: PERSPECTIVES.admin,
+      args: () => [ctx.scratch(5)],
+      check: (user) => {
+        expect(user.isOwner).toBe(true);
+        expect(user.role).toBe("admin");
+      },
     },
   },
   reviewService: {
@@ -335,6 +440,17 @@ const CASES = {
       args: () => [{ weekKey: currentWeekKey() }],
       ...rejects("FORBIDDEN"),
     },
+    // D7 is the profile's strip; a manager reads it (the content: demoPeople.test.js).
+    getPersonMetrics: {
+      as: PERSPECTIVES.manager,
+      args: [PERSPECTIVES.member],
+      check: hasKeys([
+        "reportsFiled",
+        "compliance",
+        "avgHoursPerWeek",
+        "corrections",
+      ]),
+    },
   },
   authService: {
     getBootstrap: { args: [], check: hasKeys(["available"]) },
@@ -370,7 +486,7 @@ const functionsOf = (module) =>
   Object.entries(module).filter(([, value]) => typeof value === "function");
 
 beforeAll(() => {
-  const store = createDemoStore();
+  store = createDemoStore();
   store.session.userId = PERSPECTIVES.member;
   const last = addWeeks(currentWeekKey(), -1);
   const reportOf = (author, weekKey) =>
@@ -382,6 +498,47 @@ beforeAll(() => {
     imaliOlder: reportOf(PERSPECTIVES.member, addWeeks(currentWeekKey(), -2)),
     sendBack: imaliLast.weekComments[0],
   };
+  // People, a project and a holiday for the C8 writes to act on, so none of them touches
+  // the three perspectives or the two projects the other cases read.
+  const person = (n, role, status = "active") => ({
+    _id: `0a${String(900 + n).padStart(22, "0")}`,
+    name: `Scratch ${n}`,
+    email: `scratch${n}@example.com`,
+    role,
+    status,
+    isOwner: false,
+    onLeave: false,
+    leaveFrom: null,
+    leaveHistory: [],
+    removedAt: null,
+    joinedAt: new Date().toISOString(),
+    projectIds: [],
+  });
+  store.users.push(
+    person(1, "member"), // changeRole
+    person(2, "member"), // removeUser
+    person(3, "member"), // changeEmail
+    person(4, "member"), // createResetLink
+    person(5, "manager"), // transferOwnership
+    { ...person(6, "member", "invited"), joinedAt: null }, // reissueInvite
+  );
+  store.projects.push({
+    _id: `0b${String(900).padStart(22, "0")}`,
+    name: "Scratch project",
+    description: "",
+    status: "active",
+    plan: null,
+    planHistory: [],
+  });
+  store.holidays.push({
+    _id: `0d${String(900).padStart(22, "0")}`,
+    date: "2099-01-06",
+    name: "Scratch day",
+    createdBy: PERSPECTIVES.admin,
+  });
+  ctx.scratch = (n) => store.users.find((u) => u.name === `Scratch ${n}`)._id;
+  ctx.project = store.projects.find((p) => p.name === "Scratch project");
+  ctx.holiday = store.holidays.find((h) => h.name === "Scratch day");
   apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
 });
 
@@ -402,12 +559,19 @@ describe("demo coverage", () => {
       const testCase = CASES[moduleName(path)]?.[name];
       if (!testCase) continue;
       it(`answers ${moduleName(path)}.${name}`, async () => {
-        if (testCase.rejects) {
-          const error = await fn(...argsOf(testCase)).catch((e) => e);
-          expect(error.name).toBe("ApiError");
-          expect(error.code).toBe(testCase.rejects);
-        } else {
-          testCase.check(await fn(...argsOf(testCase)));
+        // `as` runs the case as another perspective (the C8 writes are managers' and admins').
+        const viewer = store.session.userId;
+        if (testCase.as) store.session.userId = testCase.as;
+        try {
+          if (testCase.rejects) {
+            const error = await fn(...argsOf(testCase)).catch((e) => e);
+            expect(error.name).toBe("ApiError");
+            expect(error.code).toBe(testCase.rejects);
+          } else {
+            testCase.check(await fn(...argsOf(testCase)));
+          }
+        } finally {
+          store.session.userId = viewer;
         }
       });
     }

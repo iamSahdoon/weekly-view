@@ -236,9 +236,24 @@ export async function listUsers(actor, filters) {
   return paginated(items, { page: filters.page, limit: filters.limit, total });
 }
 
-/** U2 — the profile header. */
-export function getUser(actor, userId) {
-  return loadUserItem(userId);
+/**
+ * U2 — the profile header: a U1 item plus `leaveHistory`, every leave period newest
+ * first, each with who set it (owner decision, 2026-10-05; api_specification.md §2.2).
+ */
+export async function getUser(actor, userId) {
+  const item = await loadUserItem(userId);
+  const user = await User.findById(userId)
+    .select("leave")
+    .populate("leave.setBy", "name role status leave")
+    .lean();
+  const leaveHistory = (user?.leave ?? [])
+    .map((p) => ({
+      from: p.from,
+      to: p.to ?? null,
+      setBy: p.setBy ? userRef(p.setBy) : null,
+    }))
+    .reverse();
+  return { ...item, leaveHistory };
 }
 
 /** U10 — active people with an open leave period, by name. Bounded: the team. */

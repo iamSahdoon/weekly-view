@@ -64,3 +64,10 @@ export const useRecentActivity = () =>
     queryKey: qk.dashboard.activity(),
     queryFn: dashboardService.getActivity,
   });
+
+/** D7 — the person profile's metric strip. */
+export const usePersonMetrics = (userId) =>
+  useQuery({
+    queryKey: qk.dashboard.person(userId),
+    queryFn: () => dashboardService.getPersonMetrics(userId),
+  });
