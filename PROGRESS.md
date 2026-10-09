@@ -956,7 +956,7 @@ version).
   clipboard on a machine without permission (the URL is selectable text then); the demo (the
   handlers are tested; the demo bar and chooser are C10).
 
-### C8 decisions (to confirm or change)
+### C8 decisions — all twelve accepted as built (owner, 2026-10-09)
 1. **U2 serves the leave history** (`leaveHistory`, newest first, `{ from, to, setBy: UserRef }`) — the
    owner asked for it and no endpoint had it, so this adds one field to U2 only (not to U1's rows),
    in `userService.getUser`, in `api_specification.md` §2.2, tested in `adminRoutes.test.js` and the
@@ -1662,7 +1662,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
-- **C8, to confirm or change:** the twelve decisions under *C8 decisions*, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).
+- ~~C8, to confirm or change~~ **Resolved (owner, 2026-10-09):** all twelve C8 decisions accepted as built — see *C8 decisions*. (Was: the twelve decisions, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).)
 - **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.
 - ~~C6, to confirm or change~~ **Resolved (owner, 2026-10-05):** all ten decisions accepted; `blockersOnly` now means open blockers and the review panel is pinned — see *C6 owner answers*. (Was: the ten decisions above, especially 1 (People is C8) and 4 (the
