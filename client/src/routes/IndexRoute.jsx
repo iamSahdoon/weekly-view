@@ -1,10 +1,10 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { Navigate } from "react-router-dom";
 import { AppBootSplash } from "../components/shell/AppBootSplash.jsx";
 import { BrandMark } from "../components/shell/BrandMark.jsx";
+import { RouteFallback } from "../components/shell/RouteFallback.jsx";
 import { useAuth } from "../hooks/useAuth.js";
-
-const ThisWeekPage = lazy(() => import("../pages/ThisWeekPage.jsx"));
+import { ThisWeekPage } from "./pages.js";
 
 // "/" branches on the session (frontend_architecture.md §4.1). Signed in it is
 // ThisWeekPage (C4); signed out, the landing page or the demo chooser (C10). Until
@@ -15,7 +15,7 @@ export default function IndexRoute() {
   if (status === "loading") return <AppBootSplash />;
   if (user) {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<RouteFallback title="This week" kind="panels" />}>
         <ThisWeekPage />
       </Suspense>
     );

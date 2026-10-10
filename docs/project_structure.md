@@ -455,7 +455,10 @@ client/
 │   │   ├── PublicOnly.jsx             # sends a signed-in visitor away from /signin and /signup
 │   │   ├── ParamGuard.jsx             # added in C2: a malformed :week / :userId / :reportId renders NotFoundPage, no request (frontend_architecture §4.1)
 │   │   ├── DevOnlyRoute.jsx           # gates /design behind import.meta.env.DEV
-│   │   └── __tests__/routeGuards.test.jsx  # added in C2: ProtectedRoute's 403, ParamGuard, and the Sidebar's DOM per role (static render)
+│   │   ├── pages.js                   # added in C8: every routed page as a lazyPage — the route table and prefetch.js both name each page here
+│   │   ├── lazyPage.jsx               # added in C8: React.lazy that renders at once once its chunk has loaded (no 300 ms Suspense hold)
+│   │   ├── prefetch.js                # added in C8: preloads the route chunks a role may open next, when the browser is idle
+│   │   └── __tests__/routeGuards.test.jsx  # added in C2: ProtectedRoute's 403, ParamGuard, and the Sidebar's DOM per role (static render); C8 adds routeFallbacks.test.jsx (lazyPage, a fallback on every route, no `fallback={null}` in the source)
 │   ├── layouts/
 │   │   ├── RootLayout.jsx             # router root: SkipLink, Outlet, Toaster, ReAuthModal, ScrollRestoration — C2: OfflineStrip is mounted by AppShell, under the top bar (design §3.13)
 │   │   ├── AppShell.jsx               # sidebar + top bar frame; renders <Outlet/>
@@ -484,7 +487,6 @@ client/
 │   │   ├── DemoEntryPage.jsx          # /demo — the perspective chooser (§3.14)
 │   │   ├── NotFoundPage.jsx           # §3.13
 │   │   ├── ForbiddenPage.jsx          # §3.13
-│   │   ├── PendingPage.jsx            # added in C2, temporary: stands in for each page a later stage builds so the route table and its guards exist now; C11 deletes it
 │   │   └── DesignPage.jsx             # /design, dev-only style guide
 │   ├── components/
 │   │   ├── ui/                        # the §6 inventory — design-system primitives
@@ -536,6 +538,7 @@ client/
 │   │   │   ├── AppBootSplash.jsx
 │   │   │   ├── OfflineStrip.jsx
 │   │   │   ├── ReAuthModal.jsx        # the session-expiry modal (design §3.12)
+│   │   │   ├── RouteFallback.jsx      # added in C8: what a route shows while its chunk loads — the page's title in the top bar and a skeleton in its shape; AuthFallback for the auth screens
 │   │   │   ├── LeaveGuard.jsx         # added in C4: asks before an in-app navigation to another page discards unsaved text (useBlocker over UnsavedChangesContext)
 │   │   │   ├── ThemeToggle.jsx
 │   │   │   ├── BrandMark.jsx          # added in C1: the bracketed-bar glyph + wordmark (auth layout, splash, sidebar)
@@ -598,10 +601,23 @@ client/
 │   │   │   └── ActivityFeed.jsx       # the latest eight events
 │   │   ├── project/                   # §3.9, §6.25
 │   │   │   ├── ProjectProgress.jsx    # the bar and "overdue by N days"
-│   │   │   └── PlanModal.jsx          # set or extend a plan
+│   │   │   ├── PlanModal.jsx          # set or extend a plan; also exports the Plan group the project form shares
+│   │   │   ├── ProjectModal.jsx       # added in C8: create / edit a project (P2, P3, then P4 for a changed plan)
+│   │   │   └── ProjectsListTable.jsx  # added in C8: the Projects page's table
 │   │   ├── holiday/                   # §3.17
+│   │   │   └── HolidayModal.jsx       # added in C8: add or edit a holiday (a Monday–Friday date and a name; HOLIDAY_EXISTS on the date)
 │   │   ├── user/                      # §3.10–3.11, §3.15
 │   │   │   ├── EndLeaveDialog.jsx     # added in C4 (owner decision): the confirm before ending leave — yours on This week, someone else's from C8's pages
+│   │   │   ├── LeaveToggleHost.jsx    # added in C8: turning leave on is one click, off asks first — for Users, a profile and Account
+│   │   │   ├── PersonCell.jsx         # added in C8: avatar, name over email, Owner / On leave / Removed chips
+│   │   │   ├── UsersTable.jsx         # added in C8: the Users table — inline role Select, row menu from permissions.userActions
+│   │   │   ├── PeopleTable.jsx        # added in C8: the People table, with the link to each person's week
+│   │   │   ├── PersonReportsTable.jsx # added in C8: a person's every week (reports and non-clickable WeekRows)
+│   │   │   ├── LeaveHistory.jsx       # added in C8: a person's leave periods and who set them (U2's leaveHistory)
+│   │   │   ├── InviteModal.jsx        # added in C8: invite → link state (the URL is component state)
+│   │   │   ├── IssueLinkModal.jsx     # added in C8: re-issue an invite / password reset link, confirm then link state
+│   │   │   ├── EditEmailModal.jsx     # added in C8
+│   │   │   └── LinkState.jsx          # added in C8: the URL block, Copy link (Copied for 900 ms) and the one-time warning
 │   │   ├── auth/                      # §3.12 form bodies shared across the auth screens
 │   │   │   ├── AuthScreen.jsx         # added in C1: heading, --mut line, panel, footer link
 │   │   │   ├── AuthLink.jsx           # added in C1: the one secondary text link
@@ -618,10 +634,10 @@ client/
 │   │   ├── demoWeekView.js            # added in C3: the WeekView, Day, Thread and Revision the API computes, computed from the store
 │   │   ├── demoWeekRoutes.js          # added in C3: U8, R3, R4, R8–R11, R13 and C1–C5 for the demo
 │   │   ├── demoDayRoutes.js           # added in C4: R1, R2 and R5 (writing a day) for the demo; C5 adds R6 and R7 (autosave, submit)
-│   │   ├── demoCatalogRoutes.js       # added in C4: T1, P1, HD1, U9, U10 for the demo
+│   │   ├── demoCatalogRoutes.js       # added in C4: T1, P1, HD1, U9, U10 for the demo; C8 adds P2–P5 and HD2–HD4
 │   │   ├── demoReviewRoutes.js        # added in C6: R12 (the team feed) and V1–V3 (approve, send back, the review desk) for the demo
-│   │   ├── demoDashboardRoutes.js     # added in C7: D1–D6 and D8 for the demo, by the server's rules (D7 arrives with the profile, C8)
-│   │   ├── demoUserRoutes.js          # added in C6: U1 (the people list) for the demo; C8 adds the rest of the user routes
+│   │   ├── demoDashboardRoutes.js     # added in C7: D1–D6 and D8 for the demo, by the server's rules; C8 adds D7
+│   │   ├── demoUserRoutes.js          # added in C6: U1 (the people list) for the demo; C8 adds U2–U7 and U11–U13
 │   │   ├── demoStore.js               # builds the in-memory store; rebuilt on refresh or Start over
 │   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates
 │   │   └── __tests__/
@@ -676,6 +692,8 @@ client/
 │   │   └── markerService.js
 │   ├── schemas/
 │   │   ├── authSchema.js              # zodResolver schemas, client-side
+│   │   ├── projectSchema.js           # added in C8: the plan group and the project form
+│   │   ├── userSchema.js              # added in C8: invite, change email, profile, password, holiday
 │   │   ├── reportSchema.js            # the day panel and the end-of-week form
 │   │   ├── __tests__/reportSchema.test.js  # added in C4: the day form's validation and its R5 body; C5 adds the weekly form's R6 body and R7 422 mapping
 │   │   ├── reviewSchema.js            # send-back comment, comments and replies
@@ -686,7 +704,9 @@ client/
 │   │   ├── cn.js                      # clsx + tailwind-merge
 │   │   ├── constants.js               # the client's copy of the shared vocabulary (§7.1)
 │   │   ├── statusMaps.js              # status and week state → label + token names
-│   │   ├── dates.js                   # ISO-week helpers over date-fns
+│   │   ├── dates.js                   # ISO-week helpers over date-fns; C8 adds addWorkingDays, holidaysWithin, nextWeekday (the plan's finish line)
+│   │   ├── peopleParams.js            # added in C8: the People request — search omits status
+│   │   ├── passwordStrength.js        # added in C8: the Account page's strength meter
 │   │   ├── normalizeError.js          # → ApiError { httpStatus, code, message, fields, details }
 │   │   ├── errorCopy.js               # one plain-language message per API error code
 │   │   ├── formErrors.js              # applyServerErrors(form, apiError)
@@ -965,7 +985,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

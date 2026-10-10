@@ -16,8 +16,9 @@ import { Skeleton } from "../ui/Skeleton.jsx";
 // The projects table (design §3.7): one row per active project with a plan — name, start
 // date, the §6.25 progress bar, the days or hours figure (a `Days | Hours` control in the
 // header picks which), and who works on it. A row opens to show each person, their hours
-// this week and in total, and their last day on it. The row menu's `Extend plan` (managers
-// and admins) is `onExtend`: C8 brings PlanModal and passes it; without it there is no menu.
+// this week and in total, and their last day on it. `Extend plan` (managers and admins) is
+// `onExtend`: it gets the project with its progress, which is what PlanModal opens from;
+// without it there is no button.
 
 const UNITS = [
   { value: "days", label: "Days" },
@@ -77,7 +78,9 @@ function ProjectRow({ item, unit, onExtend }) {
             variant="ghost"
             size="sm"
             className="mr-14 shrink-0"
-            onClick={() => onExtend(item.project)}
+            onClick={() =>
+              onExtend({ ...item.project, progress: item.progress })
+            }
             aria-label={`Extend plan for ${item.project.name}`}
           >
             Extend plan

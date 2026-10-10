@@ -1,10 +1,14 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { qk } from "../lib/queryKeys.js";
-import { toCalendarDate, weekDays } from "../lib/dates.js";
+import { parseCalendarDate, toCalendarDate, weekDays } from "../lib/dates.js";
 import * as holidayService from "../services/holidayService.js";
 
-// Holiday hooks (frontend_architecture.md §5.6). The writes arrive with the holidays
-// page (C8).
+// Holiday hooks (frontend_architecture.md §5.6, §5.7).
 
 const yearOptions = (year) => ({
   queryKey: qk.holidays(year),
@@ -15,6 +19,32 @@ const yearOptions = (year) => ({
 /** HD1 for one calendar year. */
 export function useHolidays(year) {
   return useQuery(yearOptions(year));
+}
+
+/**
+ * The holidays a plan may cross, as a Set of YYYY-MM-DD: the start year and as many
+ * after it as `plannedDays` can reach (about 250 working days a year). `data` is
+ * undefined until every year has loaded. PlanModal's finish line reads it.
+ */
+export function useHolidaySet(startDate, plannedDays) {
+  const start = startDate ? parseCalendarDate(startDate) : null;
+  const first = start ? start.getFullYear() : new Date().getFullYear();
+  const span = Math.min(5, Math.floor((Number(plannedDays) || 0) / 200) + 1);
+  const years = Array.from({ length: span + 1 }, (_, i) => first + i);
+  return useQueries({
+    queries: years.map(yearOptions),
+    combine: (results) =>
+      results.some((r) => r.isPending || r.isError)
+        ? { isPending: true, data: undefined }
+        : {
+            isPending: false,
+            data: new Set(
+              results.flatMap((r) =>
+                r.data.items.map((h) => h.date.slice(0, 10)),
+              ),
+            ),
+          },
+  });
 }
 
 /**
@@ -46,3 +76,35 @@ export function useHolidaysForWeek(weekKey) {
     },
   });
 }
+
+// A holiday moves every derived thing: the calendar, project plans (a holiday is not a
+// working day), the weeks' day states, the team's day and the dashboard.
+function useHolidayWrite(mutationFn) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      for (const key of [
+        qk.all.holidays(),
+        qk.all.projects(),
+        qk.all.week(),
+        qk.all.teamUpdates(),
+        qk.all.dashboard(),
+      ]) {
+        queryClient.invalidateQueries({ queryKey: key });
+      }
+    },
+  });
+}
+
+/** HD2. */
+export const useCreateHoliday = () =>
+  useHolidayWrite((body) => holidayService.createHoliday(body));
+
+/** HD3 — `{ id, body }`. */
+export const useUpdateHoliday = () =>
+  useHolidayWrite(({ id, body }) => holidayService.updateHoliday(id, body));
+
+/** HD4 — the holiday id. */
+export const useDeleteHoliday = () =>
+  useHolidayWrite((id) => holidayService.deleteHoliday(id));

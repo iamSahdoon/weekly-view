@@ -533,8 +533,12 @@ Errors: `403 FORBIDDEN` for a member.
 
 #### U2 · `GET /api/users/:userId`
 
-Roles: `authorize('manager')`. The profile header. **200** a U1 item. Errors:
-`404 USER_NOT_FOUND`.
+Roles: `authorize('manager')`. The profile header. **200** a U1 item plus
+`leaveHistory`: every leave period the person has had, newest first —
+`[ { "from": "…", "to": "…" | null, "setBy": UserRef } ]` (`to` is `null` while the
+leave is open). U1's rows do not carry it. *(Owner decision, 2026-10-05, built in C8:
+managers and admins see who set each period; the data was already stored on the user's
+leave periods, `database_schema.md` §1.1.)* Errors: `404 USER_NOT_FOUND`.
 
 #### U3 · `POST /api/users` — create an invite
 

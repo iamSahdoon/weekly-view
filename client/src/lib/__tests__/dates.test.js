@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   addWeeks,
+  addWorkingDays,
+  holidaysWithin,
+  nextWeekday,
   compareWeekKeys,
   currentWeekKey,
   isWeekKey,
@@ -56,5 +59,45 @@ describe("dates", () => {
     expect(formatWeekRange("2026-W38")).toBe("14–18 Sep");
     expect(formatWeekRange("2026-W40")).toBe("28 Sep – 2 Oct");
     expect(formatWeekLabel("2026-W38")).toBe("W38 · 14–18 Sep");
+  });
+});
+
+// The PlanModal's "Ends Fri 16 Oct" line: the start counts as day 1, as the server's
+// count does (S3's done list: a 20-day plan from Monday 7 Sep ends Friday 2 Oct).
+describe("addWorkingDays and holidaysWithin", () => {
+  const start = parseCalendarDate("2026-09-07");
+
+  it("ends a 20-day plan on the Friday four weeks on, counting the start as day 1", () => {
+    expect(toCalendarDate(addWorkingDays(start, 20))).toBe("2026-10-02");
+    expect(toCalendarDate(addWorkingDays(start, 1))).toBe("2026-09-07");
+    expect(toCalendarDate(addWorkingDays(start, 6))).toBe("2026-09-14");
+  });
+
+  it("skips a holiday, which moves the end by a working day", () => {
+    const holidays = new Set(["2026-09-08"]);
+    expect(toCalendarDate(addWorkingDays(start, 20, holidays))).toBe(
+      "2026-10-05",
+    );
+    expect(
+      holidaysWithin(start, addWorkingDays(start, 20, holidays), holidays),
+    ).toBe(1);
+  });
+
+  it("does not count a holiday on a weekend as skipped", () => {
+    const holidays = new Set(["2026-09-12"]);
+    const end = addWorkingDays(start, 20, holidays);
+    expect(toCalendarDate(end)).toBe("2026-10-02");
+    expect(holidaysWithin(start, end, holidays)).toBe(0);
+  });
+
+  it("returns null for inputs that make no date", () => {
+    expect(addWorkingDays(start, 0)).toBeNull();
+    expect(addWorkingDays(start, 2.5)).toBeNull();
+    expect(addWorkingDays(null, 5)).toBeNull();
+  });
+
+  it("starts a new plan on the next weekday", () => {
+    expect(nextWeekday(new Date(2026, 9, 3))).toBe("2026-10-05"); // Saturday
+    expect(nextWeekday(new Date(2026, 9, 7))).toBe("2026-10-07"); // Wednesday
   });
 });

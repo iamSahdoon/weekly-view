@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ActivityFeed } from "../components/dashboard/ActivityFeed.jsx";
 import { HoursByTypeChart } from "../components/dashboard/HoursByTypeChart.jsx";
@@ -5,6 +6,7 @@ import { MetricStrip } from "../components/dashboard/MetricStrip.jsx";
 import { ProjectsTable } from "../components/dashboard/ProjectsTable.jsx";
 import { TasksTrendChart } from "../components/dashboard/TasksTrendChart.jsx";
 import { TeamTable } from "../components/dashboard/TeamTable.jsx";
+import { PlanModal } from "../components/project/PlanModal.jsx";
 import { WorkloadByProjectChart } from "../components/dashboard/WorkloadByProjectChart.jsx";
 import { PageContainer } from "../components/shell/PageContainer.jsx";
 import { PageHeader } from "../components/shell/PageHeader.jsx";
@@ -47,6 +49,8 @@ import { isObjectId } from "../lib/routeParams.js";
 export default function TeamDashboardPage() {
   const { user: me } = useAuth();
   const { weekKey, setWeek } = useWeekParam();
+  // The project whose plan is being extended (the projects table's `Extend plan`).
+  const [extending, setExtending] = useState(null);
   const { filters, setFilter, setFilters } = useUrlFilters(DASHBOARD_SPEC);
   const params = dashboardParams(filters, weekKey);
 
@@ -150,6 +154,7 @@ export default function TeamDashboardPage() {
               query={projectsTable}
               unit={filters.unit}
               onUnitChange={(unit) => keepPage({ unit })}
+              onExtend={setExtending}
             />
             <div className="grid grid-cols-1 gap-24 min-[1200px]:grid-cols-12">
               <TasksTrendChart
@@ -173,6 +178,13 @@ export default function TeamDashboardPage() {
           </div>
         )}
       </PageContainer>
+      {extending && (
+        <PlanModal
+          project={extending}
+          open
+          onOpenChange={(next) => !next && setExtending(null)}
+        />
+      )}
     </>
   );
 }

@@ -15,6 +15,7 @@ export const qk = {
     projects: () => ["projects"],
     tasks: () => ["tasks"],
     users: () => ["users"],
+    holidays: () => ["holidays"],
   },
 
   bootstrap: () => ["auth", "bootstrap"],
