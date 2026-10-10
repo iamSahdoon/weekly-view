@@ -1348,6 +1348,35 @@ git-ignored) deleted at the end.
   day cards; open the week's report and set a status on each task to submit. (Not looked at in a browser this round: only the
   fixtures and the adapter's answers were tested.)
 
+### C10 fix: landing pills fit their text (2026-10-10)
+Owner report: the dashed SAMPLE DATA pill's text overflowed its rounded border with the real Bricolage Grotesque.
+- **Cause (in the reference too):** the ledger's column-title rule `.lhead span` (padding `0 0 18px`, 15 px, weight 650) also
+  matched the SAMPLE DATA pill inside the ledger's middle column, and out-ranked `.samp`. The pill lost its side padding, grew
+  to the title's size and bold weight and became 39 px tall, so the text touched the curved ends. The fallback face hid it
+  only because it is narrower than Bricolage.
+- **Fix, in `landing.css` only:** one rule, `.landing .lhead .samp`, restores the pill's own padding (`3px 10px`), 12 px,
+  weight 700, line-height 1.4 and `nowrap`. It has no width or height, so it is as wide and tall as its text in any font. The
+  dashed border and the pill radius are as the reference has them.
+- **How it was checked, without relying on the real font or screenshots:** a Playwright check (run from the scratchpad, not part
+  of the repo, because it needs a browser) forced each of **DejaVu Sans, Verdana's fallback, DejaVu Sans Mono and Liberation
+  Serif** onto every landing element, at **1440, 1024 and 360 px**, with the sign-up closed and open. For every pill, chip,
+  button, link and tag it checked that the text's box lies inside the element's box, that `scrollWidth` is not larger than
+  `clientWidth` (4 px of slack for an underlined button), and that a pill-shaped element (radius ≥ half its height, no icon) has at
+  least 35 % of its height of space between the text and each curved end. Elements: `.samp`, `.samp-u`, `.pill` (nav, hero, final
+  band, sm and xl, solid and ghost), `.chip`, `.fbtn` (the manager table's filter buttons), `.door`, `.replay`, `.vd`, `.tt`,
+  `.dayrail li`, `.dr-rep`, `.srv-node`, `.sel`, `.post`, `.ubtn`, `.faq summary`, `.lic`, `.fcount`, the nav and account links.
+  **Before the fix it failed once per run** (the `.samp` at 1440: 39.5 px tall, text 1 px from each end); **after, nothing
+  overflows in any font, width or state.** No other pill, button or link needed a change.
+- **The app's own dashed tag** (`SampleDataPill`, eight of them on the team dashboard) and the demo bar's tag, `Switch`, `Start
+  over` and `Sign in` were run through the same check in the demo at 1440 and 360 px with the same four faces: they fit, with
+  no change (the pill is `inline-flex` with side padding and no fixed size).
+- **A test keeps the CSS honest:** `landingIsolation.test.js` has three cases — the pills, chips, tags and filter buttons carry
+  padding and no `width` / `height`; the `.lhead .samp` guard exists with its padding, size and `nowrap`; `.samp` keeps its dashed
+  border, radius and `nowrap`. (The text-against-border check itself needs a browser and is the one above.) Lint clean;
+  server 385, client **516** (was 513).
+- **Still not seen:** the real Bricolage Grotesque (blocked here), so the fix is proven for wide fallback faces, not by eye
+  with the actual font.
+
 **Owner: how to test C10 by hand** (the demo and the landing page need no database; steps 1–9 need only the client)
 1. In a terminal: copy `client/.env.example` to `client/.env` if you have not, then `npm --prefix client run dev`, and open
    http://localhost:5173/ **with the API not running**. You should see the green landing page, and the one big button reads

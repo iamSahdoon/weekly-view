@@ -140,3 +140,40 @@ describe("nothing of the landing page reaches the app", () => {
     expect(importers).toEqual(["pages/LandingPage.jsx"]);
   });
 });
+
+// A pill is sized by its text: padding and nowrap, never a fixed width or height. (What cannot be
+// asserted from the CSS — that the text clears the curved ends in a wide font — was checked in a
+// browser with DejaVu Sans, Verdana, DejaVu Sans Mono and Liberation Serif forced onto the page.)
+describe("the pills fit their text", () => {
+  const body = (selector) => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return (
+      new RegExp(`(?:^|\\n)${escaped}\\{([^}]*)\\}`).exec(css)?.[1] ?? null
+    );
+  };
+
+  it("sizes the pills, chips and tags from their content", () => {
+    for (const cls of ["samp", "samp-u", "pill", "chip", "vd", "tt", "fbtn"]) {
+      const rule = body(`.landing .${cls}`);
+      expect(rule, cls).not.toBeNull();
+      expect(rule, cls).not.toMatch(/(?:^|;)(?:width|height):/);
+      expect(rule, cls).toMatch(/padding:/);
+    }
+  });
+
+  it("keeps the SAMPLE DATA pill's own padding where a column rule would reach it", () => {
+    // `.lhead span` styles the ledger's column titles and also matches the pill inside the middle one.
+    expect(body(".landing .lhead span")).toMatch(/padding:0 0 18px/);
+    const guard = body(".landing .lhead .samp");
+    expect(guard).toMatch(/padding:3px 10px/);
+    expect(guard).toMatch(/white-space:nowrap/);
+    expect(guard).toMatch(/font-size:12px/);
+  });
+
+  it("keeps the dashed border and the pill radius", () => {
+    const samp = body(".landing .samp");
+    expect(samp).toMatch(/border:1px dashed/);
+    expect(samp).toMatch(/border-radius:999px/);
+    expect(samp).toMatch(/white-space:nowrap/);
+  });
+});

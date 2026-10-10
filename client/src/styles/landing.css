@@ -705,3 +705,7 @@ html.landing-active .wv-skip{display:none}
 .landing .pill.xl.ghost{padding:0 34px}
 .landing .fin-acts{margin-top:44px;display:flex;flex-wrap:wrap;justify-content:center;gap:14px 12px}
 .landing .final .fin-acts .pill{margin-top:0}
+/* `.lhead span` (the ledger's column titles) also matched the SAMPLE DATA pill inside its middle column and
+   took its side padding away, so the text touched the pill's curved ends and grew to the title size. The pill
+   keeps its own size and padding, and is as wide as its text in any font. */
+.landing .lhead .samp{padding:3px 10px;font-size:12px;font-weight:700;line-height:1.4;color:var(--l-fg2);white-space:nowrap}
