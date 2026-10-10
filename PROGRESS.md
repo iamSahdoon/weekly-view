@@ -1170,7 +1170,7 @@ were never used. Every server started was stopped (the API, Vite and the in-memo
   path are hidden from me and nothing listens on the port my in-memory server used, so I take it not to be mine and
   did not touch it.
 
-### C9 decisions (please confirm)
+### C9 decisions — all six accepted as built (owner, 2026-10-10)
 1. **The error boundary is in `AppShell` as well as `RootLayout`.** `frontend_architecture.md` §9.17 puts the
    page-level boundary in `RootLayout`; a boundary there would replace the whole shell on a crash, contradicting
    "so one broken page leaves the shell usable". So `AppShell` wraps its `<Outlet/>` (keyed by the route, so
