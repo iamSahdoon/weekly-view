@@ -66,7 +66,10 @@ export default function ReviewPage() {
         <PageHeader title="Review" back={back} />
         <PageContainer>
           {code === "REPORT_FORBIDDEN" ? (
-            <EmptyState title="You don’t have access to this report." />
+            <EmptyState
+              variant="system"
+              title="You don’t have access to this report."
+            />
           ) : (
             <InlineError
               title="This report didn’t load."

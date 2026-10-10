@@ -367,6 +367,11 @@ The five days of the week, each showing its state. Click a day to open it in the
 | Leave | You're on leave; no update needed. |
 | Not on the team | A day before you joined (or after you left). |
 
+Each day also shows its **Updates square** (§37) next to its name, the same square the team
+table uses, so a day reads the same everywhere. The leave and holiday line under the strip
+leads each item with its square too (the hatch for leave, the dots for a holiday). On
+***This week***, the report panel shows the five squares next to **Days posted**.
+
 ## 15. Writing a daily update: work lines, tasks, types, hours
 
 A day is **one or more work lines**. Each line has:
@@ -671,6 +676,9 @@ Each person's Mon–Fri as five squares; the legend sits under the table:
 | Faint outline | **Later this week** |
 
 Each state has a different **shape or pattern**, so they're readable without colour too.
+
+The same squares appear in the week strip on ***This week*** and above the weekly form (§14),
+and five small hollow squares sit above the message on an empty list.
 
 ## 38. Projects: plans, progress and Extend plan
 

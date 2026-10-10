@@ -1,10 +1,13 @@
-import { useRef } from "react";
+import { motion as Motion } from "motion/react";
+import { useId, useRef } from "react";
 import { cn } from "../../lib/cn.js";
 
 // A two- or three-option switch: Days | Hours, Asked for approval | All
 // submitted, Light | Dark (frontend_architecture.md §8.1). A radiogroup with a
 // roving tabindex; arrows move and select. Selection is --acc-l with --acc-txt,
-// as the active nav item is.
+// as the active nav item is. Polish (2026-10-10): the selection slides to the option
+// chosen (180ms --ease-out, Motion layoutId) — it shows what changed; under reduced
+// motion it moves at once (MotionConfig).
 
 const SIZES = {
   sm: "h-[var(--ctrl-h-sm)] px-11 text-dense",
@@ -20,6 +23,7 @@ export function SegmentedControl({
   className,
 }) {
   const refs = useRef([]);
+  const group = useId();
   const move = (event, index) => {
     const step =
       event.key === "ArrowRight" || event.key === "ArrowDown"
@@ -59,11 +63,19 @@ export function SegmentedControl({
               "focus-inset relative font-ui font-medium whitespace-nowrap transition-[background-color,color] duration-[120ms] ease-linear",
               SIZES[size],
               selected
-                ? "bg-acc-l text-acc-txt"
+                ? "text-acc-txt"
                 : "text-body hover:bg-tint hover:text-ink",
             )}
           >
-            {option.label}
+            {selected && (
+              <Motion.span
+                layoutId={`segment-${group}`}
+                aria-hidden="true"
+                className="absolute inset-0 bg-acc-l"
+                transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+              />
+            )}
+            <span className="relative">{option.label}</span>
           </button>
         );
       })}

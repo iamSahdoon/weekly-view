@@ -19,11 +19,11 @@ export function MyProjectsPanel({ projects, unit, onUnitChange }) {
       aria-labelledby="my-projects"
       className="flex flex-col border border-hair bg-card"
     >
-      <header className="flex h-44 items-center justify-between gap-11 border-b border-hair px-20">
+      <header className="flex min-h-44 flex-wrap items-center justify-between gap-x-11 gap-y-6 border-b border-hair px-20 py-6">
         <div className="flex min-w-0 items-center gap-8">
           <h2
             id="my-projects"
-            className="font-display text-panel font-bold text-ink"
+            className="font-display text-panel font-bold whitespace-nowrap text-ink"
           >
             My projects
           </h2>

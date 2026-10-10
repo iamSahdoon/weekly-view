@@ -111,6 +111,7 @@ export default function UsersPage() {
 
   const emptyFiltered = (
     <EmptyState
+      variant="filtered"
       title="No people match these filters."
       action={
         <Button variant="secondary" onClick={clear}>

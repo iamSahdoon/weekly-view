@@ -46,6 +46,12 @@ export function Comment({
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
+  // A comment its writer has only just posted settles into place (polish, 2026-10-10);
+  // everything already there when the page opened appears as it is.
+  const [fresh] = useState(
+    () =>
+      isWriter && Date.now() - new Date(comment.createdAt).getTime() < 15_000,
+  );
 
   const left = minutesLeft(comment.editableUntil, now);
   const writable = isWriter && left > 0;
@@ -64,7 +70,13 @@ export function Comment({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", reply && "text-dense")}>
+    <div
+      className={cn(
+        "flex flex-col gap-6",
+        reply && "text-dense",
+        fresh && "wv-settle-in",
+      )}
+    >
       <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
         <Avatar name={comment.author?.name ?? ""} size={22} />
         <span className="text-dense font-medium text-ink">

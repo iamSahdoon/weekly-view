@@ -10,6 +10,13 @@
 .focus-halo:focus-visible {
   box-shadow: 0 0 0 4px var(--acc-l);
 }
+/* The targets a route change focuses for screen readers (useRouteFocus): the page's
+   <h1> and <main>. They are never reached by Tab, so the ring there only drew a box
+   around the page title on load. Polish, 2026-10-10. */
+#page-title:focus-visible,
+main[tabindex="-1"]:focus-visible {
+  outline: none;
+}
 /* Where an outset ring would be clipped (table rows, tabs, nav items, cells). */
 .focus-inset:focus-visible {
   outline-offset: -2px;
@@ -76,8 +83,23 @@ button:not(:disabled),
 @keyframes wv-drop-in {
   from {
     opacity: 0;
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(0.98);
   }
+}
+/* Something the person just added (a comment, a reply, a work line): it settles into
+   place instead of popping in. Polish, 2026-10-10. */
+@keyframes wv-settle-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.wv-settle-in,
+[data-appended] {
+  animation: wv-settle-in 200ms var(--ease-out);
+}
+.wv-fade-in {
+  animation: wv-fade-in 120ms var(--ease-out);
 }
 
 .wv-backdrop[data-state="open"] {
@@ -99,11 +121,32 @@ button:not(:disabled),
 .wv-tooltip[data-state="closed"] {
   animation: wv-fade-out 100ms linear;
 }
+/* Popovers and menus grow from their trigger (Radix gives the origin). */
+.wv-popover {
+  transform-origin: var(
+    --radix-popover-content-transform-origin,
+    var(--radix-dropdown-menu-content-transform-origin, top)
+  );
+}
 .wv-popover[data-state="open"] {
-  animation: wv-drop-in 120ms var(--ease-out);
+  animation: wv-drop-in 140ms var(--ease-out);
 }
 .wv-popover[data-state="closed"] {
   animation: wv-fade-out 100ms linear;
+}
+
+/* A theme switch the person makes eases instead of flashing (useTheme adds the class
+   for 260ms). Colours only; nothing moves. Polish, 2026-10-10. */
+.wv-theme-easing,
+.wv-theme-easing *,
+.wv-theme-easing *::before,
+.wv-theme-easing *::after {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    fill 200ms ease,
+    stroke 200ms ease !important;
 }
 
 /* Below 1024px every interactive element has a 44×44px hit area, reached with a

@@ -20,7 +20,7 @@ const VARIANTS = {
   // `aria-disabled` looks disabled but stays focusable and clickable, so a tooltip can
   // say why and a click can show the problem (the weekly form's Submit, design §4.9).
   primary:
-    "border-acc bg-acc text-on-acc enabled:not-aria-disabled:hover:border-acc-d enabled:not-aria-disabled:hover:bg-acc-d enabled:not-aria-disabled:active:scale-[.985] " +
+    "border-acc bg-acc text-on-acc enabled:not-aria-disabled:hover:border-acc-d enabled:not-aria-disabled:hover:bg-acc-d " +
     "disabled:border-tint2 disabled:bg-tint2 disabled:text-mut aria-disabled:cursor-not-allowed aria-disabled:border-tint2 aria-disabled:bg-tint2 aria-disabled:text-mut",
   secondary:
     "border-rule bg-card text-ink enabled:hover:border-hair2 enabled:hover:bg-tint enabled:active:bg-tint2 " +
@@ -33,7 +33,7 @@ const VARIANTS = {
     "disabled:border-hair disabled:text-mut",
   // On an --ink surface only. --on-acc is white in both themes.
   inverted:
-    "border-paper bg-paper text-ink enabled:hover:border-on-acc enabled:hover:bg-on-acc enabled:active:scale-[.985] " +
+    "border-paper bg-paper text-ink enabled:hover:border-on-acc enabled:hover:bg-on-acc " +
     "disabled:border-d-panel2 disabled:bg-d-panel2 disabled:text-d-mut",
 };
 
@@ -69,7 +69,11 @@ export const Button = forwardRef(function Button(
       aria-busy={loading || undefined}
       className={cn(
         "focus-halo relative inline-flex shrink-0 items-center justify-center gap-8 border font-ui font-medium whitespace-nowrap no-underline select-none",
-        "transition-[background-color,border-color,transform] duration-[120ms,120ms,80ms] ease-[linear,linear,var(--ease-out)]",
+        // Tailwind 4's scale-* sets `scale`, not `transform`, so that is what transitions.
+        "transition-[background-color,border-color,color,scale] duration-[120ms,120ms,120ms,120ms] ease-[linear,linear,linear,var(--ease-out)]",
+        // Press (design §8.2 #2, widened by the owner's polish pass): every variant
+        // gives under the pointer, so the app answers on pointer-down.
+        "enabled:not-aria-disabled:active:scale-[.97] [&:is(a):active]:scale-[.97]",
         "disabled:cursor-not-allowed",
         SIZES[size],
         iconOnly && cn(ICON_SIZES[size], "px-0"),

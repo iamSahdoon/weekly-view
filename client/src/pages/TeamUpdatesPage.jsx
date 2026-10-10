@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageContainer } from "../components/shell/PageContainer.jsx";
 import { PageHeader } from "../components/shell/PageHeader.jsx";
@@ -5,6 +6,7 @@ import { DayTabs } from "../components/updates/DayTabs.jsx";
 import { PersonUpdate } from "../components/updates/PersonUpdate.jsx";
 import { Button } from "../components/ui/Button.jsx";
 import { Checkbox } from "../components/ui/Checkbox.jsx";
+import { ContentSwap } from "../components/ui/ContentSwap.jsx";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
 import { FilterBar } from "../components/ui/FilterBar.jsx";
 import { InlineError } from "../components/ui/InlineError.jsx";
@@ -18,6 +20,7 @@ import { useProjects } from "../hooks/useProjectQueries.js";
 import { useTeamUpdates } from "../hooks/useReportQueries.js";
 import { useUrlFilters } from "../hooks/useUrlFilters.js";
 import { useWeekParam } from "../hooks/useWeekParam.js";
+import { WEEKDAYS } from "../lib/constants.js";
 import { weekKeyOf } from "../lib/dates.js";
 import { isObjectId } from "../lib/routeParams.js";
 import { resolveUpdatesDay, updatesDays } from "../lib/updatesDay.js";
@@ -52,6 +55,11 @@ export default function TeamUpdatesPage() {
   const project = isObjectId(filters.project) ? filters.project : "";
   const blockersOnly = filters.blockers === "1";
   const feed = useTeamUpdates(weekKey, weekday, { project, blockersOnly });
+  // The day whose updates are on screen: while the next day loads, the previous one
+  // stays (dimmed, placeholder data); the list swaps in when its own data arrives.
+  const [shownDay, setShownDay] = useState(weekday);
+  if (feed.data && !feed.isPlaceholderData && shownDay !== weekday)
+    setShownDay(weekday);
 
   const chooseDay = (next) => {
     const params = new URLSearchParams(searchParams);
@@ -119,6 +127,7 @@ export default function TeamUpdatesPage() {
               empty={
                 <div className="border border-hair bg-card">
                   <EmptyState
+                    variant={activeCount > 0 ? "filtered" : "new"}
                     title={
                       activeCount > 0
                         ? "No updates match these filters."
@@ -136,18 +145,23 @@ export default function TeamUpdatesPage() {
               }
             >
               {(data) => (
-                <ul
-                  aria-label="Updates for the chosen day"
-                  className="flex flex-col gap-16"
+                <ContentSwap
+                  swapKey={`${weekKey}:${shownDay}`}
+                  order={WEEKDAYS.indexOf(shownDay)}
                 >
-                  {data.items.map((entry) => (
-                    <PersonUpdate
-                      key={entry.user._id}
-                      entry={entry}
-                      weekKey={weekKey}
-                    />
-                  ))}
-                </ul>
+                  <ul
+                    aria-label="Updates for the chosen day"
+                    className="flex flex-col gap-16"
+                  >
+                    {data.items.map((entry) => (
+                      <PersonUpdate
+                        key={entry.user._id}
+                        entry={entry}
+                        weekKey={weekKey}
+                      />
+                    ))}
+                  </ul>
+                </ContentSwap>
               )}
             </QueryView>
           )}

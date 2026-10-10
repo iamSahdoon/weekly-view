@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { WEEKDAYS } from "../../lib/constants.js";
 import { parseCalendarDate } from "../../lib/dates.js";
+import { DaySquare } from "../dashboard/UpdatesCell.jsx";
 
 // The leave and holiday line under the week strip (design §3.1): a single --tint line,
 // present only when there is something to say. Who is on leave is known for *now*
@@ -25,7 +26,7 @@ export function OnLeaveStrip({
   if (!others && days.length === 0 && !mine) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-11 gap-y-4 bg-tint px-14 py-8 text-dense text-body">
+    <div className="flex flex-wrap items-center gap-x-20 gap-y-6 bg-tint px-14 py-8 text-dense text-body">
       {mine && (
         <span className="inline-flex items-center gap-8">
           You’re on leave
@@ -44,12 +45,12 @@ export function OnLeaveStrip({
           )}
         </span>
       )}
-      {others && <Item>On leave: {others.join(", ")}</Item>}
+      {others && <Item square="leave">On leave: {others.join(", ")}</Item>}
       {days.map((weekday) => {
         const holiday = holidays[weekday];
         const date = parseCalendarDate(holiday.date.slice(0, 10));
         return (
-          <Item key={weekday}>
+          <Item key={weekday} square="holiday">
             Holiday {format(date, "EEE d MMM")}: {holiday.name}
           </Item>
         );
@@ -58,11 +59,14 @@ export function OnLeaveStrip({
   );
 }
 
-// Items after the first are set off by a middle dot.
-function Item({ children }) {
+// Each item leads with its Updates square (polish, 2026-10-10) — the hatch for leave,
+// the dots for a holiday — so the line reads like the squares' legend and wraps
+// cleanly, where a middle dot used to start the second line.
+function Item({ square, children }) {
   return (
-    <span className="before:mr-11 before:text-mut before:content-['·'] first:before:hidden">
-      {children}
+    <span className="inline-flex items-center gap-8">
+      <DaySquare state={square} size={10} />
+      <span>{children}</span>
     </span>
   );
 }

@@ -79,7 +79,10 @@ function WeekDetail({ weekKey, userId }) {
         <PageHeader title={title} {...headerLinks(me, own, userId, null)} />
         <PageContainer>
           {code === "REPORT_FORBIDDEN" ? (
-            <EmptyState title="You don’t have access to this report." />
+            <EmptyState
+              variant="system"
+              title="You don’t have access to this report."
+            />
           ) : (
             <InlineError
               title="This week didn’t load."

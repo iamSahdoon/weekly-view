@@ -15,6 +15,8 @@ export default function ForbiddenPage({ allow = [] }) {
       <PageHeader title="No access" />
       <PageContainer>
         <EmptyState
+          variant="system"
+          fill
           title="You don’t have access to this page."
           action={
             <Button asChild>

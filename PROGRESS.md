@@ -1666,6 +1666,112 @@ section order are rule 10's, unchanged (the footer's links and line are new).
 13. **With the real font** (Bricolage loads on your machine), look at the headlines, captions and the footer's
     wordmark: it should run edge to edge of the content column without being cut off.
 
+### Polish: whole-app UI/UX pass (owner request, 2026-10-10)
+Not a stage; **C11 is still next.** The planned "visual polish after C10" (see *C7 owner feedback*, item 6),
+on branch `claude/app-polish`, **for the owner to review before merging**. Inside the product design system
+(cobalt on cool neutrals, Chivo / Instrument Sans / JetBrains Mono, square corners, hairlines, tokens only, no
+hex in components). Every rule or motion change is recorded as an owner decision in `product_design_system.md`
+(§1.3, §3.0, §3.1, §3.12, §6.1, §6.9, §6.17 and the new **§8.5**). No behaviour, route, API call, button label
+or page name changed; the landing page, `server/api/`, `server/vercel.json` and `docs/DEPLOYMENT.md` were not
+touched. References: Emil Kowalski's skills (`apple-design`, `emil-design-eng`, `animate`,
+`find-animation-opportunities`) were read and applied; **21st.dev was unreachable** from this environment (the
+proxy refused the connection), so no patterns were taken from it. Motion (already in the stack) is used; no
+dependency was added.
+
+**Across the app**
+- **Press feedback on every button** (all variants, and links drawn as buttons): `scale(.97)` on pointer-down,
+  120ms. The old press was on primary and inverted only, and never eased (Tailwind 4 sets `scale`, the
+  transition named `transform`) — fixed.
+- **Sidebar:** the active item's tint and cobalt bar slide to the page you open (200ms).
+- **Segmented controls** (Days | Hours, Asked for approval | All submitted, Light | Dark): the selection slides.
+- **Popovers and menus** grow 2% from their trigger instead of the middle.
+- **Light ↔ dark** cross-fades over 200ms instead of flashing.
+- **Empty states** carry the product's own mark: five small Updates squares above the title (the first in the
+  "today" cobalt outline for a list nothing has filled yet; dashed for "nothing matches these filters"; plain
+  for a page that isn't there or isn't yours). Not an icon or illustration; §6.17 amended.
+- **Page alignment:** a page's content now starts under its top-bar title instead of centring. Holidays and
+  Account (narrow pages) no longer float in the middle of a wide screen.
+- **Panel headers** wrap their actions under the title on a phone, so "My projects" no longer breaks onto two
+  lines next to the SAMPLE DATA pill and the Days | Hours switch.
+- **Route focus:** the page title no longer shows a focus box when a page opens (the heading is focused for
+  screen readers; the ring there was a side effect).
+- **Reduced motion** respected throughout: the slides jump, the day switch is a fade only, row and comment
+  entrances are cut to nothing; checked in the browser with `prefers-reduced-motion: reduce`.
+
+**Per page**
+- **This week:** each day in the week strip shows its Updates square (posted, missing ×, today outline, leave
+  hatch, holiday dots, later) — the dashboard's language — and days you can open answer the pointer. Picking a day
+  slides the 2px bar and fades the new day in from the side it came from. The leave and holiday line leads each
+  item with its square (no stray "·" when it wraps on a phone). The *Week N* panel: figures in three columns at
+  14px, *Days posted* with the week's five squares, *Key blocker* on its own row.
+- **The weekly form:** a plan item, achievement or link you add settles into place; the autosave line leads with
+  a small square — hollow while saving, cobalt once saved — and each state fades in. The strip above uses the
+  squares too.
+- **A week (yours, a teammate's, a person's):** comments you post settle in; the day cards are unchanged.
+- **Day panel (This week):** a work line or blocker you add settles into place.
+- **My reports, Review desk, People, Users, Person profile:** the "no matches" and "nothing yet" states carry
+  the mark; tables, filters and chips unchanged.
+- **Team updates:** switching day fades the new day's updates in from its side once they arrive (the old day
+  stays, dimmed, while they load); the day tabs fit at 360px.
+- **Review page, Team dashboard, Projects:** press feedback, segmented slide and empty states as above; the
+  C7 colours, squares and legend are unchanged.
+- **Holidays, Account:** aligned under the page title.
+- **Sign in, Create account, Join the team, Choose a new password:** the column starts 18% down the screen
+  instead of hugging the top.
+- **Demo chooser:** same placement; each choice gets the cobalt bar and a chevron that moves on hover.
+- **Demo bar:** unchanged.
+- **404 / No access:** centred in the content area (a little above the middle) with the mark; standalone
+  versions centred on the screen.
+
+**Files:** new `components/ui/ContentSwap.jsx` and `hooks/useAppendMotion.js` (both in
+`project_structure.md`); `UpdatesCell.jsx` now exports `DaySquare`, used by the week strip, the leave line and
+the week panel. `USER_MANUAL.md` §14 and §37 mention the squares in the strip (no label changed).
+
+**Checks**
+- `npm run lint`: clean. `npm test`: green — server 385 (unchanged), client 580 (unchanged in number; one dashboard
+  test kept passing by keeping the squares' `size-[14px]` class on the shared `DaySquare`).
+- **Browser** (Playwright's Chromium, headless; API and Vite on this machine, a local in-memory MongoDB with the
+  repo's seed — Atlas and `MONGODB_URI` never used): 26 views — This week (approved and draft), the weekly form,
+  a week, a person's week, My reports, Team updates, Review desk, the review page, Team dashboard, Projects, Users,
+  Holidays, People, a profile, Account, the four sign-in screens, the demo chooser, the demo as a member, 404 and
+  No access — at **1440 and 360 px, light and dark** (104 screenshots), looked at; no horizontal overflow and no
+  page errors. Motion measured in the page: the sidebar highlight, the strip bar and the segmented fill move
+  over their duration and land on the new item; the day panel starts at opacity 0 and 8px off and settles; a
+  pressed button reads `scale: 0.97`; with reduced motion the three slides jump and the day panel has no
+  offset.
+- **Not verified:** how the motion *feels* (judged from measurements and stills, not watched); Safari and
+  Firefox; real touch devices; a screen reader; print (unchanged code, not re-checked).
+
+**Owner: how to check the polish by hand** (local, on your machine)
+1. Use a local or throw-away database — `npm run seed` **wipes** the one in `server/.env`. Then `npm run seed`,
+   and in two terminals `npm --prefix server run dev` and `npm --prefix client run dev`.
+2. Open http://localhost:5173/signin. The sign-in card sits in the upper middle of the window, not at the top.
+   Sign in as `imali@example.com`, password `weekly-view-dev`.
+3. **This week:** each day in the strip has a small square (blue = posted; Wednesday's dotted square is the
+   holiday). Click **Tue**, then **Mon**: the black bar along the top slides, and the day below fades in from the
+   right, then from the left. The grey line under the strip starts each item with its square.
+4. In the **Week 41** panel, *Days posted* shows "4 of 4" with five squares, and the figures sit in three columns.
+5. Press and hold **View report**: the button gives slightly under the pointer. Release; the week opens.
+6. Click **My reports**, then **Team updates** in the sidebar: the blue highlight slides from item to item.
+7. On **Team updates**, click **Mon 5**, then **Fri 9**: the updates fade in from the side of the day you picked.
+8. Your name (bottom of the sidebar) → **Appearance → Dark**: the colours ease over instead of flashing. Then
+   **Account**: the panels line up under the "Account" title on the left.
+9. Back on **This week**, under **My projects**, click **Hours**, then **Days**: the blue fill slides.
+10. Sign out; sign in as `ayesha@example.com`. Open **This week**, pick **Mon**, **Edit**, **Add a line**: the new
+    line settles into place. Cancel. Click **Review and submit**: type in *Planned for next week*; the line at the
+    bottom left shows a hollow square with "Saving…" and then a blue square with "Saved hh:mm". Click **Add an item**:
+    the new row settles in.
+11. Open a day with comments (Imali's Tuesday as Ayesha, under **Team updates**, **Tue 6**), post a comment: it
+    settles in.
+12. Go to http://localhost:5173/nowhere: "That page doesn't exist." sits in the middle of the page under five
+    small squares.
+13. On **My reports**, filter **Status → Needs correction**: "No reports match these filters." with dashed squares.
+14. Sign out; open http://localhost:5173/demo. Hover each choice: a blue bar on the left and the arrow moves.
+15. Turn on reduced motion (Windows: **Settings → Accessibility → Visual effects → Animation effects**, off) and
+    repeat 3 and 6: the bar and highlight jump, the day just fades.
+16. Narrow the window to about 360 px (or the device toolbar) and repeat 3, 4 and 7: nothing runs off the side,
+    "My projects" stays on one line, and all five day tabs fit.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -2306,7 +2412,9 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   reversible change.
 - ~~C10, to confirm or change~~ **Resolved (owner, 2026-10-10):** all twelve C10 decisions accepted as built — see *C10 decisions*; the weekend look of the team table was fixed (see *C10 owner answers*). (Was: the twelve decisions, especially 3 (the demo bar's surface is `--d-panel`, not `--ink`), 4 (its way out is always `Sign in`), 6 (the pill on panels only) and 10 (the open-sign-up wording of the landing page's FAQ).) The landing page and the demo were checked in a browser with fallback fonts only; see *C10 checks*.
 - ~~C8, to confirm or change~~ **Resolved (owner, 2026-10-09):** all twelve C8 decisions accepted as built — see *C8 decisions*. (Was: the twelve decisions, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).)
-- **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.
+- **Whole-app polish, to review:** built on `claude/app-polish` (see *Polish: whole-app UI/UX pass*); every rule
+  and motion change is an owner-decision note in `product_design_system.md` (§8.5 lists the new motion). Say what
+  to keep, change or drop before it is merged. (Was: "After C10: one whole-app *visual polish* session".)
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.
 - ~~C6, to confirm or change~~ **Resolved (owner, 2026-10-05):** all ten decisions accepted; `blockersOnly` now means open blockers and the review panel is pinned — see *C6 owner answers*. (Was: the ten decisions above, especially 1 (People is C8) and 4 (the
   feed's optimistic toggles); and the `blockersOnly` gap.)

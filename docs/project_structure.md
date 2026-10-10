@@ -515,6 +515,7 @@ client/
 │   │   │   ├── DatePicker.jsx         # weekends not selectable
 │   │   │   ├── Popover.jsx            # the shared Radix wrapper
 │   │   │   ├── ConfirmDialog.jsx      # destructive confirm: consequence text + Cancel / action
+│   │   │   ├── ContentSwap.jsx        # added in the polish pass (2026-10-10): a day's content fades in from the side it came from (design §8.5, 26)
 │   │   │   ├── QueryView.jsx          # the four designed states around a query result (frontend_architecture §8.4)
 │   │   │   ├── __tests__/QueryView.test.jsx  # added in the C3 fix: a failed refetch keeps loaded data on screen
 │   │   │   ├── InlineError.jsx
@@ -676,6 +677,7 @@ client/
 │   │   ├── useDocumentTitle.js
 │   │   ├── useIsDemo.js               # added in C10: AuthContext's isDemo, false with no provider — for the SAMPLE DATA pill only
 │   │   ├── useActiveSection.js        # IntersectionObserver for the form rail
+│   │   ├── useAppendMotion.js         # added in the polish pass (2026-10-10): the row just added with "Add a …" settles in (design §8.5, 27)
 │   │   ├── useHasMounted.js           # lets charts animate data changes but not mount
 │   │   ├── usePermissions.js          # lib/permissions bound to the current user
 │   │   ├── useLandingMotion.js        # the landing page's motion, as one effect hook: the hero's typed blocker, the two guided scroll stories, entrances, parallax and the footer's week (GSAP + ScrollTrigger, imported here only)

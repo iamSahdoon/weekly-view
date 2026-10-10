@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
+import { WEEKDAYS } from "../../lib/constants.js";
+import { cn } from "../../lib/cn.js";
 import {
   formatDateTime,
   formatHours,
   formatWeekRange,
 } from "../../lib/format.js";
 import { derivePanelAction } from "../../lib/weekActions.js";
+import { DaySquare } from "../dashboard/UpdatesCell.jsx";
 import { Button } from "../ui/Button.jsx";
 import { StatusChip } from "../ui/StatusChip.jsx";
 import { SampleDataPill } from "../ui/SampleDataPill.jsx";
@@ -40,13 +43,15 @@ export function CurrentWeekPanel({ week }) {
   )[0];
   const action = derivePanelAction(week);
 
+  // Polish (2026-10-10): the figures in three columns at a readable size, the key
+  // blocker (free text) on its own row last, and Days posted with the week's squares.
   const rows = [
     ["Days posted", expected.length ? `${posted} of ${expected.length}` : null],
     ["Hours logged", report ? `${formatHours(hours)} h` : null],
     ["Tasks", report ? String(report.tasks.length) : null],
     ["Projects", report ? String(projects.size) : null],
-    ["Key blocker", keyBlocker?.text ?? null],
     ["Last saved", report?.updatedAt ? formatDateTime(report.updatedAt) : null],
+    ["Key blocker", keyBlocker?.text ?? null],
   ];
 
   return (
@@ -75,18 +80,35 @@ export function CurrentWeekPanel({ week }) {
         </div>
       </header>
       <div className="flex flex-col gap-20 p-20">
-        <dl className="grid grid-cols-1 gap-x-24 gap-y-11 sm:grid-cols-2">
+        <dl className="grid grid-cols-2 gap-x-24 gap-y-16 sm:grid-cols-3">
           {rows.map(([label, value]) => (
-            <div key={label} className="flex min-w-0 flex-col gap-2">
+            <div
+              key={label}
+              className={cn(
+                "flex min-w-0 flex-col gap-4",
+                label === "Key blocker" && "col-span-full",
+              )}
+            >
               <dt className="text-caption text-mut">{label}</dt>
               <dd
                 className={
                   label === "Key blocker"
-                    ? "text-dense break-words text-ink"
-                    : "font-mono text-dense text-ink"
+                    ? "text-base break-words text-ink"
+                    : "flex flex-wrap items-center gap-x-11 gap-y-6 font-mono text-base text-ink"
                 }
               >
                 <Value>{value}</Value>
+                {label === "Days posted" && expected.length > 0 && (
+                  <span className="inline-flex gap-4">
+                    {WEEKDAYS.map((d) => (
+                      <DaySquare
+                        key={d}
+                        state={week.dayStates[d] ?? "future"}
+                        size={10}
+                      />
+                    ))}
+                  </span>
+                )}
               </dd>
             </div>
           ))}

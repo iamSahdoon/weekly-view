@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { demo } from "../demo/bootDemo.js";
@@ -52,7 +53,7 @@ export default function DemoEntryPage() {
     <main
       id="main"
       tabIndex={-1}
-      className="min-h-[100dvh] bg-paper px-16 py-52 outline-none max-xs:py-32"
+      className="min-h-[100dvh] bg-paper px-16 pt-[max(52px,18vh)] pb-52 outline-none max-xs:pt-32"
     >
       <div className="mx-auto w-full max-w-[420px]">
         <BrandMark className="mb-32 text-[20px]" />
@@ -78,19 +79,30 @@ export default function DemoEntryPage() {
                     aria-busy={chosen === role && signIn.isPending}
                     onClick={() => choose(role)}
                     className={cn(
-                      "focus-inset flex w-full flex-col items-start gap-4 px-24 py-20 text-left max-xs:px-16",
+                      "focus-inset group relative flex w-full items-center gap-16 px-24 py-20 text-left max-xs:px-16",
                       "transition-colors duration-[120ms] ease-linear",
-                      "enabled:hover:bg-tint disabled:cursor-wait",
-                      chosen === role && signIn.isPending && "bg-tint",
+                      // The choice under the pointer gets the nav's 2px cobalt bar.
+                      "before:absolute before:inset-y-0 before:left-0 before:w-2 before:bg-acc before:opacity-0 before:transition-opacity before:duration-[120ms]",
+                      "enabled:hover:bg-tint enabled:hover:before:opacity-100 disabled:cursor-wait",
+                      chosen === role &&
+                        signIn.isPending &&
+                        "bg-tint before:opacity-100",
                     )}
                   >
-                    <span className="font-display text-panel font-bold text-ink">
-                      {title}
+                    <span className="flex min-w-0 flex-1 flex-col items-start gap-4">
+                      <span className="font-display text-panel font-bold text-ink">
+                        {title}
+                      </span>
+                      <span className="text-base text-body">{line}</span>
+                      <span className="text-dense text-mut">
+                        You&rsquo;d be {who}
+                      </span>
                     </span>
-                    <span className="text-base text-body">{line}</span>
-                    <span className="text-dense text-mut">
-                      You&rsquo;d be {who}
-                    </span>
+                    <ChevronRight
+                      aria-hidden="true"
+                      strokeWidth={1.5}
+                      className="size-[18px] shrink-0 text-mut transition-[color,transform] duration-[160ms] ease-[var(--ease-out)] group-enabled:group-hover:translate-x-2 group-enabled:group-hover:text-acc-txt"
+                    />
                   </button>
                 </li>
               ))}

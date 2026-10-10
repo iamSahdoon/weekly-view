@@ -50,7 +50,7 @@ export function Tabs({ value, onChange, items, ariaLabel, className }) {
             onClick={() => onChange(item.value)}
             onKeyDown={(event) => move(event, index)}
             className={cn(
-              "focus-inset group relative px-16 font-ui text-base font-medium whitespace-nowrap",
+              "focus-inset group relative px-16 font-ui text-base font-medium whitespace-nowrap max-sm:px-11",
               "transition-colors duration-[120ms] ease-linear",
               active ? "text-ink" : "text-mut enabled:hover:text-ink",
               "disabled:cursor-not-allowed disabled:text-mut",
