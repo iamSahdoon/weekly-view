@@ -34,10 +34,10 @@ export default function MarketingLayout({ rootRef, signupOpen, children }) {
             WeeklyView
           </a>
           <nav className="nl" aria-label="Sections">
-            <a href="#week">The week</a>
+            <a href="#prob">Why it helps</a>
+            <a href="#week">For the team</a>
             <a href="#desk">For managers</a>
-            <a href="#sides">Both sides</a>
-            <a href="#limits">Limits</a>
+            <a href="#private">Privacy</a>
             <a href="#faq">FAQ</a>
           </nav>
           <div className="acct">
@@ -62,7 +62,7 @@ export default function MarketingLayout({ rootRef, signupOpen, children }) {
       <footer>
         <div className="wrap">
           <span>
-            WeeklyView. Daily updates, one weekly report, one dashboard.
+            WeeklyView. Short daily notes, one weekly report, one dashboard.
           </span>
           <span>
             Every name on this page belongs to a fictional sample team.{" "}
