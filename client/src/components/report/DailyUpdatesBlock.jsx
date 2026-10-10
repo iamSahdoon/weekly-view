@@ -202,7 +202,11 @@ function DayBody({ week, day, canResolve, resolve }) {
       )}
 
       <div
-        className={cn(SECTION, "flex flex-col gap-14", !hasThreads && "py-11")}
+        className={cn(
+          SECTION,
+          "flex flex-col gap-14",
+          !hasThreads && "py-11 print:hidden",
+        )}
       >
         {hasThreads && <h3 className={LABEL}>Comments</h3>}
         {day.comments.map((thread) => (
@@ -285,7 +289,7 @@ function QuietDay({ weekday, date, state }) {
   return (
     <div
       className={cn(
-        "relative flex flex-wrap items-center justify-between gap-x-20 gap-y-4 border border-hair px-20 py-11",
+        "relative flex break-inside-avoid flex-wrap items-center justify-between gap-x-20 gap-y-4 border border-hair px-20 py-11",
         tinted ? "bg-tint" : "bg-card",
         missing &&
           "before:absolute before:inset-y-0 before:left-0 before:w-2 before:bg-st-corr-fg",
@@ -322,7 +326,7 @@ function PostedDayCard({
   toggleTeam,
 }) {
   return (
-    <div className="border border-hair bg-card">
+    <div className="break-inside-avoid border border-hair bg-card">
       <header className="flex flex-wrap items-center justify-between gap-x-20 gap-y-8 border-b border-hair px-20 py-11">
         <div className="flex flex-wrap items-baseline gap-x-14 gap-y-2">
           <DayTitle

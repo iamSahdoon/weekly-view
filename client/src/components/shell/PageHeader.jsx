@@ -9,7 +9,7 @@ import { Breadcrumb } from "../ui/Breadcrumb.jsx";
 // A page's title, back-link, week picker and actions, portalled into the TopBar's
 // slots (frontend_architecture.md §7.3). It renders nothing in place and sets
 // document.title to "{title} · WeeklyView". One primary action per page
-// (design §11 rule 3); the title is the page's <h1>.
+// (design §11 rule 3); the title is the text of the top bar's <h1>.
 //
 //   back        { label, to } — the second-level back-link (line 1)
 //   breadcrumb  [{ label, to }] — the one three-level route, instead of `back`
@@ -49,13 +49,7 @@ export function PageHeader({
           ),
           slots.back,
         )}
-      {slots.title &&
-        createPortal(
-          <h1 className="truncate font-display text-panel font-bold text-ink">
-            {title}
-          </h1>,
-          slots.title,
-        )}
+      {slots.title && createPortal(title, slots.title)}
       {slots.weekPicker &&
         weekPicker &&
         createPortal(weekPicker, slots.weekPicker)}

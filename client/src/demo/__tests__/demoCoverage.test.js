@@ -353,6 +353,15 @@ const CASES = {
       },
     },
   },
+  markerService: {
+    getNewMarks: {
+      args: [],
+      check: (data) => {
+        hasKeys(["reviewRequests", "nav"])(data);
+        hasKeys(["thisWeek", "myReports"])(data.nav);
+      },
+    },
+  },
   reviewService: {
     // The three review calls are for managers and admins; a member is refused (the
     // content: demoReview.test.js).
@@ -368,6 +377,13 @@ const CASES = {
       ...rejects("FORBIDDEN"),
     },
     listReviewDesk: { args: [{ page: 1, limit: 20 }], ...rejects("FORBIDDEN") },
+    // V4 is a manager's (the sidebar never asks it for a member); the member's refusal
+    // and the numbers: demoMarkers.test.js.
+    getReviewDeskCount: {
+      args: [],
+      as: PERSPECTIVES.manager,
+      check: (data) => expect(data).toEqual({ count: expect.any(Number) }),
+    },
     commentOnDay: {
       args: () => [ctx.imaliLast._id, "mon", "Thanks for the note."],
       check: (day) => {

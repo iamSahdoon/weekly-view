@@ -2,6 +2,7 @@
 @import "tailwindcss";
 @import "./tokens.css"; /* §9.3 — :root + [data-theme="dark"] */
 @import "./base.css"; /* global elements, focus ring, reduced motion */
+@import "./print.css"; /* §3.4 — the week page on paper */
 
 @theme {
   /* ── Colors — REPLACED ──────────────────────────────────────────

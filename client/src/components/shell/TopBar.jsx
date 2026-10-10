@@ -22,7 +22,7 @@ export function TopBar({ showMenu }) {
   const inMenu = narrow && hasSecondary;
 
   return (
-    <header className="sticky top-[var(--demo-h,0px)] z-30 flex flex-wrap items-center gap-x-11 border-b border-hair bg-card px-32 max-md:px-20">
+    <header className="sticky top-[var(--demo-h,0px)] z-30 flex flex-wrap items-center gap-x-11 border-b border-hair bg-card px-32 max-md:px-20 print:hidden">
       {showMenu && (
         <Dialog.Trigger asChild>
           <Button
@@ -40,7 +40,14 @@ export function TopBar({ showMenu }) {
           ref={slotRefs.back}
           className="min-w-0 text-caption text-mut empty:hidden"
         />
-        <div ref={slotRefs.title} className="min-w-0" />
+        {/* The page's <h1>, always present: a route change moves focus here
+            (useRouteFocus) and the page's PageHeader portals its title in. */}
+        <h1
+          id="page-title"
+          ref={slotRefs.title}
+          tabIndex={-1}
+          className="min-w-0 truncate font-display text-panel font-bold text-ink outline-none"
+        />
       </div>
       <div
         ref={slotRefs.weekPicker}

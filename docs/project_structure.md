@@ -537,6 +537,8 @@ client/
 │   │   │   ├── navItems.js            # the sidebar as data: groups, roles, routes, dots, counts
 │   │   │   ├── AppBootSplash.jsx
 │   │   │   ├── OfflineStrip.jsx
+│   │   │   ├── ErrorBoundary.jsx      # added in C9: the class that catches a page that throws while rendering (§9.17); ErrorStates.jsx holds the 500 panels it shows — in the shell (AppShell, keyed by route) and standalone (RootLayout)
+│   │   │   ├── ErrorStates.jsx        # added in C9: PageError (title in the top bar + inline panel with Try again) and StandaloneError
 │   │   │   ├── ReAuthModal.jsx        # the session-expiry modal (design §3.12)
 │   │   │   ├── RouteFallback.jsx      # added in C8: what a route shows while its chunk loads — the page's title in the top bar and a skeleton in its shape; AuthFallback for the auth screens
 │   │   │   ├── LeaveGuard.jsx         # added in C4: asks before an in-app navigation to another page discards unsaved text (useBlocker over UnsavedChangesContext)
@@ -569,6 +571,7 @@ client/
 │   │   │   ├── AutosaveIndicator.jsx
 │   │   │   ├── StickyActionBar.jsx    # Submit, and the "Ask for approval" checkbox (§4.9)
 │   │   │   ├── ReportDocument.jsx     # the read-only rendering shared by §3.4 and §3.6
+│   │   │   ├── PrintFooter.jsx        # added in C9: the print-only status line and footer (week, author, version, print date) of §3.4
 │   │   │   ├── BlockerRow.jsx         # added in C3: a blocker as read — Key bar, Carried over, Resolved, the resolve toggle when given `onResolve`
 │   │   │   ├── WeekNotices.jsx        # added in C3: the strips and panels that stand where the document would be (teammate note, Draft note, correcting and version banners)
 │   │   │   ├── RevisionsRail.jsx
@@ -656,6 +659,8 @@ client/
 │   │   ├── useMediaQuery.js
 │   │   ├── useShellMode.js            # added in C2: full / rail / drawer from the width and the wv.nav.collapsed choice (frontend_architecture §7.2)
 │   │   ├── useOnlineStatus.js
+│   │   ├── useRouteFocus.js           # added in C9: after a path change focus moves to the top bar's <h1> (frontend_architecture §12)
+│   │   ├── usePrintTheme.js           # added in C9: prints on the light theme whatever the screen's theme
 │   │   ├── useUnsavedGuard.js         # registers dirty state with UnsavedChangesContext
 │   │   ├── useDocumentTitle.js
 │   │   ├── useActiveSection.js        # IntersectionObserver for the form rail
@@ -714,6 +719,7 @@ client/
 │   │   ├── queryClient.js
 │   │   ├── urlParams.js               # enumParam, listParam, weekParam, pageParam, limitParam
 │   │   ├── routeParams.js             # added in C2: isObjectId and paramsAreValid, for ParamGuard
+│   │   ├── clearMarkers.js            # added in C9: clears "new" in the cached lists, feed and weeks once a week has been opened (FA11)
 │   │   ├── tokenStore.js              # wv_token get / set / clear, try/catch around storage
 │   │   ├── authEvents.js              # the tiny emitter behind "session-expired"
 │   │   ├── permissions.js             # UX gates derived from role and ownership — never the authority
@@ -748,6 +754,7 @@ client/
 │   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]
 │   │   ├── base.css                   # global element styles, focus ring, reduced motion
+│   │   ├── print.css                  # added in C9: the @media print stylesheet of design §3.4, imported by index.css
 │   │   └── index.css                  # @import "tailwindcss" → tokens.css → base.css, then @theme
 │   └── assets/                        # the glyph SVG and anything else shipped as a file
 ├── vite.config.js
@@ -985,7 +992,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. C9 adds `demo/__tests__/demoMarkers.test.js` (N1 and V4 in the demo), `lib/__tests__/clearMarkers.test.js` and `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

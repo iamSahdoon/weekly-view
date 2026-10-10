@@ -23,6 +23,19 @@ export function useReviewDesk(filters) {
   });
 }
 
+/**
+ * V4 — the count beside Review desk in the sidebar. Managers and admins only (a member
+ * is refused, so it is never asked). Refetched on window focus, never polled (§5.5).
+ */
+export function useReviewDeskCount({ enabled = true } = {}) {
+  return useQuery({
+    queryKey: qk.reviewDeskCount(),
+    queryFn: reviewService.getReviewDeskCount,
+    enabled,
+    refetchOnWindowFocus: true,
+  });
+}
+
 // V1 and V2 — the response is the reviewed report; it goes straight into the report
 // cache so the page can show the outcome without another request, and every view that
 // lists, counts or reviews reports is marked stale (§5.7). `REPORT_STATE_CHANGED` and

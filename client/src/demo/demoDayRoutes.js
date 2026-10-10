@@ -17,8 +17,8 @@ import { fail, ok, withUser } from "./demoResponses.js";
 import {
   dayAvailability,
   expectedDaysOf,
+  isReportNew,
   projectRef,
-  threadOut,
   weekViewOf,
 } from "./demoWeekView.js";
 
@@ -442,16 +442,6 @@ export function reportRow(store, actor, report) {
       lines.map((l) => projectOfTask(store, l.taskId)).filter(Boolean),
     ),
   ];
-  const threads = [
-    ...report.weekComments.map((t) =>
-      threadOut(store, actor, report, t, { week: true }),
-    ),
-    ...report.days.flatMap((d) =>
-      d.comments.map((t) =>
-        threadOut(store, actor, report, t, { week: false }),
-      ),
-    ),
-  ];
   const days = weekDays(report.weekKey);
   return {
     _id: report._id,
@@ -470,7 +460,7 @@ export function reportRow(store, actor, report) {
     postedWeekdays: WEEKDAYS.filter((d) =>
       report.days.some((day) => day.weekday === d),
     ),
-    isNew: threads.some((t) => t.isNew),
+    isNew: isReportNew(store, actor, report),
   };
 }
 

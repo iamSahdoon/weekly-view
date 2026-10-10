@@ -4,7 +4,7 @@
 
 export function ReadOnlyStrip({ own = false }) {
   return (
-    <div className="bg-tint px-20 py-11 text-dense text-body">
+    <div className="bg-tint px-20 py-11 text-dense text-body print:hidden">
       {own
         ? "You can’t review your own report."
         : "Read-only — you can comment, but you can’t edit."}

@@ -5,11 +5,14 @@ import { PageHeader } from "../components/shell/PageHeader.jsx";
 import { Button } from "../components/ui/Button.jsx";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
 import { useAuth } from "../hooks/useAuth.js";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 
 // Design §3.13: inside the shell if signed in, standalone if not. It never
 // speculates that something was removed.
 export default function NotFoundPage() {
   const { user } = useAuth();
+  // Signed in, the PageHeader names the page; standalone, nothing else does.
+  useDocumentTitle(user ? null : "Page not found");
   const content = (
     <EmptyState
       title="That page doesn’t exist."

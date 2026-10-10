@@ -30,7 +30,7 @@ export function Sidebar({ mode, onToggleCollapsed, onNavigate, marks = {} }) {
   return (
     <aside
       className={cn(
-        "flex shrink-0 flex-col border-r border-hair bg-card",
+        "flex shrink-0 flex-col border-r border-hair bg-card print:hidden",
         drawer
           ? "h-full w-[var(--nav-drawer)]"
           : "sticky top-[var(--demo-h,0px)] z-40 h-[calc(100dvh-var(--demo-h,0px))] self-start transition-[width] duration-[160ms] ease-[var(--ease-soft)]",

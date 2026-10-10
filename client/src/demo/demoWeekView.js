@@ -117,6 +117,37 @@ function isThreadNew(store, report, thread, actor) {
   );
 }
 
+// A report (a row, or one of the sidebar's two dots) is new for the reader when activity on
+// it since they last opened it concerns them (database_schema.md §5.4): their own report
+// approved or sent back, an approval request waiting for a manager, or a new entry in a
+// thread that concerns them. Week threads count only where the reader may read them.
+export function isReportNew(store, actor, report) {
+  const seen = seenAt(store, report, actor);
+  const after = (at) => Boolean(at) && (!seen || at > seen);
+  const author = isAuthor(actor, report);
+  if (
+    author &&
+    ["approved", "needs_correction"].includes(report.status) &&
+    after(report.lastActivityAt)
+  ) {
+    return true;
+  }
+  if (
+    isManager(actor) &&
+    !author &&
+    report.status === "submitted" &&
+    report.approvalRequested &&
+    after(report.submittedAt)
+  ) {
+    return true;
+  }
+  const threads = [
+    ...report.days.flatMap((d) => d.comments),
+    ...(canReadContent(actor, report) ? report.weekComments : []),
+  ];
+  return threads.some((t) => isThreadNew(store, report, t, actor));
+}
+
 // ---------------------------------------------------------------- shapes
 
 function entryOut(store, entry) {
