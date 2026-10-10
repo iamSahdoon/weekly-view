@@ -26,6 +26,11 @@ import { Modal } from "../ui/Modal.jsx";
 // replaced. The group (`PlanFields`) is also the create / edit modal's Plan section.
 // P4 pushes the old plan onto the project's history on the server; this only asks.
 
+// Under Planned hours, in both modals (owner, C8): what the number is and what it is read
+// against — the project's hours logged, shown by the Days | Hours control.
+const HOURS_HINT =
+  "Optional. Total hours for the whole project, all people combined. Compared with the hours logged.";
+
 // "Ends Fri 16 Oct, skipping 1 holiday." Nothing until the three inputs make a date.
 function FinishLine({ startDate, plannedDays }) {
   const days = Number(plannedDays);
@@ -70,26 +75,28 @@ export function PlanFields({ form, prefix = "" }) {
           )}
         />
       </Field>
-      <div className="grid grid-cols-1 gap-14 sm:grid-cols-2">
-        <Field label="Working days" error={errors.plannedDays}>
-          <Input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={1000}
-            {...form.register(name("plannedDays"))}
-          />
-        </Field>
-        <Field label="Planned hours" optional error={errors.plannedHours}>
-          <Input
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step="any"
-            {...form.register(name("plannedHours"))}
-          />
-        </Field>
-      </div>
+      <Field label="Working days" error={errors.plannedDays}>
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={1000}
+          {...form.register(name("plannedDays"))}
+        />
+      </Field>
+      <Field
+        label="Planned hours"
+        helper={HOURS_HINT}
+        error={errors.plannedHours}
+      >
+        <Input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="any"
+          {...form.register(name("plannedHours"))}
+        />
+      </Field>
       <FinishLine startDate={startDate} plannedDays={plannedDays} />
     </div>
   );

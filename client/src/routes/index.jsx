@@ -1,5 +1,9 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
+import {
+  AuthFallback,
+  RouteFallback,
+} from "../components/shell/RouteFallback.jsx";
 import AuthLayout from "../layouts/AuthLayout.jsx";
 import RootLayout from "../layouts/RootLayout.jsx";
 import DevOnlyRoute from "./DevOnlyRoute.jsx";
@@ -8,6 +12,26 @@ import IndexRoute from "./IndexRoute.jsx";
 import ParamGuard from "./ParamGuard.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicOnly from "./PublicOnly.jsx";
+import {
+  AccountPage,
+  AcceptInvitePage,
+  DesignPage,
+  HolidaysPage,
+  PeoplePage,
+  PersonProfilePage,
+  ProjectsPage,
+  ReportDetailPage,
+  ReportEditPage,
+  ReportHistoryPage,
+  ResetPasswordPage,
+  ReviewDeskPage,
+  ReviewPage,
+  SignInPage,
+  SignUpPage,
+  TeamDashboardPage,
+  TeamUpdatesPage,
+  UsersPage,
+} from "./pages.js";
 import SessionLayout from "./SessionLayout.jsx";
 
 // The route table (frontend_architecture.md §4.1): every path in the product, with
@@ -15,33 +39,34 @@ import SessionLayout from "./SessionLayout.jsx";
 //
 // Every page is built; each is lazy-loaded behind `page(...)`.
 
-const SignInPage = lazy(() => import("../pages/SignInPage.jsx"));
-const SignUpPage = lazy(() => import("../pages/SignUpPage.jsx"));
-const ReportDetailPage = lazy(() => import("../pages/ReportDetailPage.jsx"));
-const ReportEditPage = lazy(() => import("../pages/ReportEditPage.jsx"));
-const ReportHistoryPage = lazy(() => import("../pages/ReportHistoryPage.jsx"));
-const TeamUpdatesPage = lazy(() => import("../pages/TeamUpdatesPage.jsx"));
-const ReviewDeskPage = lazy(() => import("../pages/ReviewDeskPage.jsx"));
-const ReviewPage = lazy(() => import("../pages/ReviewPage.jsx"));
-const TeamDashboardPage = lazy(() => import("../pages/TeamDashboardPage.jsx"));
-const ProjectsPage = lazy(() => import("../pages/ProjectsPage.jsx"));
-const HolidaysPage = lazy(() => import("../pages/HolidaysPage.jsx"));
-const UsersPage = lazy(() => import("../pages/UsersPage.jsx"));
-const AccountPage = lazy(() => import("../pages/AccountPage.jsx"));
-const PeoplePage = lazy(() => import("../pages/PeoplePage.jsx"));
-const PersonProfilePage = lazy(() => import("../pages/PersonProfilePage.jsx"));
-const AcceptInvitePage = lazy(() => import("../pages/AcceptInvitePage.jsx"));
-const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage.jsx"));
-// Defined in development only, so a production build has no /design chunk.
-const DesignPage = import.meta.env.DEV
-  ? lazy(() => import("../pages/DesignPage.jsx"))
-  : null;
-
-const page = (element) => <Suspense fallback={null}>{element}</Suspense>;
+// A route chunk loads behind a fallback that is the page's own frame and skeleton, never a
+// blank (RouteFallback); `fallback` names its title, shape and width.
+const page = (element, fallback) => (
+  <Suspense fallback={<RouteFallback {...fallback} />}>{element}</Suspense>
+);
+// Each page's title, the shape of its skeleton and its width (design §3, §6.16).
+const FALLBACK = {
+  history: { title: "My reports", kind: "table", size: "wide" },
+  week: { title: "Week", kind: "panels" },
+  edit: { title: "Weekly report", kind: "panels" },
+  updates: { title: "Team updates", kind: "panels" },
+  account: { title: "Account", kind: "panels", size: "doc" },
+  review: { title: "Review desk", kind: "table", size: "wide" },
+  reviewOne: { title: "Review", kind: "panels" },
+  team: { title: "Team dashboard", kind: "dashboard", size: "wide" },
+  people: { title: "People", kind: "table", size: "wide" },
+  person: { title: "Person", kind: "panels" },
+  projects: { title: "Projects", kind: "table" },
+  users: { title: "Users", kind: "table", size: "wide" },
+  holidays: { title: "Holidays", kind: "table", size: "doc" },
+};
+const authPage = (element) => (
+  <Suspense fallback={<AuthFallback />}>{element}</Suspense>
+);
 
 // A route with parameters: a malformed one is the not-found page, with no request.
-const guarded = (names, element) => (
-  <ParamGuard names={names}>{page(element)}</ParamGuard>
+const guarded = (names, element, fallback) => (
+  <ParamGuard names={names}>{page(element, fallback)}</ParamGuard>
 );
 
 export function buildRoutes({ withoutRealOnly = false } = {}) {
@@ -55,14 +80,14 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
           children: [
             {
               path: "/signin",
-              element: <PublicOnly>{page(<SignInPage />)}</PublicOnly>,
+              element: <PublicOnly>{authPage(<SignInPage />)}</PublicOnly>,
             },
             {
               path: "/signup",
-              element: <PublicOnly>{page(<SignUpPage />)}</PublicOnly>,
+              element: <PublicOnly>{authPage(<SignUpPage />)}</PublicOnly>,
             },
-            { path: "/invite/:token", element: page(<AcceptInvitePage />) },
-            { path: "/reset/:token", element: page(<ResetPasswordPage />) },
+            { path: "/invite/:token", element: authPage(<AcceptInvitePage />) },
+            { path: "/reset/:token", element: authPage(<ResetPasswordPage />) },
           ],
         },
         {
@@ -72,45 +97,88 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
             {
               element: <ProtectedRoute />,
               children: [
-                { path: "/reports", element: page(<ReportHistoryPage />) },
+                {
+                  path: "/reports",
+                  element: page(<ReportHistoryPage />, FALLBACK.history),
+                },
                 {
                   path: "/reports/:week",
-                  element: guarded(["week"], <ReportDetailPage />),
+                  element: guarded(
+                    ["week"],
+                    <ReportDetailPage />,
+                    FALLBACK.week,
+                  ),
                 },
                 {
                   path: "/reports/:week/edit",
-                  element: guarded(["week"], <ReportEditPage />),
+                  element: guarded(["week"], <ReportEditPage />, FALLBACK.edit),
                 },
-                { path: "/updates", element: page(<TeamUpdatesPage />) },
+                {
+                  path: "/updates",
+                  element: page(<TeamUpdatesPage />, FALLBACK.updates),
+                },
                 {
                   path: "/people/:userId/reports/:week",
-                  element: guarded(["userId", "week"], <ReportDetailPage />),
+                  element: guarded(
+                    ["userId", "week"],
+                    <ReportDetailPage />,
+                    FALLBACK.week,
+                  ),
                 },
-                { path: "/account", element: page(<AccountPage />) },
+                {
+                  path: "/account",
+                  element: page(<AccountPage />, FALLBACK.account),
+                },
               ],
             },
             {
               element: <ProtectedRoute allow={["manager", "admin"]} />,
               children: [
-                { path: "/review", element: page(<ReviewDeskPage />) },
+                {
+                  path: "/review",
+                  element: page(<ReviewDeskPage />, FALLBACK.review),
+                },
                 {
                   path: "/review/:reportId",
-                  element: guarded(["reportId"], <ReviewPage />),
+                  element: guarded(
+                    ["reportId"],
+                    <ReviewPage />,
+                    FALLBACK.reviewOne,
+                  ),
                 },
-                { path: "/team", element: page(<TeamDashboardPage />) },
-                { path: "/people", element: page(<PeoplePage />) },
+                {
+                  path: "/team",
+                  element: page(<TeamDashboardPage />, FALLBACK.team),
+                },
+                {
+                  path: "/people",
+                  element: page(<PeoplePage />, FALLBACK.people),
+                },
                 {
                   path: "/people/:userId",
-                  element: guarded(["userId"], <PersonProfilePage />),
+                  element: guarded(
+                    ["userId"],
+                    <PersonProfilePage />,
+                    FALLBACK.person,
+                  ),
                 },
-                { path: "/projects", element: page(<ProjectsPage />) },
+                {
+                  path: "/projects",
+                  element: page(<ProjectsPage />, FALLBACK.projects),
+                },
               ],
             },
             {
               element: <ProtectedRoute allow={["admin"]} />,
               children: [
-                { path: "/users", element: page(<UsersPage />) },
-                { path: "/holidays", element: page(<HolidaysPage />) },
+                {
+                  path: "/users",
+                  element: page(<UsersPage />, FALLBACK.users),
+                },
+                {
+                  path: "/holidays",
+                  element: page(<HolidaysPage />, FALLBACK.holidays),
+                },
               ],
             },
             // Inside the shell if signed in, standalone if not.
@@ -119,7 +187,7 @@ export function buildRoutes({ withoutRealOnly = false } = {}) {
         },
         import.meta.env.DEV && {
           path: "/design",
-          element: <DevOnlyRoute>{page(<DesignPage />)}</DevOnlyRoute>,
+          element: <DevOnlyRoute>{authPage(<DesignPage />)}</DevOnlyRoute>,
           handle: { realOnly: true },
         },
       ].filter(Boolean),

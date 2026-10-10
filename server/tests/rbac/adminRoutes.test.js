@@ -630,6 +630,103 @@ describe("U1 and U2 — the people list", () => {
     expect((await call("U2", managerA, "nope")).status).toBe(422);
   });
 
+  // The report stats are read after sorting and paging (name, joinedAt) or for everyone in
+  // one grouped query (the stat sorts) — never a lookup per person — and the order is the
+  // one MongoDB's $sort gave: a null lowest, ties by _id.
+  it("sorts by the report stats — nulls lowest, ties by _id — and pages through them", async () => {
+    const week = (n) => ({
+      weekKey: `2026-W${10 + n}`,
+      weekStart: new Date("2026-03-02"),
+      weekEnd: new Date("2026-03-06"),
+    });
+    const filed = (author, n, activity) =>
+      Report.create({
+        author,
+        ...week(n),
+        status: "submitted",
+        revisionNumber: 1,
+        lastActivityAt: activity ? new Date(activity) : null,
+      });
+    // X: two filed, last 6 Mar. Y: one filed, last 9 Mar, plus a draft (revisionNumber 0).
+    await filed(memberX._id, 1, "2026-03-06T10:00:00.000Z");
+    await filed(memberX._id, 2, "2026-03-04T10:00:00.000Z");
+    await filed(memberY._id, 1, "2026-03-09T10:00:00.000Z");
+    await Report.create({ author: memberY._id, ...week(2), status: "draft" });
+
+    const names = async (qs) =>
+      (await api.get(`/api/users?${qs}`).set(as(admin))).body.data.items.map(
+        (u) => u.name,
+      );
+    const byFiled = await names("sort=reportsFiled&dir=desc&limit=20");
+    expect(byFiled.slice(0, 2)).toEqual(["Member X.", "Member Y."]);
+    const asc = await names("sort=reportsFiled&dir=asc&limit=20");
+    expect(asc.slice(-2)).toEqual(["Member Y.", "Member X."]);
+    // Everyone else filed none: the same count, so they keep _id order, in either direction.
+    const zero = (
+      await api
+        .get("/api/users?sort=reportsFiled&dir=asc&limit=20")
+        .set(as(admin))
+    ).body.data.items
+      .filter((u) => u.reportsFiled === 0)
+      .map((u) => String(u._id));
+    expect(zero.length).toBeGreaterThan(2);
+    expect(zero).toEqual([...zero].sort());
+
+    // lastActivityAt: newest first puts Y, X; people with none (null) come last, oldest-first the reverse.
+    const recent = await names("sort=lastActivityAt&dir=desc&limit=20");
+    expect(recent.slice(0, 2)).toEqual(["Member Y.", "Member X."]);
+    const oldest = await names("sort=lastActivityAt&dir=asc&limit=20");
+    expect(oldest.slice(-2)).toEqual(["Member X.", "Member Y."]);
+
+    // Paging walks the whole sorted list once, in order, with the same total.
+    const all = await names("sort=reportsFiled&dir=desc&limit=20");
+    const pages = [];
+    for (const page of [1, 2, 3]) {
+      const res = await api
+        .get(`/api/users?sort=reportsFiled&dir=desc&limit=20&page=${page}`)
+        .set(as(admin));
+      pages.push(...res.body.data.items.map((u) => u.name));
+      expect(res.body.data.meta.total).toBe(all.length);
+    }
+    expect(pages).toEqual(all);
+    const one = (
+      await api
+        .get("/api/users?sort=reportsFiled&dir=desc&limit=20&page=1")
+        .set(as(admin))
+    ).body.data.items[0];
+    expect(one).toMatchObject({ name: "Member X.", reportsFiled: 2 });
+    expect(
+      (
+        await api
+          .get("/api/users?sort=reportsFiled&dir=desc&limit=20")
+          .set(as(admin))
+      ).body.data.items.find((u) => u.name === "Member Y.").reportsFiled,
+    ).toBe(1); // the draft is not a filed report
+  });
+
+  it("sorts by joined date with the people who have none (an invite) lowest, and filters before it pages", async () => {
+    const invited = await api
+      .post("/api/users")
+      .set(as(admin))
+      .send({ email: "early@example.com", role: "member" });
+    expect(invited.status).toBe(201);
+    const asc = (
+      await api.get("/api/users?sort=joinedAt&dir=asc&limit=20").set(as(admin))
+    ).body.data.items;
+    expect(asc[0].status).toBe("invited");
+    const desc = (
+      await api.get("/api/users?sort=joinedAt&dir=desc&limit=20").set(as(admin))
+    ).body.data.items;
+    expect(desc.at(-1).status).toBe("invited");
+    const filtered = (
+      await api
+        .get("/api/users?role=member&sort=name&limit=20&page=1")
+        .set(as(admin))
+    ).body.data;
+    expect(filtered.meta.total).toBe(filtered.items.length);
+    expect(filtered.items.every((u) => u.role === "member")).toBe(true);
+  });
+
   it("filters by q, role, status and project, and paginates", async () => {
     const project = await Project.create({ name: "Client B" });
     await User.updateOne(

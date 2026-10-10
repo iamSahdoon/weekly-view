@@ -1028,6 +1028,95 @@ Mongo or a throw-away Atlas database, never one you want to keep)
 15. As `nadia@example.com` (manager now, or admin after step 13), **People** has no `Manage users` button
     for a manager; as an admin it does. A member visiting `/people` or `/users` gets the forbidden page.
 
+### C8 follow-up: loading states, faster Users list, planned-hours hint (2026-10-10)
+Owner feedback after testing C8. Local in-memory MongoDB only (Atlas and `MONGODB_URI` never used).
+
+**1. Loading states.** The blank Users page was the lazily loaded route chunk behind a
+`Suspense` fallback of `null`. Fixed for every route:
+- `components/shell/RouteFallback.jsx`: each routed page now loads behind its own frame — the
+  title in the top bar and a skeleton in its shape (`table`, `panels` or `dashboard`, at the page's
+  width); `AuthFallback` for sign-in, sign-up, invite and reset. The route table (`routes/index.jsx`),
+  `IndexRoute` (This week) and the auth routes all use them; no `fallback={null}` is left in the source
+  (a test fails if one comes back).
+- Checked every route two ways in Chromium, light and dark: with its page chunk held back for 2.5 s,
+  and with every API call held back for 2.5 s. 15 shell routes and 4 auth screens: each showed its title
+  and a skeleton at 500–700 ms, none blank. Every `QueryView` already had a skeleton (17 of 17); the
+  in-page pending branches of This week, the week page, the edit form, the review page and the
+  profile were already skeletons.
+- **Also found:** even with the chunk in the browser, `React.lazy` suspends on its first render and
+  React 19 then holds a revealed page back until 300 ms after its fallback committed. So
+  `routes/lazyPage.jsx` renders a page at once once its chunk has loaded, `routes/pages.js` names every
+  routed page, and `routes/prefetch.js` loads the chunks a role may open next, one at a time when the
+  browser is idle after sign-in.
+
+**2. Why Users was slow — measured** (this machine; Vite 7 dev server, seeded data, API on the same
+machine; milliseconds from the sidebar click, medians of repeated runs):
+
+| | before | after |
+| --- | --- | --- |
+| **(a) Vite dev, first visit** (cache cleared): the page module and its 15 imports | `UsersPage.jsx` 28 ms, then 15 imports in parallel 56–92 ms each; the graph was ready ~200 ms after the click | the same files, now fetched when the browser is idle after sign-in, before anyone clicks |
+| Blank content area (dev, click straight after sign-in) | 288 ms (first skeleton at 349–362) | **0** (first skeleton at 18 ms; title at 3–18 ms) |
+| Content on screen, Users / People (dev, click straight after sign-in) | 571–576 / 461 | 549 / 496 |
+| Content on screen, Users / People (dev, after the idle prefetch) | 542 / 461 (Vite warm) | **255 / 165** |
+| **(b) Production build**: `UsersPage` chunk | 36.8 kB, 13.1 kB gzip, ~24 ms to fetch locally | unchanged |
+| Production, blank area, Users / People | 336 / 304 (top-bar title blank until 353 / 329) | **0** (skeleton and title at 10–23) |
+| Production, content, click straight after sign-in / after prefetch | 403 / 365 (Users / People, blank ~300 of it) | 392 / 390, **skeleton shown throughout** / **70 / 73** |
+| **(c) U1 in the browser**, seeded (11 people) | 19–35 ms | 14–25 ms |
+| **U1 on the server**, seeded: median | 11–13 ms | 11–12 ms |
+| **U1 on the server**, 2,000 people and 80,000 reports (a scratch database, not the seed): by name / joined | 557–589 ms | **15–20 ms** |
+| same, sorted by Reports filed or Last activity | 537–588 ms | 236–262 ms |
+
+Plainly: **the API was not the cause** — U1 takes about 12 ms on the seeded team. The 1–2 s the owner
+saw was the lazily loaded route chunk (in development, Vite compiling and serving ~16 modules on the
+first visit to a page, slower on a slower machine) shown as a blank page, plus React's 300 ms hold. The
+production chunk is 13 kB gzip. What stays: with no prefetch yet (a click in the first second after
+sign-in) a page still takes ~300–550 ms to arrive, but behind its skeleton now.
+
+**U1 was still worth fixing.** It computed every person's report stats (a `$lookup` per user) *before*
+sorting and paging, so it cost the same for page 1 of 20 as for all 2,000 people. `queryUserItems` now
+sorts and pages the users first (name and joined: `.lean()`, the collation, `_id` as the tiebreak),
+then reads the stats for the page's people in **one** grouped query over the `{ author, weekKey }`
+index; the two stat sorts group for everyone matched in one query and sort in memory. **The response
+is byte-identical**: 17 requests (every sort and direction, filters, pages, U2) compared before and
+after on the seed and on the 2,000-person set. New tests in `adminRoutes.test.js` cover the stat sorts
+(nulls lowest, ties by `_id`, paging, a draft not counting as filed) and the joined sort. **Not done:**
+the stat sorts still read everyone's reports (~250 ms at 2,000 people); a covered index on
+`{ author, revisionNumber, lastActivityAt }` would cut it, but `database_schema.md` §6 fixes the index
+set and a test checks it, so that is a change for the owner to approve.
+
+**3. Planned hours hint.** Under Planned hours, in `PlanModal` and the project modal (one shared
+`PlanFields`): "Optional. Total hours for the whole project, all people combined. Compared with the
+hours logged." It wires to the input (`aria-describedby`) and gives way to an error message when there
+is one. The right-hand "Optional" marker on that label is gone (the hint says it), and Working days and
+Planned hours are now stacked rather than side by side, so the hint has the width.
+
+**Decisions to confirm:** (1) the prefetch and `lazyPage` above (three new files in `routes/`; every
+page chunk is fetched in the background after sign-in — about 400 kB gzip in all, 118 kB of it the
+dashboard's charts, for a manager); (2) a fallback's title for a parameter route is generic ("Week",
+"Person", "Review") until the page loads and names it; (3) the covered-index question above.
+
+**Checks:** `npm run lint` clean; `npm test` green (server 385, client 444).
+
+**Owner: how to check these three by hand**
+1. `npm run seed`, then `npm --prefix server run dev` and `npm --prefix client run dev`; sign in at
+   http://localhost:5173/signin as `sanduni@example.com` (password `weekly-view-dev`).
+2. *Loading states.* In the browser's developer tools open **Network**, tick **Disable cache** and set
+   throttling to **Slow 4G**. Immediately after the page that follows sign-in appears, click each sidebar
+   item in turn: **Users**, **People**, **Projects**, **Holidays**, **Team dashboard**, **Review desk**,
+   **My reports**, **Team updates**. Each shows its title in the top bar and grey skeleton blocks at once;
+   at no point is the area blank. Then wait a few seconds on any page and click **Users** again: it opens
+   with almost no wait.
+3. Open a person from **People**, a week from their profile, and **Account**: same, skeleton first.
+4. Sign out, keep the throttling, and open `/signin`: the card shows skeleton fields, not an empty page.
+5. Switch **Appearance → Dark** (your name at the bottom of the sidebar) and repeat step 2 for two pages;
+   the skeletons stay on the dark surface.
+6. *Planned hours.* **Projects → Extend plan** on **Client A**: under **Planned hours** the line reads
+   "Optional. Total hours for the whole project, all people combined. Compared with the hours logged."
+   Close it and click **New project**: the same line. Type `-5` in Planned hours and create: the error
+   replaces the line. Check both in Light and Dark.
+7. *The Users list.* Open **Users**, sort by **Joined** and by name from the headers, page through with
+   a smaller page size; the order and rows are the ones you had before.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds

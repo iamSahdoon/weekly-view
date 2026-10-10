@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import mongoose from "mongoose";
 import { env } from "../config/env.js";
 import { Project } from "../models/projectModel.js";
+import { Report } from "../models/reportModel.js";
 import { User } from "../models/userModel.js";
 import { AppError } from "../utils/appError.js";
 import { pageWindow, paginated } from "../utils/paginate.js";
@@ -114,68 +115,96 @@ function toUserItem(user) {
   };
 }
 
-const SORT_FIELDS = {
-  name: "name",
-  joinedAt: "joinedAt",
-  lastActivityAt: "lastActivityAt",
-  reportsFiled: "reportsFiled",
-};
+// What a list row never carries (U1: no token or hash, raw or stored, ever).
+const HIDDEN = "-passwordHash -linkTokenHash -tokenVersion";
+const STAT_SORTS = new Set(["reportsFiled", "lastActivityAt"]);
 
-// U1 rows and every single-user read share this pipeline, so a row is the same shape
-// wherever it is served. Aggregation ignores `select: false`, hence the $project.
+/**
+ * `reportsFiled` (reports submitted at least once; a draft has revisionNumber 0) and
+ * `lastActivityAt` for the given people, as a Map keyed by id string — one grouped query
+ * over the `{ author, weekKey }` index, not one per person.
+ */
+async function reportStats(authorIds) {
+  if (authorIds.length === 0) return new Map();
+  const rows = await Report.aggregate([
+    { $match: { author: { $in: authorIds } } },
+    {
+      $group: {
+        _id: "$author",
+        filed: { $sum: { $cond: [{ $gt: ["$revisionNumber", 0] }, 1, 0] } },
+        last: { $max: "$lastActivityAt" },
+      },
+    },
+  ]);
+  return new Map(rows.map((row) => [String(row._id), row]));
+}
+
+const withStats = (users, stats) =>
+  users.map((user) =>
+    toUserItem({
+      ...user,
+      reportsFiled: stats.get(String(user._id))?.filed ?? 0,
+      lastActivityAt: stats.get(String(user._id))?.last ?? null,
+    }),
+  );
+
+// U1 rows and every single-user read share this function, so a row is the same shape
+// wherever it is served. Sorting and paging happen on the users first and the report stats
+// are then read for the people on the page only (name and joinedAt sorts), or for everyone
+// matched in one grouped query when the sort is by the stats themselves — never a lookup per
+// person before paging. A null sorts lowest, as MongoDB orders it; ties fall to `_id`.
 async function queryUserItems(match, { sort = "name", dir = "asc", window }) {
   const order = dir === "desc" ? -1 : 1;
-  const pipeline = [
-    { $match: match },
-    { $project: { passwordHash: 0, linkTokenHash: 0, tokenVersion: 0 } },
-    {
-      $lookup: {
-        from: "reports",
-        let: { userId: "$_id" },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$author", "$$userId"] } } },
-          {
-            $group: {
-              _id: null,
-              // Filed = submitted at least once; a draft has revisionNumber 0.
-              filed: {
-                $sum: { $cond: [{ $gt: ["$revisionNumber", 0] }, 1, 0] },
-              },
-              last: { $max: "$lastActivityAt" },
-            },
-          },
-        ],
-        as: "reportStats",
-      },
-    },
-    {
-      $addFields: {
-        reportsFiled: { $ifNull: [{ $first: "$reportStats.filed" }, 0] },
-        lastActivityAt: { $first: "$reportStats.last" },
-        joinedAt: { $first: "$workPeriods.from" },
-      },
-    },
-    { $project: { reportStats: 0 } },
-    { $sort: { [SORT_FIELDS[sort]]: order, _id: 1 } },
-    {
-      $facet: {
-        items: window ? [{ $skip: window.skip }, { $limit: window.limit }] : [],
-        total: [{ $count: "n" }],
-      },
-    },
-  ];
-  const [result] = await User.aggregate(pipeline).collation({
-    locale: "en",
-    strength: 2,
-  });
-  await User.populate(result.items, {
-    path: "projects",
-    select: "name status",
-    options: { lean: true },
-  });
+  const populate = { path: "projects", select: "name status" };
+
+  if (STAT_SORTS.has(sort)) {
+    const everyone = await User.find(match).select("_id").lean();
+    const stats = await reportStats(everyone.map((u) => u._id));
+    const key = (id) => {
+      const row = stats.get(String(id));
+      const value = sort === "reportsFiled" ? (row?.filed ?? 0) : row?.last;
+      return value == null ? -Infinity : Number(value);
+    };
+    const ids = everyone
+      .map((u) => u._id)
+      .sort(
+        (a, b) =>
+          (key(a) === key(b) ? 0 : key(a) < key(b) ? -order : order) ||
+          String(a).localeCompare(String(b)),
+      );
+    const pageIds = window
+      ? ids.slice(window.skip, window.skip + window.limit)
+      : ids;
+    const found = await User.find({ _id: { $in: pageIds } })
+      .select(HIDDEN)
+      .populate(populate)
+      .lean();
+    const byId = new Map(found.map((u) => [String(u._id), u]));
+    return {
+      items: withStats(
+        pageIds.map((id) => byId.get(String(id))),
+        stats,
+      ),
+      total: ids.length,
+    };
+  }
+
+  const sortSpec =
+    sort === "joinedAt"
+      ? { "workPeriods.0.from": order, _id: 1 }
+      : { name: order, _id: 1 };
+  let query = User.find(match)
+    .collation({ locale: "en", strength: 2 })
+    .sort(sortSpec);
+  if (window) query = query.skip(window.skip).limit(window.limit);
+  const [users, total] = await Promise.all([
+    query.select(HIDDEN).populate(populate).lean(),
+    window ? User.countDocuments(match) : undefined,
+  ]);
+  const stats = await reportStats(users.map((u) => u._id));
   return {
-    items: result.items.map(toUserItem),
-    total: result.total[0]?.n ?? 0,
+    items: withStats(users, stats),
+    total: total ?? users.length,
   };
 }
 
