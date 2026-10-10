@@ -1,6 +1,8 @@
 import { WEEKDAYS } from "../lib/constants.js";
 import {
+  addWeeks,
   compareWeekKeys,
+  currentWeekKey,
   isWeekKey,
   toCalendarDate,
   weekDays,
@@ -9,6 +11,7 @@ import { fail, ok, withUser } from "./demoResponses.js";
 import {
   dayAvailability,
   dayOut,
+  isReportNew,
   projectRef,
   userRef,
   weekViewOf,
@@ -271,9 +274,52 @@ function listReviewDesk(store, { query }, actor) {
   });
 }
 
+// ---------------------------------------------------------------- V4, N1
+
+// V4 — requested reports this manager hasn't opened since their latest submission.
+function countReviewRequests(store, actor) {
+  if (!isManager(actor)) return 0;
+  return store.reports.filter(
+    (r) =>
+      r.status === "submitted" &&
+      r.author !== actor._id &&
+      isRequestNew(store, actor, r),
+  ).length;
+}
+
+// N1 — the sidebar's dots, over the actor's own reports of the last 12 weeks. "This
+// week" is the current week; "My reports" is the earlier ones.
+function newMarks(store, req, actor) {
+  const current = currentWeekKey();
+  const earliest = addWeeks(current, -11);
+  const fresh = store.reports.filter(
+    (r) =>
+      r.author === actor._id &&
+      compareWeekKeys(r.weekKey, earliest) >= 0 &&
+      isReportNew(store, actor, r),
+  );
+  return ok({
+    reviewRequests: countReviewRequests(store, actor),
+    nav: {
+      thisWeek: fresh.some((r) => compareWeekKeys(r.weekKey, current) >= 0),
+      myReports: fresh.some((r) => compareWeekKeys(r.weekKey, current) < 0),
+    },
+  });
+}
+
 export const reviewRoutes = [
   ["get", "/updates", withUser(listTeamUpdates)], // R12
   ["post", "/reports/:id/review/approve", review("approved")], // V1
   ["post", "/reports/:id/review/send-back", review("changes_requested")], // V2
   ["get", "/review-desk", withUser(listReviewDesk)], // V3
+  [
+    "get",
+    "/review-desk/count",
+    withUser((store, req, actor) =>
+      isManager(actor)
+        ? ok({ count: countReviewRequests(store, actor) })
+        : forbidden(),
+    ),
+  ], // V4
+  ["get", "/me/new", withUser(newMarks)], // N1
 ];

@@ -24,7 +24,7 @@ function Section({ number, title, children }) {
     <section aria-labelledby={`doc-${number}`}>
       <h3
         id={`doc-${number}`}
-        className="flex items-baseline gap-11 border-b border-hair pb-14 font-display text-panel font-bold text-ink"
+        className="flex break-after-avoid items-baseline gap-11 border-b border-hair pb-14 font-display text-panel font-bold text-ink"
       >
         <span className="font-mono text-dense font-normal text-mut">
           {number}

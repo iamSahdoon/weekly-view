@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { DailyUpdatesBlock } from "../components/report/DailyUpdatesBlock.jsx";
+import { PrintFooter, PrintStatus } from "../components/report/PrintFooter.jsx";
 import {
   DocumentSkeleton,
   RailBlock,
@@ -16,8 +17,8 @@ import { InlineError } from "../components/ui/InlineError.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { StatusChip } from "../components/ui/StatusChip.jsx";
 import { useAuth } from "../hooks/useAuth.js";
+import { useSeenOnOpen } from "../hooks/useNewMarks.js";
 import {
-  useMarkSeen,
   useRevision,
   useRevisions,
   useWeek,
@@ -152,13 +153,7 @@ function ReportWeek({ week, own }) {
 
   // Once per report, after the week has loaded — never `week` or `report`, so this
   // page keeps the "new" markers it opened with (§9.4, FA11).
-  const { mutate: markSeen } = useMarkSeen();
-  const seenFor = useRef(null);
-  useEffect(() => {
-    if (seenFor.current === report._id) return;
-    seenFor.current = report._id;
-    markSeen(report._id);
-  }, [report._id, markSeen]);
+  useSeenOnOpen(report._id);
 
   const author = isAuthorOf(me, report);
   const manager = isManagerRole(me.role);
@@ -191,7 +186,7 @@ function ReportWeek({ week, own }) {
         }
       />
       <PageContainer>
-        <div className="grid gap-x-44 gap-y-32 lg:grid-cols-[minmax(0,860px)_280px]">
+        <div className="print-report grid gap-x-44 gap-y-32 lg:grid-cols-[minmax(0,860px)_280px] print:block">
           <div className="flex min-w-0 flex-col gap-44">
             <header className="flex flex-col gap-6">
               <p className="font-mono text-caption text-mut">
@@ -205,6 +200,7 @@ function ReportWeek({ week, own }) {
                 {report.author?.name}
                 {projects.length > 0 && ` · ${projects.join(", ")}`}
               </p>
+              <PrintStatus report={report} />
             </header>
 
             <DailyUpdatesBlock week={week} />
@@ -219,11 +215,16 @@ function ReportWeek({ week, own }) {
               author={author}
               manager={manager}
             />
+            <PrintFooter
+              weekNumber={number}
+              author={report.author?.name}
+              revisionNumber={report.revisionNumber}
+            />
           </div>
 
           <aside
             aria-label="Status, versions and comments"
-            className="flex min-w-0 flex-col gap-24 max-lg:order-first lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px)] lg:self-start lg:overflow-y-auto"
+            className="flex min-w-0 flex-col gap-24 max-lg:order-first lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px)] lg:self-start lg:overflow-y-auto print:hidden"
           >
             <RailBlock label="Status">
               <div className="flex flex-wrap items-center gap-8">

@@ -1,0 +1,73 @@
+/* Print — product_design_system.md §3.4 ("Print"), frontend_architecture.md §9.4.
+   A stylesheet only, no component logic. It prints the week page (and the review page,
+   which is the same document): sidebar, top bar, rail and controls hidden, the document at
+   full width on a white page, hairlines at light grey, the status as text, and a footer
+   line with week, author, version and print date. Everything is built from tokens.
+
+   Colour: the page always prints on the light theme (usePrintTheme swaps
+   <html data-theme> for the print and back). The status chips, the day cards and the
+   Missing bar keep the colours they have on screen — owner, C9 — and every one of them
+   also carries its word, so the page reads in black and white. */
+
+/* Screen: the print-only lines do not exist. */
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  /* Hairlines at light grey, whatever the token is (the design says #CCC). */
+  html:root {
+    --hair: color-mix(in srgb, var(--ink) 20%, white);
+    --hair2: color-mix(in srgb, var(--ink) 25%, white);
+    --rule: color-mix(in srgb, var(--ink) 25%, white);
+  }
+
+  /* A white page. The browser prints backgrounds only when asked, and this asks for the
+     ones that carry meaning (chips, tinted days) but never the page's own. */
+  html,
+  body {
+    background: transparent !important;
+    color: var(--ink);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* The things that exist only on screen. */
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  /* Controls on a report: nothing to click on paper. A blocker keeps its text and its
+     `Resolved` label; a comment keeps its words and loses Reply, Edit and the composer. */
+  .print-report button,
+  .print-report textarea,
+  .print-report [role="switch"],
+  .print-report :has(> [role="switch"]) {
+    display: none !important;
+  }
+
+  /* Never print a link's address after it, and keep a table's header with its rows. */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr {
+    break-inside: avoid;
+  }
+
+  /* The whole document uses the page, not the screen's measure. */
+  .print-report {
+    max-width: none !important;
+  }
+}

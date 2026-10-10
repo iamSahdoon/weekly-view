@@ -1,7 +1,6 @@
 import { api } from "./apiClient.js";
 
-// Review and comments (api_specification.md §2.6, §2.7). V1–V3 are here; the desk's
-// count (V4) arrives with the sidebar's marker in C9. One path shape serves day and
+// Review and comments (api_specification.md §2.6, §2.7). One path shape serves day and
 // week threads: thread ids are unique within a report.
 
 /** V1 → WeekView. `comment` is optional; `revisionNumber` is the version that was read. */
@@ -17,6 +16,9 @@ export const sendBack = (id, { revisionNumber, comment }) =>
 
 /** V3 → paginated review-desk items, never the caller's own. */
 export const listReviewDesk = (params) => api.get("/review-desk", { params });
+
+/** V4 → `{ count }`: requested reports this manager hasn't opened since their latest submission. */
+export const getReviewDeskCount = () => api.get("/review-desk/count");
 
 /** C1 → Day (201) */
 export const commentOnDay = (reportId, weekday, text) =>

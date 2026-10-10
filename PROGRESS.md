@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C9**
+**Next stage: C10**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -21,7 +21,7 @@
 | C6 | History, team updates, review desk, review page | done |
 | C7 | Dashboard and charts | done |
 | C8 | Projects, users, holidays, people, profile, account | done |
-| C9 | "New" markers, system states, print | not started |
+| C9 | "New" markers, system states, print | done |
 | C10 | Demo chooser and bar, landing page | not started |
 | C11 | Verification, deployment, README | not started |
 
@@ -1117,6 +1117,114 @@ dashboard's charts, for a manager); (2) a fallback's title for a parameter route
 7. *The Users list.* Open **Users**, sort by **Joined** and by name from the headers, page through with
    a smaller page size; the order and rows are the ones you had before.
 
+### C9 checks (2026-10-10)
+Local, on a throw-away **in-memory** MongoDB (a `MongoMemoryReplSet` on 127.0.0.1, seeded with the repo's
+seed; `MONGODB_URI` overridden for those processes only). Atlas, `server/.env` and `npm run seed` against it
+were never used. Every server started was stopped (the API, Vite and the in-memory Mongo).
+- `npm run lint`: clean. `npm test`: green — server 385 (unchanged), client **473** (was 444; new:
+  `demo/__tests__/demoMarkers.test.js` 7, `lib/__tests__/clearMarkers.test.js` 8,
+  `components/shell/__tests__/SidebarMarks.test.jsx` 5, `components/shell/__tests__/ErrorBoundary.test.jsx` 7,
+  and two cases in `demoCoverage.test.js` for `markerService.getNewMarks` and `reviewService.getReviewDeskCount`).
+  `vite build` OK.
+- **What was built:** `markerService.getNewMarks` (N1) and `reviewService.getReviewDeskCount` (V4); `useNewMarks`,
+  `useNavMarks` (feeds both `Sidebar`s from `AppShell`: a dot on **This week** / **My reports**, the count on
+  **Review desk**, nothing while loading or failed) and `useReviewDeskCount` (managers only, refetched on window
+  focus, never polled); the demo answers N1 and V4 by the server's rules (`isReportNew` in `demoWeekView.js`, also
+  used for the History rows); `ErrorBoundary` + `ErrorStates`; `useRouteFocus`; document titles on the auth
+  screens and the standalone 404 / 500 (every shell page already had one through `PageHeader`); `styles/print.css`,
+  `usePrintTheme`, `PrintFooter`. `isNew` markers were already drawn everywhere design §6.24 places them (week
+  rows, day comment counts, threads, desk rows); C9 supplied what fed the sidebar and fixed reopening.
+- **Done item — "opening a week shows its markers once and not on reopening",** in a browser against the real
+  API (Imali, whose W38 had a new manager comment, and W36 / W37 / W39 new through approvals): the history list marks
+  W38; opening it shows two markers (the day's comment count and the thread); leaving and coming back **inside the
+  30 s cache window** shows **zero**; the history row's marker is gone; the **My reports** dot went when the last new
+  week (W36) was opened. This was the gap C3 left: the cached week was served with the markers it loaded with.
+  Now `useSeenOnOpen` (week page and review page) sends R13 once, keeps the open page's markers (FA11 stands), and
+  once the page is left clears the cached week and report in place (`lib/clearMarkers.js`); the lists, the team
+  feed and the review desk are cleared in place the moment R13 lands.
+- **Sidebar, as a manager** (Ruwan): **Review desk** showed `5` equal to V4 and to the number of marked desk rows;
+  opening one request dropped it to 4 and cleared its row. Dots and the count looked at in light and dark
+  (screenshots, 1280 px).
+- **Error boundary,** with a temporary `throw` in a page (reverted): the shell stayed (sidebar present), the top
+  bar read "Something went wrong", the panel read "This page ran into a problem." with `Try again`; with the cause
+  removed `Try again` brought the page back; navigating to another page cleared a failed one.
+- **Focus on route change:** after a sidebar click `document.activeElement` is the top bar's `<h1>`
+  (`#page-title`) and `document.title` is "{page} · WeeklyView". (A first version used `requestAnimationFrame`,
+  which does not fire while the Browser pane is hidden; it is a `setTimeout` now.) A change of query string alone
+  does not move focus — by construction (it watches the path); not exercised in the browser.
+- **Print,** in headless Chrome driven over its debugging protocol (print media emulated at 718 px, the
+  `beforeprint` event fired by hand), the week page as Imali in the **dark theme**: the theme switched to light for
+  the print and back after; sidebar, top bar, rail and every button, textarea and switch gone; document full width;
+  hairlines light grey; day cards, the Holiday card, the status text and the type swatches as on screen;
+  "Status: Submitted" as text under the heading; the footer "Week 38 · Imali J. · rev 1 · Printed 10 Oct 2026" as
+  the last line. A real `Page.printToPDF` also ran without error. **Not looked at:** the real page breaks
+  (nothing here could render the PDF, so `break-inside: avoid` on day cards is unverified), a physical or
+  black-and-white print, Firefox and Safari, and the Needs-correction / Draft variants of the page in print.
+- **Not verified:** the demo in a browser (there is no chooser until C10; N1 and V4 are covered by
+  `demoMarkers.test.js` and the coverage test); the 500 state in the dark theme (its pieces are the existing
+  `InlineError`); 360 px for the sidebar markers; screen-reader output of the focus move.
+- **One observation I could not explain:** the first of three headless screenshots of Ruwan's Review desk showed a
+  `This week` dot; the next two, and three direct N1 calls, did not (Ruwan's W41 is not new). Nothing was written
+  between them. Worth a look if the owner ever sees a dot appear by itself.
+- **Left running:** a `mongod` process (pid 5860) was running on this machine when I finished. Its command line and
+  path are hidden from me and nothing listens on the port my in-memory server used, so I take it not to be mine and
+  did not touch it.
+
+### C9 decisions (please confirm)
+1. **The error boundary is in `AppShell` as well as `RootLayout`.** `frontend_architecture.md` §9.17 puts the
+   page-level boundary in `RootLayout`; a boundary there would replace the whole shell on a crash, contradicting
+   "so one broken page leaves the shell usable". So `AppShell` wraps its `<Outlet/>` (keyed by the route, so
+   navigating away clears it) and `RootLayout` keeps an outer one for signed-out pages or the shell itself,
+   which resets on a path change. Both use `ErrorStates.jsx`.
+2. **The page `<h1>` now lives in `TopBar`** (always present, `id="page-title"`, `tabIndex=-1`); `PageHeader`
+   portals the title text into it instead of an `<h1>` per page. That is what makes focus-on-route-change work
+   while a lazy page replaces its fallback.
+3. **`useMarkSeen` also clears the lists, the team feed and the desk in place** (§5.7 only says invalidate),
+   and the week/report caches are cleared when the page is left (see above). The open page still keeps its
+   markers (FA11). `useSeenOnOpen` is in `hooks/useNewMarks.js`, where the structure doc put "marking a week seen".
+4. **N1 supplies the two dots and V4 supplies the count** (N1's `reviewRequests` equals V4; V4 is used because its
+   key is the one the review actions already invalidate, and members never ask it).
+5. **Print:** the page prints on the light theme by switching `<html data-theme>` on `beforeprint` (no dark
+   colours restated); hairlines are `color-mix(ink 20%, white)` rather than the literal `#CCC` the design names
+   (no hex outside `tokens.css`); backgrounds that carry meaning (chips, tinted days, the Missing bar) print
+   (`print-color-adjust: exact`) as on screen, per your note on the C7 status colours and the day-card style;
+   the footer's date is taken when printing starts. The rail (and so the overall comments and versions) is not
+   printed, as the design says. The review page prints like the week page, without its action panel. A day's
+   "Open to team comments" switch and its label are not printed (the switch is a control; its label alone would
+   read as "open" on every day).
+6. **Demo's marker rule:** a new `isReportNew` in `demoWeekView.js`; the History rows in the demo now use it, so
+   a week a manager approved shows "new" for its author until opened (as the server does). In the demo,
+   Imali's last week (sent back) starts marked.
+
+**Owner: how to test C9 by hand** (local; the seed **wipes** the database it points at — use a local Mongo or a
+throw-away Atlas database, never one you want to keep; password for every account `weekly-view-dev`)
+1. `npm run seed`, then `npm --prefix server run dev` and `npm --prefix client run dev`; open http://localhost:5173/signin.
+2. **Dots:** sign in as `tharindu@example.com`. The sidebar shows a small blue square at the right edge of the item
+   whose page holds something new (their last week was sent back, so **My reports** and/or **This week**). Open
+   that week from **My reports**: the sent-back thread is marked. Click **Team updates**, then **My reports**,
+   then the same week again: **no marker anywhere**, and the sidebar square is gone once nothing new is left.
+3. **A comment as a marker:** sign in as `nadia@example.com`, open **Team updates** → a person's day → comment on a
+   day. Sign in as that person: **My reports** has a square; the week's row in the list has one; open the week: the
+   day's comment count and the thread are marked. Go back to **My reports** and open it again: nothing is marked.
+4. **Review desk count:** sign in as `ruwan@example.com` (manager). **Review desk** shows a number. Open a request and
+   come back: the number is one lower and that row has no square. Switch to another browser tab for a moment,
+   comment as the author elsewhere if you like, and return to the tab: the count refreshes when the window regains
+   focus.
+5. **Focus:** with the keyboard, tab to a sidebar link and press Enter: the page title in the top bar is focused (no
+   ring is drawn on it). Tab once: focus moves into the page. Switching a week with the week picker does not move
+   focus.
+6. **Titles:** the browser tab reads "Users · WeeklyView", "Week 40 · WeeklyView", "Sign in · WeeklyView"; signed
+   out, a wrong address (`/nowhere`) reads "Page not found · WeeklyView".
+7. **Print:** as `imali@example.com` open **My reports** → any week. Press Ctrl+P: the preview shows only the report
+   (no sidebar, top bar, buttons or right-hand column), a white page, "Status: …" under the title, and a last line
+   "Week N · Imali J. · rev R · Printed <today>". Tick **Background graphics** to see the chips and tinted days;
+   untick it to see the black-and-white version. Check that no day card is split across two pages. Repeat with
+   **Appearance → Dark**: it still prints on white.
+8. **Error state:** to see it, in `client/src/pages/TeamUpdatesPage.jsx` add `throw new Error("test");` as the first
+   line of `TeamUpdatesPage`, and open **Team updates**: the sidebar stays, the title reads "Something went wrong"
+   and the panel offers **Try again**. Remove the line and click **Try again**. (Revert the edit afterwards.)
+9. Do steps 2, 4 and 7 in the **dark** theme too, and step 2 in a 360 px-wide window.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -1776,6 +1884,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C9 added `components/shell/{ErrorBoundary,ErrorStates}.jsx`, `components/report/PrintFooter.jsx`, `hooks/{useNewMarks,useRouteFocus,usePrintTheme}.js`, `lib/clearMarkers.js`, `services/markerService.js` (in the tree), `styles/print.css` and four test files (`demo/__tests__/demoMarkers.test.js`, `lib/__tests__/clearMarkers.test.js`, `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`); `project_structure.md` §3.1 and §6 are updated. The page-level error boundary is in `AppShell` as well as `RootLayout` (see C9 decisions).
 - C8 added `pages/{ProjectsPage,HolidaysPage,UsersPage,PeoplePage,PersonProfilePage,AccountPage}.jsx` (all in the tree), `components/project/{ProjectModal,ProjectsListTable}.jsx`, `components/holiday/HolidayModal.jsx`, ten files in `components/user/` (see the tree), `ui/{DropdownMenu,DatePicker,Meter}.jsx` (in the tree), `schemas/{projectSchema,userSchema}.js`, `lib/{peopleParams,passwordStrength}.js` and five test files; it deleted `pages/PendingPage.jsx`. `project_structure.md` §3.1 and §6 are updated.
 - C7 added `lib/dashboardParams.js`, `lib/dashboardData.js`, `demo/demoDashboardRoutes.js`, `components/ui/AvatarStack.jsx` (in the tree of §3.1 as `AvatarStack` of the `ui/` list, now a file) and five test files (`pages/__tests__/TeamDashboardPage.test.jsx`, `demo/__tests__/demoDashboard.test.js`, `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`); `project_structure.md` §3.1 and §6 are updated. `MetricCell` is built (`PersonalStrip` still draws its own three cells). `typeColor` in `chartTheme.js` is `TASK_TYPE_COLORS` itself, not a second copy.
 - C6 added `components/report/WeekDocument.jsx`, `components/ui/WeekRangeFilter.jsx`, `demo/demoReviewRoutes.js`, `demo/demoUserRoutes.js`, `lib/reviewDeskParams.js`, `lib/reviewOutcome.js`, `lib/updatesDay.js` and five test files (`pages/__tests__/ReviewPages.test.jsx`, `demo/__tests__/demoReview.test.js`, `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`); `project_structure.md` §3.1 and §6 are updated. `WeekComments.jsx` (built in C3) is reused by the review page unchanged. `hooks/useNewMarks.js` and the desk's count are C9's.

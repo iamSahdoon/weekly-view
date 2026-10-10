@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { DailyUpdatesBlock } from "../components/report/DailyUpdatesBlock.jsx";
+import { PrintFooter, PrintStatus } from "../components/report/PrintFooter.jsx";
 import {
   DocumentSkeleton,
   RailBlock,
@@ -18,8 +19,8 @@ import { EmptyState } from "../components/ui/EmptyState.jsx";
 import { InlineError } from "../components/ui/InlineError.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { useAuth } from "../hooks/useAuth.js";
+import { useSeenOnOpen } from "../hooks/useNewMarks.js";
 import {
-  useMarkSeen,
   useReport,
   useRevision,
   useRevisions,
@@ -94,13 +95,7 @@ function ReviewedWeek({ week, back, deskSearch }) {
 
   // Once per report, after it has loaded — never `report`, so the page keeps the "new"
   // markers it opened with (§9.4, FA11).
-  const { mutate: markSeen } = useMarkSeen();
-  const seenFor = useRef(null);
-  useEffect(() => {
-    if (seenFor.current === report._id) return;
-    seenFor.current = report._id;
-    markSeen(report._id);
-  }, [report._id, markSeen]);
+  useSeenOnOpen(report._id);
 
   const number = weekNumber(week.weekKey);
   const firstName = firstNameOf(report.author?.name);
@@ -120,7 +115,7 @@ function ReviewedWeek({ week, back, deskSearch }) {
         back={back}
       />
       <PageContainer>
-        <div className="grid gap-x-44 gap-y-32 lg:grid-cols-[minmax(0,860px)_320px]">
+        <div className="print-report grid gap-x-44 gap-y-32 lg:grid-cols-[minmax(0,860px)_320px] print:block">
           <div className="flex min-w-0 flex-col gap-24">
             <ReadOnlyStrip own={own} />
             <div className="flex min-w-0 flex-col gap-44">
@@ -133,6 +128,11 @@ function ReviewedWeek({ week, back, deskSearch }) {
                 <h2 className="font-display text-page font-bold text-ink">
                   Week {number} report
                 </h2>
+                <p className="print-only text-base text-body">
+                  {report.author?.name}
+                  {projects.length > 0 && ` · ${projects.join(", ")}`}
+                </p>
+                <PrintStatus report={report} />
               </header>
               <DailyUpdatesBlock week={week} />
               <WeekDocument
@@ -145,6 +145,11 @@ function ReviewedWeek({ week, back, deskSearch }) {
                 author={own}
                 manager
               />
+              <PrintFooter
+                weekNumber={number}
+                author={report.author?.name}
+                revisionNumber={report.revisionNumber}
+              />
             </div>
           </div>
 
@@ -153,7 +158,7 @@ function ReviewedWeek({ week, back, deskSearch }) {
               page grid, stuck to the bottom of the screen. */}
           <aside
             aria-label="Person, status, versions, comments and review"
-            className="flex min-w-0 flex-col max-lg:contents lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px)] lg:self-start"
+            className="flex min-w-0 flex-col max-lg:contents lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px)] lg:self-start print:hidden"
           >
             <div className="flex min-h-0 min-w-0 flex-col gap-24 max-lg:order-first lg:flex-1 lg:overflow-y-auto lg:pb-24">
               <RailBlock label="Person">

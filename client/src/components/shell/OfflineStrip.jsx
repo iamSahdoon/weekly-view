@@ -9,7 +9,7 @@ export function OfflineStrip() {
   return (
     <p
       role="status"
-      className="border-b border-hair bg-tint2 px-32 py-8 text-dense text-body max-md:px-20"
+      className="border-b border-hair bg-tint2 px-32 py-8 text-dense text-body max-md:px-20 print:hidden"
     >
       You&rsquo;re offline. Unsaved changes are kept until you reconnect.
     </p>

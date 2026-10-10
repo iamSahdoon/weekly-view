@@ -4,6 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { clearListMarkers } from "../lib/clearMarkers.js";
 import { toastError } from "../lib/errorToast.js";
 import { invalidateWeek } from "../lib/invalidateWeek.js";
 import { qk } from "../lib/queryKeys.js";
@@ -315,12 +316,15 @@ export function useTeamComments(week) {
 
 // R13 — silent. Invalidates what shows "new" elsewhere, and deliberately **not**
 // `week` or `report`: the open page keeps the markers it loaded with, so the person
-// can see what is new; they are gone next time (§9.4, FA11).
+// can see what is new; they are gone next time (§9.4, FA11). The lists and the team feed
+// are cleared in place as well, so none of them shows the marker again for a moment while
+// it refetches; the cached week is cleared when its page is left (useSeenOnOpen).
 export function useMarkSeen() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: reportService.markSeen,
-    onSuccess: () => {
+    onSuccess: (_, reportId) => {
+      clearListMarkers(queryClient, reportId);
       queryClient.invalidateQueries({ queryKey: qk.newMarks() });
       queryClient.invalidateQueries({ queryKey: qk.all.reports() });
       queryClient.invalidateQueries({ queryKey: qk.all.reviewDesk() });
