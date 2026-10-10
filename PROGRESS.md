@@ -1377,6 +1377,37 @@ Owner report: the dashed SAMPLE DATA pill's text overflowed its rounded border w
 - **Still not seen:** the real Bricolage Grotesque (blocked here), so the fix is proven for wide fallback faces, not by eye
   with the actual font.
 
+### C10 owner copy: plain-language "Who can do what" (2026-10-10)
+Owner decision: the block was too technical for non-technical visitors and its first example was misleading (it read as if
+a teammate opening a report were the only thing the page checked). Only the words changed, plus one added row; layout, styles
+and colours are as they were.
+- **Copy (landing, `LimitsSection.jsx`):** heading "Who can do what" (kept); subtitle "WeeklyView checks every action, so
+  people can only do what their role allows."; top box **WeeklyView checks** / "who you are and what you're allowed to do";
+  five rows — Tharindu (teammate) reads Imali's daily updates · *Allowed*; Tharindu (teammate) tries to open Imali's weekly
+  report · *Not allowed: managers only*; Nadia (manager) comments on Imali's weekly report · *Allowed*; Nadia (manager) tries to
+  change Imali's report · *Not allowed: comments only*; Nadia (manager) tries to approve her own report · *Not allowed: no one
+  approves their own*. The hidden sentence for screen readers reads "Examples of what WeeklyView allows and what it refuses."
+  The server-check animation walks all five rows (it reads the list, so nothing in the script changed). Owner-decision line added
+  to `brand_design_strategy.md` §7.9.
+- **The pills.** `.vd` is `width:max-content; max-width:100%` with its `3px 10px` padding, no fixed width or height: one line,
+  as wide as its text in any font, and when the row's text leaves no room it drops whole onto its own line. Only when one line of
+  it is wider than the column does its text wrap inside it, so it cannot overflow. **This is not `white-space:nowrap`** as
+  asked: with `nowrap` the longest verdict ("Not allowed: no one approves their own") overflowed the column in a wide font (the
+  check below caught it at 1440 and 360 px). A verdict's `max-content` width also made the grid column refuse to shrink in a wide
+  font (page-wide sideways scroll at 360 px), so `.mx > div` has `min-width:0`. Both are in `landing.css` under `.landing`.
+- **Checked in a browser at 1440, 1024, 360 and 320 px, sign-up closed and open,** with DejaVu Sans, DejaVu Sans Mono, Liberation
+  Serif and Inter forced onto every landing element: no pill, chip, button, link or tag overflows its box, the text clears each
+  pill's curved ends (the check now measures the curve's inset at each line of text, not a fixed fraction), and the page has no
+  sideways scroll. Screenshots of the block were looked at at 1440 px, 360 px, and 360 px in DejaVu Sans: five rows, each verdict
+  on the row's line or its own line, the longest verdict wrapping inside its pill only at 360 px in the fallback face.
+- **Tests:** `LandingPage.test.jsx` has four new cases (the heading, subtitle and top box; the five rows with their verdicts in
+  order, `ok` / `no`; the names in bold; no "server", "request", "refused", "Imali J." or "week 38" left in the block). The old
+  copy was not asserted anywhere. `landingIsolation.test.js` asserts the verdict pill's `max-content` sizing, its padding and radius
+  and the absence of `nowrap`; the generic pill rule now allows `width:max-content` and nothing else. Lint clean; server 385,
+  client **521** (was 516: four cases in `LandingPage.test.jsx`, one in `landingIsolation.test.js`).
+- **Not seen:** the real Bricolage Grotesque (blocked here). The line breaks, and so which verdicts sit beside the text and which
+  drop to their own line, will move a little with it.
+
 **Owner: how to test C10 by hand** (the demo and the landing page need no database; steps 1–9 need only the client)
 1. In a terminal: copy `client/.env.example` to `client/.env` if you have not, then `npm --prefix client run dev`, and open
    http://localhost:5173/ **with the API not running**. You should see the green landing page, and the one big button reads

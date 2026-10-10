@@ -512,7 +512,7 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .srv-q li::before{content:"";position:absolute;left:0;top:19px;width:14px;height:2px;background:var(--l-ln)}
 .landing .srv-q b{color:var(--l-fg);font-weight:650}
 .landing .q-t{display:inline}
-.landing .vd{display:inline-block;margin:4px 0 0 6px;vertical-align:1px;font-size:13px;font-weight:650;line-height:1.3;padding:3px 10px;border-radius:999px;border:1px solid}
+.landing .vd{display:inline-block;max-width:100%;margin:4px 0 0 6px;vertical-align:1px;font-size:13px;font-weight:650;line-height:1.3;padding:3px 10px;border-radius:999px;border:1px solid;width:max-content}
 .landing .vd.ok{color:var(--l-st-appr-fg);background:var(--l-st-appr-bg);border-color:var(--l-st-appr-bd)}
 .landing .vd.no{color:var(--l-st-corr-fg);background:var(--l-st-corr-bg);border-color:var(--l-st-corr-bd)}
 .landing.motion .srv .vd{transition:opacity .25s linear,transform .45s var(--l-ease-m)}
@@ -709,3 +709,8 @@ html.landing-active .wv-skip{display:none}
    took its side padding away, so the text touched the pill's curved ends and grew to the title size. The pill
    keeps its own size and padding, and is as wide as its text in any font. */
 .landing .lhead .samp{padding:3px 10px;font-size:12px;font-weight:700;line-height:1.4;color:var(--l-fg2);white-space:nowrap}
+/* "Who can do what": a verdict is `width:max-content` capped at its column (`max-width:100%` above): one line, as wide as
+   its text, whatever the font, and it drops whole to its own line when the row's text leaves no room. Only if a single
+   line of it is wider than the column itself does its text wrap inside it, so it can never overflow. */
+/* A verdict's `width:max-content` would otherwise count, in full, towards how narrow the grid's column may get. */
+.landing .mx > div{min-width:0}

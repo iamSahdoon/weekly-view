@@ -115,7 +115,8 @@ export function LimitsSection() {
           <div>
             <h3 id="mx-h">Who can do what</h3>
             <p className="note">
-              Checked on the server for every request. Not hidden buttons.
+              WeeklyView checks every action, so people can only do what their
+              role allows.
             </p>
             <div className="srv" id="srv">
               <div className="srv-node" id="srv-node">
@@ -127,40 +128,49 @@ export function LimitsSection() {
                   </svg>
                 </span>
                 <span>
-                  <b>The server</b>
-                  <small>checks who is asking, every time</small>
+                  <b>WeeklyView checks</b>
+                  <small>who you are and what you&rsquo;re allowed to do</small>
                 </span>
               </div>
               <ol className="srv-q">
                 <li>
                   <span className="q-t">
-                    <b>Tharindu S.</b> opens Imali J.'s week 38 report
-                  </span>
-                  <span className="vd no">Refused: not a manager</span>
-                </li>
-                <li>
-                  <span className="q-t">
-                    <b>Nadia F.</b> comments on Imali J.'s report
+                    <b>Tharindu</b> (teammate) reads Imali&rsquo;s daily updates
                   </span>
                   <span className="vd ok">Allowed</span>
                 </li>
                 <li>
                   <span className="q-t">
-                    <b>Nadia F.</b> edits a line of it
+                    <b>Tharindu</b> (teammate) tries to open Imali&rsquo;s
+                    weekly report
                   </span>
-                  <span className="vd no">Refused: comments only</span>
+                  <span className="vd no">Not allowed: managers only</span>
                 </li>
                 <li>
                   <span className="q-t">
-                    <b>Nadia F.</b> approves her own week
+                    <b>Nadia</b> (manager) comments on Imali&rsquo;s weekly
+                    report
                   </span>
-                  <span className="vd no">Refused: never your own</span>
+                  <span className="vd ok">Allowed</span>
+                </li>
+                <li>
+                  <span className="q-t">
+                    <b>Nadia</b> (manager) tries to change Imali&rsquo;s report
+                  </span>
+                  <span className="vd no">Not allowed: comments only</span>
+                </li>
+                <li>
+                  <span className="q-t">
+                    <b>Nadia</b> (manager) tries to approve her own report
+                  </span>
+                  <span className="vd no">
+                    Not allowed: no one approves their own
+                  </span>
                 </li>
               </ol>
               <span className="srv-dot" id="srv-dot" aria-hidden="true"></span>
               <p className="vh">
-                Sample requests. Each one is checked on the server before
-                anything happens.
+                Examples of what WeeklyView allows and what it refuses.
               </p>
             </div>
           </div>

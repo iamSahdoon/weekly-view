@@ -156,7 +156,7 @@ describe("the pills fit their text", () => {
     for (const cls of ["samp", "samp-u", "pill", "chip", "vd", "tt", "fbtn"]) {
       const rule = body(`.landing .${cls}`);
       expect(rule, cls).not.toBeNull();
-      expect(rule, cls).not.toMatch(/(?:^|;)(?:width|height):/);
+      expect(rule, cls).not.toMatch(/(?:^|;)(?:height|width:(?!max-content))/);
       expect(rule, cls).toMatch(/padding:/);
     }
   });
@@ -168,6 +168,16 @@ describe("the pills fit their text", () => {
     expect(guard).toMatch(/padding:3px 10px/);
     expect(guard).toMatch(/white-space:nowrap/);
     expect(guard).toMatch(/font-size:12px/);
+  });
+
+  it('sizes the verdict pills of "Who can do what" from their text, capped at their column', () => {
+    const vd = body(".landing .vd");
+    expect(vd).toMatch(/width:max-content/);
+    expect(vd).toMatch(/max-width:100%/);
+    expect(vd).toMatch(/padding:3px 10px/);
+    expect(vd).toMatch(/border-radius:999px/);
+    // No nowrap: a pill wider than its column wraps inside itself instead of overflowing it.
+    expect(vd).not.toMatch(/white-space:nowrap/);
   });
 
   it("keeps the dashed border and the pill radius", () => {

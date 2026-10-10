@@ -157,6 +157,64 @@ describe("the sections", () => {
   });
 });
 
+describe("Who can do what, in plain language (owner decision)", () => {
+  const html = page(false);
+  const section = html.slice(
+    html.indexOf('id="mx-h"'),
+    html.indexOf('class="mtab"'),
+  );
+  const rows = [...section.matchAll(/<li>(.*?)<\/li>/gs)].map((m) => ({
+    sentence: text(m[1].replace(/<span class="vd[^>]*>.*$/s, "")).trim(),
+    verdict: text(
+      m[1].match(/<span class="vd (?:ok|no)">(.*?)<\/span>/s)?.[1] ?? "",
+    ).trim(),
+    kind: m[1].match(/class="vd (ok|no)"/)?.[1],
+  }));
+
+  it("keeps the heading and has the owner's subtitle and top box", () => {
+    expect(section).toContain("Who can do what");
+    expect(text(section)).toContain(
+      "WeeklyView checks every action, so people can only do what their role allows.",
+    );
+    expect(text(section)).toContain("WeeklyView checks");
+    expect(text(section)).toContain(
+      "who you are and what you’re allowed to do",
+    );
+  });
+
+  it("has the five examples, in order, with their verdicts", () => {
+    expect(rows.map((r) => [r.sentence, r.verdict, r.kind])).toEqual([
+      ["Tharindu (teammate) reads Imali’s daily updates", "Allowed", "ok"],
+      [
+        "Tharindu (teammate) tries to open Imali’s weekly report",
+        "Not allowed: managers only",
+        "no",
+      ],
+      ["Nadia (manager) comments on Imali’s weekly report", "Allowed", "ok"],
+      [
+        "Nadia (manager) tries to change Imali’s report",
+        "Not allowed: comments only",
+        "no",
+      ],
+      [
+        "Nadia (manager) tries to approve her own report",
+        "Not allowed: no one approves their own",
+        "no",
+      ],
+    ]);
+  });
+
+  it("puts each name in bold", () => {
+    expect(section.match(/<b>(Tharindu|Nadia)<\/b>/g)).toHaveLength(5);
+  });
+
+  it("no longer talks about servers, requests or refusals", () => {
+    expect(text(section)).not.toMatch(
+      /server|request|refused|Imali J\.|week 38/i,
+    );
+  });
+});
+
 describe("the components carry no colour of their own", () => {
   const files = [
     ...readdirSync(new URL("..", import.meta.url))

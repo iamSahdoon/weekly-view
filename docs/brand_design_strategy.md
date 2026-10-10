@@ -609,6 +609,15 @@ questions in the order they arise.
   3. Nothing is overwritten — every version preserved with its timestamp.
   4. Three roles, checked server-side — enforced by the API, not hidden buttons.
 - This section doubles as the surveillance rebuttal.
+- **Owner decision (C10, 2026-10-10): the "Who can do what" block of the landing page is written in plain language.**
+  Heading "Who can do what"; subtitle "WeeklyView checks every action, so people can only do what their role allows."; top
+  box "WeeklyView checks / who you are and what you're allowed to do" (no "server", "request" or "refused" on the
+  page's visitor-facing copy of this block); five example rows, a bold first name, the role in brackets, the action and a
+  verdict pill — Tharindu (teammate) reads Imali's daily updates, *Allowed*; Tharindu tries to open Imali's weekly report,
+  *Not allowed: managers only*; Nadia (manager) comments on Imali's weekly report, *Allowed*; Nadia tries to change
+  Imali's report, *Not allowed: comments only*; Nadia tries to approve her own report, *Not allowed: no one approves their
+  own*. Layout, styles and colours are as built in `landing-reference/index.html`; the permission claims still match
+  `requirments_doc.md` §4.
 
 ### 7.10 FAQ
 
