@@ -1285,7 +1285,9 @@ the code keeps it that way:
   its inline script to `hooks/useLandingMotion.js` (reveals, split headings, counters,
   scroll scenes; a no-op under `prefers-reduced-motion`). Keep its copy — except where the
   owner has since changed it: the section order, the copy and the two guided scroll stories
-  are `brand_design_strategy.md` §6.0 rule 10.
+  are `brand_design_strategy.md` §6.0 rule 10; the centred layout, the GSAP motion and the
+  footer are rule 11. GSAP is imported by `useLandingMotion.js` only (`tech_stack.md` §10),
+  inside one `gsap.matchMedia()` that is reverted on unmount.
 - **Scoped, never global:** every landing rule sits under a `.landing` root and every
   landing token is prefixed (`--l-*`), so none can reach the app. `landing.css` is imported
   by `LandingPage` alone, so it ships in the landing chunk and is never loaded when a

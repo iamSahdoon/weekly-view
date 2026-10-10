@@ -11,31 +11,18 @@
    The light/dark toggle (data-theme on <html>) has no effect here. The mock-ups restate the
    product's own palette as --l-u-* and --l-st-*, so they look as they do in the app. */
 
-/* ── Motion kit: content is visible by default; hidden start states exist only under .motion,
-      which useLandingMotion sets on the .landing root before paint when reduced motion is off. ── */
+/* ── Motion kit: content is visible by default. The entrances ([data-reveal], [data-head], the
+      [data-split] words, [data-draw] lines) are GSAP's (useLandingMotion, owner decision, landing
+      polish): it sets their start states before paint, and only when motion is allowed. What stays
+      here is structure, and the few CSS transitions that are not scroll-driven. ── */
 .landing{--l-ease-m:cubic-bezier(.16,1,.3,1)}
-@media (prefers-reduced-motion:no-preference){html.landing-active{scroll-behavior:smooth}}
-.landing.motion [data-reveal]{opacity:0;transform:translate3d(0,22px,0);transition:opacity .7s var(--l-ease-m),transform .9s var(--l-ease-m);transition-delay:calc(var(--l-i,0) * 70ms + var(--l-d,0ms))}
-.landing.motion [data-reveal="fade"]{transform:none}
-.landing.motion [data-reveal="scale"]{transform:scale(.965)}
-.landing.motion [data-reveal="left"]{transform:translate3d(-28px,0,0)}
-.landing.motion [data-reveal="right"]{transform:translate3d(28px,0,0)}
-.landing.motion [data-reveal].in{opacity:1;transform:none}
 .landing [data-split] .w{display:inline-block;overflow:hidden;vertical-align:top;padding:.06em .02em .12em;margin:-.06em -.02em -.12em}
 .landing [data-split] .wi{display:inline-block}
-.landing.motion [data-split] .wi{transform:translate3d(0,112%,0);transition:transform 1s var(--l-ease-m);transition-delay:calc(var(--l-wi,0) * 55ms + var(--l-d,0ms))}
-.landing.motion [data-split].in .wi{transform:none}
-.landing.motion [data-draw]{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.4s var(--l-ease-m);transition-delay:calc(var(--l-i,0) * 90ms + var(--l-d,0ms))}
-.landing.motion .in [data-draw],.landing.motion [data-draw].in{stroke-dashoffset:0}
-.landing [data-grow]{transform:scaleX(var(--l-to,1));transform-origin:0 50%}
-.landing.motion [data-grow]{transform:scaleX(0);transition:transform 1.1s var(--l-ease-m);transition-delay:calc(var(--l-i,0) * 80ms + var(--l-d,0ms))}
-.landing.motion .in [data-grow],.landing.motion [data-grow].in{transform:scaleX(var(--l-to,1))}
 .landing .paused,.landing .paused *{animation-play-state:paused!important}
 .landing [data-magnetic]{transition:transform .6s var(--l-ease-m)}
-.landing [data-tilt]{transition:transform .7s var(--l-ease-m)}
 .landing.motion details[open] > :not(summary){animation:l-wv-open .5s var(--l-ease-m)}
 @keyframes l-wv-open{from{opacity:0;transform:translate3d(0,-6px,0)}to{opacity:1;transform:none}}
-@media print{.landing.motion [data-reveal],.landing.motion [data-split] .wi{opacity:1!important;transform:none!important}}
+@media print{.landing [data-reveal],.landing [data-head],.landing [data-head] ~ p,.landing .eyebrow,.landing [data-split] .wi{opacity:1!important;transform:none!important}}
 /* v11 · Spruce desk, refined. v7 with: a re-timed week scene (starts at the text edge, days fill as they arrive,
    cards lift then drop under the report), a fold-into-one problem visual, a monitor that opens as it arrives with a
    fixed-size dashboard, a backbone that clicks together on scroll, and a server-check sequence beside the matrix.
@@ -93,10 +80,6 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing footer{color:var(--l-fg)}
 .landing .samp{display:inline-block;font-size:12px;font-weight:700;line-height:1.4;letter-spacing:.04em;border:1px dashed var(--l-chip-ln);background:var(--l-bg);color:var(--l-fg2);padding:3px 10px;border-radius:999px;white-space:nowrap}
 .landing .samp-u{display:inline-block;font-size:11px;font-weight:500;line-height:1.2;letter-spacing:.04em;border:1px dashed var(--l-app-rule);color:var(--l-app-mut);padding:2px 6px;white-space:nowrap}
-/* section headings arrive as a left-to-right wipe (brand-sanctioned), not a rise */
-.landing .wipe{position:relative}
-.landing.motion .wipe::after{content:"";position:absolute;inset:-.08em -.06em -.14em;background:var(--l-bg);transform-origin:100% 50%;transition:transform 1s var(--l-ease-m) var(--l-d,0ms);pointer-events:none}
-.landing.motion .wipe.in::after{transform:scaleX(0)}
 /* pill actions with the arrow circle */
 .landing .pill{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:52px;padding:0 10px 0 26px;border-radius:999px;background:var(--l-btn-bg);color:var(--l-btn-fg);font-weight:650;font-size:17px;line-height:1.3;text-decoration:none;white-space:nowrap;transition:transform .35s var(--l-ease-m),background-color .2s linear}
 .landing .pill .ic{flex:none;width:34px;height:34px;border-radius:50%;background:var(--l-btn-ic);color:var(--l-btn-ic-fg);display:inline-flex;align-items:center;justify-content:center;transition:transform .35s var(--l-ease-m)}
@@ -125,11 +108,13 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .acct .si{color:var(--l-fg2);text-decoration:none;padding:12px 2px;white-space:nowrap;transition:color .2s linear}
 .landing .acct .si:hover{color:var(--l-fg)}
 /* ───────── HERO: both sides of the desk ───────── */
-.landing .hero{position:relative;padding:144px 0 96px}
-.landing .hgrid{display:grid;grid-template-columns:minmax(0,.41fr) minmax(0,.59fr);grid-template-rows:auto 1fr;column-gap:56px;row-gap:44px}
-.landing .hcopy{grid-column:1;grid-row:1}
-.landing .doors{grid-column:1;grid-row:2;align-self:start;display:flex;gap:12px;flex-wrap:wrap}
-.landing .hvis{grid-column:2;grid-row:1 / span 2;min-width:0}
+/* centred in the first screen: the nav's 76px, then equal room above and below (owner bug, landing polish) */
+.landing .hero{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:100vh;min-height:100svh;padding:124px 0 48px}
+.landing .hero > .wrap{width:100%}
+.landing .hgrid{display:grid;grid-template-columns:minmax(0,.41fr) minmax(0,.59fr);grid-template-rows:minmax(0,1fr) auto auto minmax(0,1fr);column-gap:56px}
+.landing .hcopy{grid-column:1;grid-row:2}
+.landing .doors{grid-column:1;grid-row:3;align-self:start;margin-top:44px;display:flex;gap:12px;flex-wrap:wrap}
+.landing .hvis{grid-column:2;grid-row:1 / -1;align-self:center;min-width:0}
 .landing .hero h1{font-size:clamp(42px,4.3vw,64px);line-height:.98;letter-spacing:-.035em;font-weight:750}
 .landing .hero-k{margin-bottom:20px}
 .landing .hero h1 em{font-style:normal;color:var(--l-acc)}
@@ -295,12 +280,12 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 /* the line from the caption to what it explains, its head, the ring and (dashboard) the dim */
 .landing .guide{display:none}
 .landing .pin .guide{display:block;position:absolute;left:0;top:0;z-index:8;pointer-events:none;overflow:visible}
-.landing .guide path,.landing .guide rect{fill:none;opacity:0;transition:opacity .25s linear}
-.landing .guide .g-halo{stroke:#06201A;stroke-opacity:.35;stroke-width:6;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:opacity .2s linear}
-.landing .guide .g-ln{stroke:var(--l-acc);stroke-width:2.2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:opacity .2s linear}
-.landing .guide .g-hd{stroke:var(--l-acc);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:opacity .15s linear}
-.landing .guide .g-ring{stroke:var(--l-acc);stroke-width:2.5;fill:var(--l-acc);fill-opacity:.06}
-.landing .guide .g-dim{fill:#06201A;fill-opacity:.4;fill-rule:evenodd;transition:opacity .35s linear}
+.landing .guide path,.landing .guide rect{fill:none;opacity:0}
+.landing .guide .g-halo{stroke:#06201A;stroke-opacity:.35;stroke-width:6;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1}
+.landing .guide .g-ln{stroke:var(--l-acc);stroke-width:2.2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1}
+.landing .guide .g-hd{stroke:var(--l-acc);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.landing .guide .g-ring{stroke:var(--l-acc);stroke-width:2.5;fill:var(--l-acc);fill-opacity:.06;transform-box:fill-box;transform-origin:50% 50%}
+.landing .guide .g-dim{fill:#06201A;fill-opacity:.4;fill-rule:evenodd}
 /* the stacked notes: the same steps as a numbered list above the mock-ups */
 .landing .notes{display:flex;flex-direction:column;gap:10px;margin:0 0 18px;max-width:62ch}
 .landing .notes li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;align-items:start;font-size:17px;line-height:1.45;color:var(--l-fg2)}
@@ -393,21 +378,23 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .ucheck i{width:15px;height:15px;background:var(--l-u-acc);display:flex;align-items:center;justify-content:center}
 .landing .ucheck i::after{content:"";width:6px;height:3px;border-left:1.5px solid var(--l-app-on-acc);border-bottom:1.5px solid var(--l-app-on-acc);transform:rotate(-45deg) translate(1px,-1px)}
 .landing .ubtn{display:inline-flex;align-items:center;min-height:32px;padding:0 14px;background:var(--l-u-acc);border:1px solid var(--l-u-acc);color:var(--l-app-on-acc);font-weight:500;font-size:12.5px;white-space:nowrap;transition:box-shadow .3s linear}
-/* pinned mode: set by script for motion + wide screens only. Native scroll, sticky + transform. */
-/* pinned mode: set by script for motion + wide screens only. Native scroll, sticky + transform. */
+/* pinned mode: set by script for motion + wide screens only. The section is as tall as the story
+   (100vh + 8 steps × 70vh; the dashboard 100vh + 10 × 60vh) and its panel is sticky: native scroll,
+   no layout shift. GSAP's ScrollTrigger reads the progress, scrubs and snaps to a step. The content
+   is centred under the 76px nav, the caption column beside the mock-up (owner bug, landing polish). */
 @media (min-width:1000px){.landing .week.pin{height:660vh;padding:0}
-.landing .pin .wk-sticky{position:sticky;top:0;height:100vh;overflow:hidden;padding-top:104px}
+.landing .pin .wk-sticky{position:sticky;top:0;height:100vh;overflow:hidden;padding-top:76px}
 .landing .pin .wk-grid{display:grid;grid-template-columns:minmax(0,.36fr) minmax(0,.64fr);gap:0 56px;height:100%}
-.landing .pin .wk-copy{display:flex;flex-direction:column;min-height:0;padding-bottom:44px}
+.landing .pin .wk-copy{align-self:center;display:flex;flex-direction:column;min-height:0;padding:24px 0}
 .landing .pin .wk-copy h2{font-size:clamp(34px,3.3vw,50px)}
 .landing .pin .wk-lede{margin-top:14px;font-size:17px}
 .landing .pin .wk-meta{margin-top:14px;font-size:14px}
-.landing .pin .wk-copy .story-caps{margin:auto 0}
-.landing .pin .wk-vis{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;margin:0}
+.landing .pin .wk-copy .story-caps{margin-top:clamp(28px,5vh,52px)}
+.landing .pin .wk-vis{position:relative;display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:0;margin:0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
 .landing .pin .dr-row{display:flex;justify-content:center}
-.landing .pin .wk-stage{position:relative;flex:1;min-height:0;margin:22px 0 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+.landing .pin .wk-stage{position:relative;flex:none;height:var(--l-wk-h,540px);margin:22px 0 0}
 .landing .pin .ch,.landing .pin .ch-rep{display:contents}
-.landing .pin .track{position:absolute;left:0;top:6px;flex-direction:row;align-items:flex-start;gap:24px;will-change:transform}
+.landing .pin .track{position:absolute;left:0;top:0;flex-direction:row;align-items:flex-start;gap:24px;will-change:transform}
 .landing .pin .day{position:relative;display:flex;flex-direction:column;width:340px;flex:none;padding:0;transform-origin:50% 100%;transition:box-shadow .35s linear;box-shadow:0 18px 30px -22px rgba(0,0,0,.55);will-change:transform,opacity}
 .landing .pin .day.on{box-shadow:0 24px 40px -20px rgba(0,0,0,.65)}
 .landing .pin.measuring .day *,.landing .pin.measuring .day{transition:none!important}
@@ -440,13 +427,14 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .pin .report.done .ubtn{box-shadow:0 0 0 3px var(--l-u-accl),0 0 0 4px var(--l-u-acc)}
 /* the manager's story */
 .landing .desk.pin{height:700vh;padding:0}
-.landing .pin .dk-sticky{position:sticky;top:0;height:100vh;overflow:hidden;padding-top:100px}
+.landing .pin .dk-sticky{position:sticky;top:0;display:flex;flex-direction:column;justify-content:center;height:100vh;overflow:hidden;padding-top:76px}
+.landing .pin .dk-sticky > .wrap{width:100%}
 .landing .pin .dk-head{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:end}
 .landing .pin .dk-head h2{font-size:clamp(30px,2.9vw,44px)}
 .landing .pin .dk-lede{display:none}
 .landing .pin .dk-head .cap-t{max-width:30ch;font-size:clamp(22px,1.9vw,27px)}
 .landing .pin .dk-head .sprog{margin-top:16px}
-.landing .pin .mon-wrap{margin-top:30px}
+.landing .pin .mon-wrap{margin-top:28px}
 .landing .pin #monwrap{transform-origin:50% 0;width:max(1240px,100%);margin-left:calc(50% - max(620px,50%));will-change:transform}
 .landing .pin .mgrid{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
 .landing .pin .mside{border-left:1px solid var(--l-u-hair);border-top:0}}
@@ -623,19 +611,44 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .faq details[open] .pm::after{transform:rotate(0deg)}
 .landing .faq details p{padding:0 64px 24px 26px;font-size:17px;line-height:1.6;color:var(--l-fg2);max-width:66ch}
 /* ───────── FINAL ───────── */
-.landing .final{position:relative;padding:148px 0 156px;text-align:center;overflow:hidden}
+.landing .final{position:relative;padding:148px 0 100px;text-align:center;overflow:hidden}
 .landing .farc{position:absolute;left:50%;top:36px;width:1300px;height:560px;margin-left:-650px;pointer-events:none;fill:none}
 .landing .farc path{stroke:var(--l-ln);stroke-width:1.5;stroke-linecap:round}
 .landing .final .wrap{position:relative}
 .landing .final h2{font-size:clamp(44px,6.4vw,94px);line-height:.95;letter-spacing:-.035em;max-width:15ch;margin:0 auto}
 .landing .final p{margin:28px auto 0;font-size:20px;line-height:1.5;color:var(--l-fg2);max-width:44ch}
 .landing .final .pill{margin-top:44px}
-.landing footer{border-top:1px solid var(--l-ln);background:var(--l-bg2)}
-.landing footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;padding-top:24px;padding-bottom:32px;font-size:15px;line-height:1.5;color:var(--l-fg3)}
-.landing footer a{color:var(--l-fg2);text-underline-offset:4px;display:inline-block;padding:10px 0;margin:-10px 0}
+/* ───────── FOOTER (owner decision, landing polish): the week's squares, the links, the wordmark ───────── */
+.landing .foot{position:relative;background:var(--l-bg2);overflow:hidden}
+.landing .foot .wrap{padding-top:40px;padding-bottom:28px}
+.landing .ft-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:48px 72px;align-items:start;padding:44px 0 52px;border-top:1px solid var(--l-ln)}
+.landing .ft-h{margin-bottom:16px;font-size:14px;font-weight:650;line-height:1.35;color:var(--l-acc)}
+.landing .fw-days{display:flex;gap:10px}
+.landing .fw-day{display:flex;flex-direction:column;align-items:center;gap:10px}
+.landing .fw-d{font-size:14px;font-weight:600;line-height:1.3;color:var(--l-fg2)}
+.landing .fw-sq{position:relative;display:block;width:44px;height:44px;border:1.5px solid var(--l-ln);border-radius:10px}
+.landing .fw-sq i{position:absolute;inset:-1.5px;border-radius:10px}
+.landing .fw-sq i,.landing .fw-leg i{display:block;transform-origin:50% 50%}
+.landing .fw-sq i.p,.landing .fw-leg i.p{background:var(--l-acc)}
+.landing .fw-sq i.m,.landing .fw-leg i.m{border:2px solid var(--l-fg2);background-image:linear-gradient(45deg,transparent calc(50% - 1px),var(--l-fg2) calc(50% - 1px),var(--l-fg2) calc(50% + 1px),transparent calc(50% + 1px)),linear-gradient(-45deg,transparent calc(50% - 1px),var(--l-fg2) calc(50% - 1px),var(--l-fg2) calc(50% + 1px),transparent calc(50% + 1px))}
+.landing .fw-sq i.h,.landing .fw-leg i.h{background-color:var(--l-up2);background-image:radial-gradient(circle,var(--l-fg3) 1.3px,transparent 1.9px);background-size:6px 6px;background-position:center}
+.landing .fw-leg{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:22px;font-size:14px;line-height:1.3;color:var(--l-fg2)}
+.landing .fw-leg li{display:inline-flex;align-items:center;gap:8px}
+.landing .fw-leg i{flex:none;width:14px;height:14px;border-radius:4px}
+.landing .fw-leg i.m{border-width:1.5px}
+.landing .fw-leg i.h{background-size:4px 4px}
+.landing .ft-cols{display:flex;gap:16px 80px}
+.landing .ft-cols ul{display:flex;flex-direction:column}
+.landing .ft-cols a{position:relative;display:inline-flex;align-items:center;min-height:40px;font-size:17px;line-height:1.3;color:var(--l-fg);text-decoration:none}
+.landing .ft-cols a::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:1.5px;background:var(--l-acc);transform:scaleX(0);transform-origin:100% 50%;transition:transform .35s var(--l-ease-m)}
+.landing .ft-cols a:hover::after{transform:scaleX(1);transform-origin:0 50%}
+.landing .ft-mark{margin:0;overflow:hidden;font-size:min(14vw,200px);font-weight:750;line-height:1;letter-spacing:-.045em;white-space:nowrap;color:var(--l-fg)}
+.landing .ft-mark > span{display:inline-flex;align-items:center;gap:.08em;padding:.04em 0 .14em}
+.landing .ft-mark svg{flex:none;width:.74em;height:.74em}
+.landing .ft-bot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 24px;padding-top:22px;border-top:1px solid var(--l-ln);font-size:14px;line-height:1.5;color:var(--l-fg3)}
+.landing .ft-promise{color:var(--l-fg);font-weight:600}
 /* ───────── responsive ───────── */
-@media (max-height:820px) and (min-width:1000px){.landing .pin .wk-sticky,.landing .pin .dk-sticky{padding-top:92px}
-.landing .pin .rp{display:none}
+@media (max-height:820px) and (min-width:1000px){.landing .pin .rp{display:none}
 .landing .pin .d-hd{padding:11px 16px 7px}
 .landing .pin .d-ctl{padding:6px 16px}
 .landing .pin .d-lines li{padding:7px 0}
@@ -651,7 +664,9 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .pin .dk-head h2{font-size:32px}}
 @media (max-width:1180px){.landing .nl{display:none}}
 @media (max-width:1060px){.landing .hgrid{grid-template-columns:1fr;row-gap:40px}
+.landing .hgrid{grid-template-rows:none}
 .landing .hcopy,.landing .hvis,.landing .doors{grid-column:1;grid-row:auto}
+.landing .doors{margin-top:0}
 .landing .hero h1{max-width:16ch}
 .landing .mgrid{grid-template-columns:1fr}
 .landing .mside{border-left:0;border-top:1px solid var(--l-u-hair)}
@@ -732,10 +747,13 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .pill.xl{min-height:64px;font-size:19px;padding:0 10px 0 26px;gap:14px}
 .landing .pill.xl .ic{width:44px;height:44px}
 .landing .farc{display:none}
-.landing footer .wrap{flex-direction:column}}
+.landing .ft-top{grid-template-columns:1fr;gap:40px;padding:36px 0 40px}
+.landing .ft-cols{gap:16px 56px}
+.landing .fw-days{gap:8px}
+.landing .fw-sq{width:40px;height:40px}
+.landing .ft-bot{flex-direction:column}}
 @media (max-width:380px){.landing .acct .si{display:none}}
 @media (prefers-reduced-motion:reduce){.landing *,.landing *::before,.landing *::after{transition-duration:1ms!important;transition-delay:0s!important;animation:none!important}}
-@media print{.landing.motion .wipe::after{display:none}}
 
 /* ───────── port additions (not in the reference) ───────── */
 /* The area behind and beyond the page is green, not --paper. */

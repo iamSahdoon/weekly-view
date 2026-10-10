@@ -15,7 +15,7 @@ export function DemoSection() {
       <div className="wrap">
         <div className="dm-head">
           <p className="eyebrow">The live demo</p>
-          <h2 id="demo-h" className="wipe" data-in="">
+          <h2 id="demo-h" data-head="">
             Try both sides yourself.
           </h2>
           <p>
@@ -43,7 +43,7 @@ export function DemoSection() {
             </li>
           ))}
         </ul>
-        <aside className="honest" aria-labelledby="new-h">
+        <aside className="honest" aria-labelledby="new-h" data-reveal="">
           <svg viewBox="0 0 44 44" aria-hidden="true">
             <path pathLength="1" data-draw="" d="M22 39V21" />
             <path

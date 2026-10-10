@@ -21,7 +21,7 @@ export function DeskSection() {
           <div className="dk-head">
             <div className="dk-copy">
               <p className="eyebrow">For managers</p>
-              <h2 id="desk-h" className="wipe" data-in="">
+              <h2 id="desk-h" data-head="">
                 The manager&rsquo;s side: the whole week on one page.
               </h2>
               <p className="dk-lede">
@@ -157,7 +157,7 @@ export function DeskSection() {
                       role="region"
                       aria-label="Team table"
                     >
-                      <table className="mtbl" id="mt" data-in="">
+                      <table className="mtbl" id="mt">
                         <thead>
                           <tr>
                             <th scope="col" className="c-p">

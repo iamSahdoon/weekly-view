@@ -7,12 +7,12 @@ export function QuestionsSection({ signupOpen }) {
       <div className="wrap">
         <div>
           <p className="eyebrow">Questions</p>
-          <h2 className="q wipe" id="q-h" data-in="">
+          <h2 className="q" id="q-h" data-head="">
             Asked before rolling it out.
           </h2>
         </div>
         <div className="faq">
-          <details>
+          <details data-reveal="">
             <summary>
               Is this employee monitoring?
               <span className="pm" aria-hidden="true"></span>
@@ -23,7 +23,7 @@ export function QuestionsSection({ signupOpen }) {
               never edit.
             </p>
           </details>
-          <details>
+          <details data-reveal="">
             <summary>
               Who can read what I write?
               <span className="pm" aria-hidden="true"></span>
@@ -34,7 +34,7 @@ export function QuestionsSection({ signupOpen }) {
               to them.
             </p>
           </details>
-          <details>
+          <details data-reveal="">
             <summary>
               How long does the weekly report take?
               <span className="pm" aria-hidden="true"></span>
@@ -44,7 +44,7 @@ export function QuestionsSection({ signupOpen }) {
               status, pick the key blocker if there is one, and submit.
             </p>
           </details>
-          <details>
+          <details data-reveal="">
             <summary>
               What if my manager sends a report back?
               <span className="pm" aria-hidden="true"></span>
@@ -55,7 +55,7 @@ export function QuestionsSection({ signupOpen }) {
               replaced.
             </p>
           </details>
-          <details>
+          <details data-reveal="">
             <summary>
               Do we need Slack, email or another tool?
               <span className="pm" aria-hidden="true"></span>
@@ -66,7 +66,7 @@ export function QuestionsSection({ signupOpen }) {
               until you open it.
             </p>
           </details>
-          <details>
+          <details data-reveal="">
             <summary>
               How does a team start?
               <span className="pm" aria-hidden="true"></span>

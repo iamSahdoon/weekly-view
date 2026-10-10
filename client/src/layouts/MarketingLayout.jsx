@@ -2,9 +2,20 @@ import { CtaPill } from "../components/marketing/CtaPill.jsx";
 
 // The landing page's frame (brand §6.0; project_structure.md): the `.landing` root that
 // scopes every landing rule, the skip link, the reading rail, the sticky nav and the
-// footer. It sits outside the app's shell and ignores the theme toggle. `signupOpen`
+// footer (a week of squares, the links, the wordmark). It sits outside the app's shell and ignores the theme toggle. `signupOpen`
 // swaps the nav's action from the demo to "Create your account"
 // (frontend_architecture.md §9.16).
+
+// The footer's week (owner decision, landing polish): the dashboard's squares in the landing's
+// colours. It fills in Monday to Friday when it comes into view (useLandingMotion).
+const WEEK = [
+  ["Mon", "p", "Monday: posted"],
+  ["Tue", "p", "Tuesday: posted"],
+  ["Wed", "m", "Wednesday: missing"],
+  ["Thu", "p", "Thursday: posted"],
+  ["Fri", "h", "Friday: holiday"],
+];
+const YEAR = new Date().getFullYear();
 
 export default function MarketingLayout({ rootRef, signupOpen, children }) {
   return (
@@ -59,15 +70,97 @@ export default function MarketingLayout({ rootRef, signupOpen, children }) {
 
       <main id="main">{children}</main>
 
-      <footer>
+      <footer className="foot" aria-label="WeeklyView">
         <div className="wrap">
-          <span>
-            WeeklyView. Short daily notes, one weekly report, one dashboard.
-          </span>
-          <span>
-            Every name on this page belongs to a fictional sample team.{" "}
-            <a href="/signin">Sign in</a>
-          </span>
+          <div className="ft-top">
+            <div className="fw" data-week="">
+              <p className="ft-h">One square a day</p>
+              <ol
+                className="fw-days"
+                aria-label="A week of daily updates, on sample data"
+              >
+                {WEEK.map(([day, state, said]) => (
+                  <li className="fw-day" key={day}>
+                    <span className="fw-d">{day}</span>
+                    <span className="fw-sq">
+                      <i className={state}></i>
+                    </span>
+                    <span className="vh">{said}</span>
+                  </li>
+                ))}
+              </ol>
+              <ul className="fw-leg" aria-hidden="true">
+                <li data-s="p">
+                  <i className="p"></i>Posted
+                </li>
+                <li data-s="m">
+                  <i className="m"></i>Missing
+                </li>
+                <li data-s="h">
+                  <i className="h"></i>Holiday
+                </li>
+              </ul>
+            </div>
+            <nav className="ft-cols" aria-label="Footer">
+              <div>
+                <p className="ft-h" id="ft-product">
+                  Product
+                </p>
+                <ul aria-labelledby="ft-product">
+                  <li>
+                    <a href="#week">The week</a>
+                  </li>
+                  <li>
+                    <a href="#desk">For managers</a>
+                  </li>
+                  <li>
+                    <a href="#private">Privacy</a>
+                  </li>
+                  <li>
+                    <a href="#faq">FAQ</a>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <p className="ft-h" id="ft-start">
+                  Get started
+                </p>
+                <ul aria-labelledby="ft-start">
+                  <li>
+                    <a href="/demo">Live demo</a>
+                  </li>
+                  <li>
+                    <a href="/signin">Sign in</a>
+                  </li>
+                </ul>
+              </div>
+            </nav>
+          </div>
+          <p className="ft-mark" data-wordmark="" aria-hidden="true">
+            <span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+              >
+                <path d="M7 4H4v16h3M17 4h3v16h-3" />
+                <path
+                  d="M12 8v8"
+                  style={{ stroke: "var(--l-acc)" }}
+                  strokeWidth="2.6"
+                />
+              </svg>
+              WeeklyView
+            </span>
+          </p>
+          <div className="ft-bot">
+            <span>&copy; {YEAR} WeeklyView</span>
+            <span className="ft-promise">No activity tracking. Ever.</span>
+            <span>
+              Every name on this page belongs to a fictional sample team.
+            </span>
+          </div>
         </div>
       </footer>
     </div>

@@ -320,7 +320,7 @@ export function WeekSection() {
         <div className="wrap wk-grid">
           <div className="wk-copy">
             <p className="eyebrow">For the team member</p>
-            <h2 id="week-h" className="wipe" data-in="">
+            <h2 id="week-h" data-head="">
               Follow one person&rsquo;s week.
             </h2>
             <p className="wk-lede">

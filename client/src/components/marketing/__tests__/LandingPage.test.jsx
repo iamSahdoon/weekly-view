@@ -474,3 +474,64 @@ describe("the components carry no colour of their own", () => {
     }
   });
 });
+
+// The footer (owner decision, landing polish; brand §6.0 rule 11).
+describe("the footer", () => {
+  const html = page(false);
+  const foot = html.slice(html.indexOf("<footer"));
+
+  it("links to the four sections and the two ways in", () => {
+    expect(hrefs(foot)).toEqual([
+      "#week",
+      "#desk",
+      "#private",
+      "#faq",
+      "/demo",
+      "/signin",
+    ]);
+    for (const label of [
+      "Product",
+      "Get started",
+      "The week",
+      "For managers",
+      "Live demo",
+      "Sign in",
+    ])
+      expect(text(foot)).toContain(label);
+  });
+
+  it("draws one week of squares, each one said in words", () => {
+    expect(foot.match(/class="fw-day"/g)).toHaveLength(5);
+    for (const said of [
+      "Monday: posted",
+      "Wednesday: missing",
+      "Friday: holiday",
+    ])
+      expect(text(foot)).toContain(said);
+    expect(text(foot)).toMatch(/Posted\s*Missing\s*Holiday/);
+  });
+
+  it("keeps the promise and the sample-team note in the bottom row", () => {
+    expect(text(foot)).toContain("No activity tracking. Ever.");
+    expect(text(foot)).toContain(
+      "Every name on this page belongs to a fictional sample team.",
+    );
+    expect(text(foot)).toMatch(/© \d{4} WeeklyView/);
+  });
+
+  it("hides the big wordmark from assistive technology", () => {
+    expect(foot).toMatch(/class="ft-mark" data-wordmark="" aria-hidden="true"/);
+  });
+});
+
+describe("the section headings enter as a group", () => {
+  it("marks each section heading for its entrance", () => {
+    const html = page(false);
+    for (const id of ["prob-h", "week-h", "desk-h", "pv-h", "demo-h", "q-h"])
+      expect(html, id).toMatch(
+        new RegExp(
+          `<h2[^>]*id="${id}"[^>]*data-head=""|<h2[^>]*data-head=""[^>]*id="${id}"`,
+        ),
+      );
+  });
+});

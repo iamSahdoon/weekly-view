@@ -8,7 +8,7 @@ export function PrivacySection() {
       <div className="wrap">
         <div className="pv-head">
           <p className="eyebrow">Privacy</p>
-          <h2 id="pv-h" className="wipe" data-in="">
+          <h2 id="pv-h" data-head="">
             Private where it matters.
           </h2>
           <p>
