@@ -174,146 +174,148 @@ export function LimitsSection() {
               </p>
             </div>
           </div>
-          <div className="mtab">
-            <table className="who" aria-labelledby="mx-h">
-              <thead>
-                <tr>
-                  <th scope="col">What</th>
-                  <th scope="col">The author</th>
-                  <th scope="col">A teammate</th>
-                  <th scope="col">A manager</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">Read daily updates</th>
-                  <td className="y">
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path
-                        pathLength="1"
-                        data-draw=""
-                        d="M2.5 8.5l3.5 3.5 7.5-8"
-                      />
-                    </svg>
-                    Yes
-                  </td>
-                  <td className="y">
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path
-                        pathLength="1"
-                        data-draw=""
-                        d="M2.5 8.5l3.5 3.5 7.5-8"
-                      />
-                    </svg>
-                    Yes
-                  </td>
-                  <td className="y">
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path
-                        pathLength="1"
-                        data-draw=""
-                        d="M2.5 8.5l3.5 3.5 7.5-8"
-                      />
-                    </svg>
-                    Yes
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">Comment on a daily update</th>
-                  <td className="y">
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path
-                        pathLength="1"
-                        data-draw=""
-                        d="M2.5 8.5l3.5 3.5 7.5-8"
-                      />
-                    </svg>
-                    Yes
-                  </td>
-                  <td>Only if it's opened to the team</td>
-                  <td className="y">
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path
-                        pathLength="1"
-                        data-draw=""
-                        d="M2.5 8.5l3.5 3.5 7.5-8"
-                      />
-                    </svg>
-                    Yes
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">Read the weekly report</th>
-                  <td className="y">
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                      <path
-                        pathLength="1"
-                        data-draw=""
-                        d="M2.5 8.5l3.5 3.5 7.5-8"
-                      />
-                    </svg>
-                    Yes
-                  </td>
-                  <td className="n">No</td>
-                  <td>Once it's submitted</td>
-                </tr>
-                <tr>
-                  <th scope="row">Edit the weekly report</th>
-                  <td>While it's Draft or Needs correction</td>
-                  <td className="n">No</td>
-                  <td className="n">No</td>
-                </tr>
-                <tr>
-                  <th scope="row">Approve or send it back</th>
-                  <td className="n">No</td>
-                  <td className="n">No</td>
-                  <td>Yes, except their own</td>
-                </tr>
-              </tbody>
-            </table>
-            <div className="mcards">
-              <div className="mcard">
-                <h4>Daily updates</h4>
-                <dl>
-                  <dt>The author</dt>
-                  <dd>Reads and writes them</dd>
-                  <dt>A teammate</dt>
-                  <dd>
-                    Reads them; comments if the author opens it to the team
-                  </dd>
-                  <dt>A manager</dt>
-                  <dd>Reads them and comments</dd>
-                </dl>
-              </div>
-              <div className="mcard">
-                <h4>The weekly report</h4>
-                <dl>
-                  <dt>The author</dt>
-                  <dd>Edits it while it's Draft or Needs correction</dd>
-                  <dt>A teammate</dt>
-                  <dd>Can't read it</dd>
-                  <dt>A manager</dt>
-                  <dd>Reads it once submitted; can't edit it</dd>
-                </dl>
-              </div>
-              <div className="mcard">
-                <h4>Approve or send back</h4>
-                <dl>
-                  <dt>The author</dt>
-                  <dd>Never their own</dd>
-                  <dt>A teammate</dt>
-                  <dd>No</dd>
-                  <dt>A manager</dt>
-                  <dd>Yes, except their own</dd>
-                </dl>
+          <div className="mx-right">
+            <div className="mtab">
+              <table className="who" aria-labelledby="mx-h">
+                <thead>
+                  <tr>
+                    <th scope="col">What</th>
+                    <th scope="col">The author</th>
+                    <th scope="col">A teammate</th>
+                    <th scope="col">A manager</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Read daily updates</th>
+                    <td className="y">
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path
+                          pathLength="1"
+                          data-draw=""
+                          d="M2.5 8.5l3.5 3.5 7.5-8"
+                        />
+                      </svg>
+                      Yes
+                    </td>
+                    <td className="y">
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path
+                          pathLength="1"
+                          data-draw=""
+                          d="M2.5 8.5l3.5 3.5 7.5-8"
+                        />
+                      </svg>
+                      Yes
+                    </td>
+                    <td className="y">
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path
+                          pathLength="1"
+                          data-draw=""
+                          d="M2.5 8.5l3.5 3.5 7.5-8"
+                        />
+                      </svg>
+                      Yes
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Comment on a daily update</th>
+                    <td className="y">
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path
+                          pathLength="1"
+                          data-draw=""
+                          d="M2.5 8.5l3.5 3.5 7.5-8"
+                        />
+                      </svg>
+                      Yes
+                    </td>
+                    <td>Only if it's opened to the team</td>
+                    <td className="y">
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path
+                          pathLength="1"
+                          data-draw=""
+                          d="M2.5 8.5l3.5 3.5 7.5-8"
+                        />
+                      </svg>
+                      Yes
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Read the weekly report</th>
+                    <td className="y">
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path
+                          pathLength="1"
+                          data-draw=""
+                          d="M2.5 8.5l3.5 3.5 7.5-8"
+                        />
+                      </svg>
+                      Yes
+                    </td>
+                    <td className="n">No</td>
+                    <td>Once it's submitted</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Edit the weekly report</th>
+                    <td>While it's Draft or Needs correction</td>
+                    <td className="n">No</td>
+                    <td className="n">No</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Approve or send it back</th>
+                    <td className="n">No</td>
+                    <td className="n">No</td>
+                    <td>Yes, except their own</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div className="mcards">
+                <div className="mcard">
+                  <h4>Daily updates</h4>
+                  <dl>
+                    <dt>The author</dt>
+                    <dd>Reads and writes them</dd>
+                    <dt>A teammate</dt>
+                    <dd>
+                      Reads them; comments if the author opens it to the team
+                    </dd>
+                    <dt>A manager</dt>
+                    <dd>Reads them and comments</dd>
+                  </dl>
+                </div>
+                <div className="mcard">
+                  <h4>The weekly report</h4>
+                  <dl>
+                    <dt>The author</dt>
+                    <dd>Edits it while it's Draft or Needs correction</dd>
+                    <dt>A teammate</dt>
+                    <dd>Can't read it</dd>
+                    <dt>A manager</dt>
+                    <dd>Reads it once submitted; can't edit it</dd>
+                  </dl>
+                </div>
+                <div className="mcard">
+                  <h4>Approve or send back</h4>
+                  <dl>
+                    <dt>The author</dt>
+                    <dd>Never their own</dd>
+                    <dt>A teammate</dt>
+                    <dd>No</dd>
+                    <dt>A manager</dt>
+                    <dd>Yes, except their own</dd>
+                  </dl>
+                </div>
               </div>
             </div>
+            <p className="notrack" data-reveal="">
+              No activity tracking, no screenshots, no idle timers.{" "}
+              <span>Only what people choose to write.</span>
+            </p>
           </div>
         </div>
-        <p className="notrack" data-reveal="">
-          No activity tracking, no screenshots, no idle timers.{" "}
-          <span>Only what people choose to write.</span>
-        </p>
       </div>
     </section>
   );

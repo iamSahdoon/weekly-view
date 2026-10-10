@@ -74,12 +74,15 @@ export function HeroSection({ signupOpen }) {
                         WeeklyView
                       </span>
                       <ul className="lnav">
-                        <li>Today</li>
-                        <li>My week</li>
-                        <li>Reports</li>
-                        <li className="on">Dashboard</li>
+                        <li>
+                          Review desk<span className="ct">2</span>
+                        </li>
+                        <li className="on">Team dashboard</li>
+                        <li>People</li>
                         <li>Projects</li>
-                        <li>Team</li>
+                        <li>This week</li>
+                        <li>My reports</li>
+                        <li>Team updates</li>
                       </ul>
                       <span className="lme">
                         <b>Nadia F.</b>Manager
@@ -93,29 +96,26 @@ export function HeroSection({ signupOpen }) {
                       </div>
                       <div className="lmet">
                         <div className="mc">
-                          <span>Posted today</span>
-                          <b>
-                            <span className="roll">
-                              <span className="od">5</span>
-                              <span className="nw">6</span>
-                            </span>
-                            <small> / 8</small>
+                          <span>Filed this week</span>
+                          <b className="tn-acc">
+                            2<small> / 8</small>
                           </b>
+                        </div>
+                        <div className="mc">
+                          <span>Compliance</span>
+                          <b className="tn-ok">25%</b>
+                        </div>
+                        <div className="mc">
+                          <span>Needs correction</span>
+                          <b className="tn-corr">1</b>
                         </div>
                         <div className="mc" id="mc-blk">
                           <span>Open blockers</span>
-                          <b>
+                          <b className="tn-warn">
                             <span className="roll" id="m-blk">
                               <span className="od">2</span>
                               <span className="nw">3</span>
                             </span>
-                          </b>
-                        </div>
-                        <div className="mc">
-                          <span>Week so far</span>
-                          <b>
-                            <span id="m-hrs">100</span>
-                            <small> h</small>
                           </b>
                         </div>
                       </div>
@@ -123,7 +123,7 @@ export function HeroSection({ signupOpen }) {
                         <thead>
                           <tr>
                             <th>Person</th>
-                            <th>Mon to Fri</th>
+                            <th>Updates</th>
                             <th className="r">Hours</th>
                             <th>Blocker</th>
                           </tr>
@@ -203,7 +203,7 @@ export function HeroSection({ signupOpen }) {
                             <td>
                               <span className="ups">
                                 <i className="p"></i>
-                                <i className="t"></i>
+                                <i className="d"></i>
                                 <i></i>
                                 <i></i>
                                 <i></i>
@@ -218,8 +218,8 @@ export function HeroSection({ signupOpen }) {
                             <td className="nm">Dinesh K.</td>
                             <td>
                               <span className="ups">
-                                <i></i>
-                                <i></i>
+                                <i className="m"></i>
+                                <i className="d"></i>
                                 <i></i>
                                 <i></i>
                                 <i></i>
@@ -264,6 +264,47 @@ export function HeroSection({ signupOpen }) {
                           </tr>
                         </tbody>
                       </table>
+                      <ul
+                        className="lleg"
+                        aria-label="What the update squares mean"
+                      >
+                        <li>
+                          <span className="ups">
+                            <i className="p"></i>
+                          </span>
+                          Posted
+                        </li>
+                        <li>
+                          <span className="ups">
+                            <i className="m"></i>
+                          </span>
+                          Missing
+                        </li>
+                        <li>
+                          <span className="ups">
+                            <i className="d"></i>
+                          </span>
+                          Not posted yet today
+                        </li>
+                        <li>
+                          <span className="ups">
+                            <i className="l"></i>
+                          </span>
+                          On leave
+                        </li>
+                        <li>
+                          <span className="ups">
+                            <i className="h"></i>
+                          </span>
+                          Holiday
+                        </li>
+                        <li>
+                          <span className="ups">
+                            <i className=""></i>
+                          </span>
+                          Later this week
+                        </li>
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -278,15 +319,20 @@ export function HeroSection({ signupOpen }) {
                       <span>5G</span>
                     </div>
                     <div className="ubar">
-                      <b>Tue 15 Sep</b>
+                      <span className="mb" aria-hidden="true">
+                        <i></i>
+                        <i></i>
+                        <i></i>
+                      </span>
+                      <b>This week</b>
                       <span className="samp-u">SAMPLE DATA</span>
                     </div>
                     <div className="strip">
-                      <span>
+                      <span className="ok">
                         Mon<i></i>
                       </span>
                       <span className="today">
-                        Today<i></i>
+                        Tue<i></i>
                       </span>
                       <span className="fut">Wed</span>
                       <span className="fut">Thu</span>
@@ -294,13 +340,24 @@ export function HeroSection({ signupOpen }) {
                     </div>
                     <div className="upanel">
                       <div className="uph">
-                        <b>What did you do?</b>
-                        <span>7 h</span>
+                        <b>
+                          Tue <span className="dt">15 Sep</span>
+                        </b>
+                        <span className="uhrs">7 h</span>
+                        <span className="umeta">
+                          <span className="a">Not posted</span>
+                          <span className="b">Posted 17:42</span>
+                        </span>
                       </div>
                       <div className="upb">
+                        <span className="uq">What did you do?</span>
                         <div className="uline">
-                          <span className="uin">Booking flow</span>
-                          <span className="uin ty">Development</span>
+                          <span className="uin">
+                            <i className="mk c1"></i>Booking flow
+                          </span>
+                          <span className="uin ty">
+                            <i className="mk c1"></i>Development
+                          </span>
                         </div>
                         <div className="uline u2">
                           <span className="uin">
@@ -309,16 +366,22 @@ export function HeroSection({ signupOpen }) {
                           <span className="uin h">4.5</span>
                         </div>
                         <div className="uline">
-                          <span className="uin">Login timeout</span>
-                          <span className="uin ty">Testing</span>
+                          <span className="uin">
+                            <i className="mk c2"></i>Login timeout
+                          </span>
+                          <span className="uin ty">
+                            <i className="mk c2"></i>Testing
+                          </span>
                         </div>
                         <div className="uline u2">
                           <span className="uin">Wrote regression tests</span>
                           <span className="uin h">2.5</span>
                         </div>
-                        <span className="ulab">Blockers</span>
+                        <span className="ulab">
+                          Blockers<em>Optional</em>
+                        </span>
                         <span className="bf filled" id="bf">
-                          <span className="phd">Add a blocker</span>
+                          <span className="phd">What is holding work up?</span>
                           <span id="typed">
                             Waiting on API keys from the client
                           </span>
@@ -326,17 +389,16 @@ export function HeroSection({ signupOpen }) {
                         </span>
                       </div>
                       <div className="ufoot">
-                        <span>Open to team comments</span>
-                        <span className="post" id="post">
-                          <span className="a">Post update</span>
-                          <span className="b">Posted 17:42</span>
+                        <span className="ucb">
+                          <i></i>Open to team comments
+                        </span>
+                        <span className="ubtns">
+                          <span className="usec">Save</span>
+                          <span className="post" id="post">
+                            Post update
+                          </span>
                         </span>
                       </div>
-                    </div>
-                    <div className="ptab">
-                      <span className="on">Today</span>
-                      <span>Week</span>
-                      <span>Reports</span>
                     </div>
                   </div>
                 </div>

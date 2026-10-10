@@ -50,29 +50,49 @@ export function WeekSection() {
                 <i></i>
               </span>
               <div className="d-hd">
-                <b>Mon 14 Sep</b>
+                <b>
+                  Mon<span className="dt">14 Sep</span>
+                </b>
                 <span className="d-h">7.5 h</span>
                 <span className="d-pt">Posted 17:36</span>
               </div>
+              <div className="d-ctl">
+                <span className="cc">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  No comments
+                </span>
+                <span className="sw">
+                  <i></i>Open to team comments
+                </span>
+              </div>
               <ul className="d-lines">
                 <li>
                   <span className="d-t">
-                    <b>Booking flow</b>
+                    <b>
+                      Booking flow<small>Client A</small>
+                    </b>
                     <span>5 h</span>
                   </span>
+                  <span className="d-ty">
+                    <i className="mk c1"></i>Development
+                  </span>
                   <span className="d-d">
-                    <span className="tt">Development</span>Wired the booking
-                    form to the new API
+                    Wired the booking form to the new API
                   </span>
                 </li>
                 <li>
                   <span className="d-t">
-                    <b>Login timeout</b>
+                    <b>
+                      Login timeout<small>Client A</small>
+                    </b>
                     <span>2.5 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Testing</span>Reproduced it on Safari
+                  <span className="d-ty">
+                    <i className="mk c2"></i>Testing
                   </span>
+                  <span className="d-d">Reproduced it on Safari</span>
                 </li>
               </ul>
             </li>
@@ -83,40 +103,77 @@ export function WeekSection() {
                 <i></i>
               </span>
               <div className="d-hd">
-                <b>Tue 15 Sep</b>
+                <b>
+                  Tue<span className="dt">15 Sep</span>
+                </b>
                 <span className="d-h">7 h</span>
                 <span className="d-pt">Posted 17:42</span>
               </div>
+              <div className="d-ctl">
+                <span className="cc">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  2 comments
+                </span>
+                <span className="sw on">
+                  <i></i>Open to team comments
+                </span>
+              </div>
               <ul className="d-lines">
                 <li>
                   <span className="d-t">
-                    <b>Booking flow</b>
+                    <b>
+                      Booking flow<small>Client A</small>
+                    </b>
                     <span>4.5 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Development</span>Date validation and
-                    error states
+                  <span className="d-ty">
+                    <i className="mk c1"></i>Development
                   </span>
+                  <span className="d-d">Date validation and error states</span>
                 </li>
                 <li>
                   <span className="d-t">
-                    <b>Login timeout</b>
+                    <b>
+                      Login timeout<small>Client A</small>
+                    </b>
                     <span>2.5 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Testing</span>Wrote regression tests
+                  <span className="d-ty">
+                    <i className="mk c2"></i>Testing
                   </span>
+                  <span className="d-d">Wrote regression tests</span>
                 </li>
               </ul>
-              <p className="d-blk">
-                <b>Blocker:</b> waiting on API keys from the client
-              </p>
-              <p className="d-cmt">
-                <b>
-                  Nadia F. <span>18:02</span>
-                </b>
-                I've chased the client. Keys should land tomorrow.
-              </p>
+              <div className="d-blk">
+                <span className="lab">Blockers</span>
+                <p className="bl">
+                  <span className="chk"></span>
+                  <span className="bt">
+                    Waiting on API keys from the client
+                  </span>
+                  <em>Key</em>
+                </p>
+              </div>
+              <div className="d-cmt">
+                <span className="lab">Comments</span>
+                <div className="cm">
+                  <span className="avs">NF</span>
+                  <b>Nadia F.</b>
+                  <span className="rc">Manager</span>
+                  <time>Tue 18:02</time>
+                </div>
+                <p>I’ve chased the client. Keys should land tomorrow.</p>
+                <div className="rp">
+                  <div className="cm">
+                    <span className="avs">IJ</span>
+                    <b>Imali J.</b>
+                    <time>Tue 18:20</time>
+                  </div>
+                  <p>Thanks, that unblocks Wednesday.</p>
+                </div>
+              </div>
             </li>
             <li className="day">
               <span className="d-wait" aria-hidden="true">
@@ -125,30 +182,47 @@ export function WeekSection() {
                 <i></i>
               </span>
               <div className="d-hd">
-                <b>Wed 16 Sep</b>
+                <b>
+                  Wed<span className="dt">16 Sep</span>
+                </b>
                 <span className="d-h">7.5 h</span>
                 <span className="d-pt">Posted 17:51</span>
               </div>
+              <div className="d-ctl">
+                <span className="cc">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  No comments
+                </span>
+                <span className="sw">
+                  <i></i>Open to team comments
+                </span>
+              </div>
               <ul className="d-lines">
                 <li>
                   <span className="d-t">
-                    <b>Login timeout</b>
+                    <b>
+                      Login timeout<small>Client A</small>
+                    </b>
                     <span>3 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Development</span>Fixed the session
-                    refresh
+                  <span className="d-ty">
+                    <i className="mk c1"></i>Development
                   </span>
+                  <span className="d-d">Fixed the session refresh</span>
                 </li>
                 <li>
                   <span className="d-t">
-                    <b>Booking flow</b>
+                    <b>
+                      Booking flow<small>Client A</small>
+                    </b>
                     <span>4.5 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Research &amp; study</span>Read the
-                    calendar API guide
+                  <span className="d-ty">
+                    <i className="mk c7"></i>Research &amp; study
                   </span>
+                  <span className="d-d">Read the calendar API guide</span>
                 </li>
               </ul>
             </li>
@@ -159,30 +233,47 @@ export function WeekSection() {
                 <i></i>
               </span>
               <div className="d-hd">
-                <b>Thu 17 Sep</b>
+                <b>
+                  Thu<span className="dt">17 Sep</span>
+                </b>
                 <span className="d-h">8 h</span>
                 <span className="d-pt">Posted 17:38</span>
               </div>
+              <div className="d-ctl">
+                <span className="cc">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  No comments
+                </span>
+                <span className="sw">
+                  <i></i>Open to team comments
+                </span>
+              </div>
               <ul className="d-lines">
                 <li>
                   <span className="d-t">
-                    <b>Booking flow</b>
+                    <b>
+                      Booking flow<small>Client A</small>
+                    </b>
                     <span>4.5 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Development</span>Mobile layout and
-                    styling
+                  <span className="d-ty">
+                    <i className="mk c1"></i>Development
                   </span>
+                  <span className="d-d">Mobile layout and styling</span>
                 </li>
                 <li>
                   <span className="d-t">
-                    <b>Code review</b>
+                    <b>
+                      Code review<small>Client A</small>
+                    </b>
                     <span>3.5 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Review</span>Reviewed Tharindu's pull
-                    request
+                  <span className="d-ty">
+                    <i className="mk c5"></i>Review
                   </span>
+                  <span className="d-d">Reviewed Tharindu’s pull request</span>
                 </li>
               </ul>
             </li>
@@ -193,29 +284,47 @@ export function WeekSection() {
                 <i></i>
               </span>
               <div className="d-hd">
-                <b>Fri 18 Sep</b>
+                <b>
+                  Fri<span className="dt">18 Sep</span>
+                </b>
                 <span className="d-h">7.5 h</span>
                 <span className="d-pt">Posted 17:30</span>
+              </div>
+              <div className="d-ctl">
+                <span className="cc">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  No comments
+                </span>
+                <span className="sw">
+                  <i></i>Open to team comments
+                </span>
               </div>
               <ul className="d-lines">
                 <li>
                   <span className="d-t">
-                    <b>Booking flow</b>
+                    <b>
+                      Booking flow<small>Client A</small>
+                    </b>
                     <span>5 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Development</span>Saved-guest flow
+                  <span className="d-ty">
+                    <i className="mk c1"></i>Development
                   </span>
+                  <span className="d-d">Saved-guest flow</span>
                 </li>
                 <li>
                   <span className="d-t">
-                    <b>Login timeout</b>
+                    <b>
+                      Login timeout<small>Client A</small>
+                    </b>
                     <span>2.5 h</span>
                   </span>
-                  <span className="d-d">
-                    <span className="tt">Testing</span>Re-ran the regression
-                    tests
+                  <span className="d-ty">
+                    <i className="mk c2"></i>Testing
                   </span>
+                  <span className="d-d">Re-ran the regression tests</span>
                 </li>
               </ul>
               <p className="d-rep">
@@ -228,7 +337,7 @@ export function WeekSection() {
               <div className="rin">
                 <div className="rtop">
                   <b>Week 38 report</b>
-                  <span className="chip c-draft">Draft</span>
+                  <span className="chip md c-draft">Draft</span>
                 </div>
                 <div className="rmeta">
                   <span>Imali J. · W38 · 14–18 Sep</span>
@@ -264,13 +373,20 @@ export function WeekSection() {
                     <tr>
                       <td>
                         <b>Booking flow</b>
-                        <small>Development, Research &amp; study</small>
+                        <small>
+                          <span className="ty">
+                            <i className="mk c1"></i>Development
+                          </span>
+                          <span className="ty">
+                            <i className="mk c7"></i>Research &amp; study
+                          </span>
+                        </small>
                       </td>
                       <td className="r">23.5 h</td>
                       <td className="r">
                         <span className="sel st">
                           <span className="s0" aria-hidden="true">
-                            Set a status
+                            Set status
                           </span>
                           <span className="s1">In progress</span>
                           <span className="chev" aria-hidden="true"></span>
@@ -280,13 +396,20 @@ export function WeekSection() {
                     <tr>
                       <td>
                         <b>Login timeout</b>
-                        <small>Testing, Development</small>
+                        <small>
+                          <span className="ty">
+                            <i className="mk c2"></i>Testing
+                          </span>
+                          <span className="ty">
+                            <i className="mk c1"></i>Development
+                          </span>
+                        </small>
                       </td>
                       <td className="r">10.5 h</td>
                       <td className="r">
                         <span className="sel st">
                           <span className="s0" aria-hidden="true">
-                            Set a status
+                            Set status
                           </span>
                           <span className="s1">Done</span>
                           <span className="chev" aria-hidden="true"></span>
@@ -296,13 +419,17 @@ export function WeekSection() {
                     <tr>
                       <td>
                         <b>Code review</b>
-                        <small>Review</small>
+                        <small>
+                          <span className="ty">
+                            <i className="mk c5"></i>Review
+                          </span>
+                        </small>
                       </td>
                       <td className="r">3.5 h</td>
                       <td className="r">
                         <span className="sel st">
                           <span className="s0" aria-hidden="true">
-                            Set a status
+                            Set status
                           </span>
                           <span className="s1">Done</span>
                           <span className="chev" aria-hidden="true"></span>

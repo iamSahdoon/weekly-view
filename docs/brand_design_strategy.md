@@ -426,6 +426,18 @@ sees the real thing.
    The page must also ask `GET /api/auth/bootstrap` and, when sign-up is open, make
    **"Create your account"** the primary action (§6.3, `requirments_doc.md` §13). On a
    closed instance it stays as built.
+8. **Owner decision (C10, 2026-10-10): the product mock-ups on the landing page show the app as it is now.** After
+   C7 (the update squares, the four coloured metrics, the status chips), the daily updates as day cards (task
+   type colour marks, a key-blocker row, comments as a conversation), C8 and C9, every mock-up (the hero's laptop
+   and phone, the week's day cards and report, the single-day card, the manager's dashboard and the ledger's
+   pieces) is drawn from the app's current components and `product_design_system.md`. The app's light palette
+   is restated as landing-scoped `--l-app-*` tokens in `landing.css` (a test keeps them equal to `tokens.css`);
+   the mock-ups' size, placement, framing and animation are as in the reference. The page's own font is used
+   inside the frames (no product font reaches the landing page).
+9. **Owner decision (C10, 2026-10-10): the privacy statement moves.** "No activity tracking, no screenshots, no
+   idle timers. Only what people choose to write." sits in the right-hand column of the "Who can do what"
+   block from 1024px up, under the permissions table and centred in the height left beside the list; below
+   1024px it follows the stacked list. Its type is unchanged.
 
 ### 6.1 Job of the page
 

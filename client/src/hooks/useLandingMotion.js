@@ -258,7 +258,6 @@ export function useLandingMotion(rootRef) {
     const cell = $("#mc-blk");
     const row = $("#r-imali");
     const rHrs = $("#r-hrs");
-    const mHrs = $("#m-hrs");
     const replay = $("#replay");
     let heroTimers = [];
     let heroFrame = 0;
@@ -286,7 +285,6 @@ export function useLandingMotion(rootRef) {
       bf.classList.remove("filled", "typing");
       typed.textContent = "";
       rHrs.textContent = "7.5";
-      mHrs.textContent = "93";
       fly.style.opacity = 0;
       trail.style.transition = "none";
       trail.style.opacity = 0;
@@ -296,7 +294,6 @@ export function useLandingMotion(rootRef) {
       cell.classList.add("flash");
       row.classList.add("hi");
       count(rHrs, 7.5, 14.5, 900, 1);
-      count(mHrs, 93, 100, 900, 0);
       heroLater(500, () => {
         trail.style.transition = "opacity .7s linear";
         trail.style.opacity = 0;
@@ -403,7 +400,6 @@ export function useLandingMotion(rootRef) {
         bf.classList.add("filled");
         typed.textContent = TEXT;
         rHrs.textContent = "14.5";
-        mHrs.textContent = "100";
       });
       undo.push(() => {
         halt();
@@ -413,7 +409,6 @@ export function useLandingMotion(rootRef) {
         bf.classList.remove("typing");
         typed.textContent = TEXT;
         rHrs.textContent = "14.5";
-        mHrs.textContent = "100";
         fly.style.opacity = "";
         trail.style.opacity = "";
         trail.style.transition = "";

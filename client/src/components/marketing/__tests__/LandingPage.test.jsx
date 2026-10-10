@@ -118,7 +118,6 @@ describe("the sections", () => {
       "mc-blk",
       "r-imali",
       "r-hrs",
-      "m-hrs",
       "replay",
       "week",
       "track",
@@ -211,6 +210,134 @@ describe("Who can do what, in plain language (owner decision)", () => {
   it("no longer talks about servers, requests or refusals", () => {
     expect(text(section)).not.toMatch(
       /server|request|refused|Imali J\.|week 38/i,
+    );
+  });
+});
+
+describe("the mock-ups show the app as it is now (owner decision, C10)", () => {
+  const html = page(false);
+  const between = (from, to) =>
+    html.slice(html.indexOf(from), html.indexOf(to, html.indexOf(from)));
+  const squares = (row) =>
+    [...row.matchAll(/<i(?: class="([a-z]*)")?><\/i>/g)].map(
+      (m) => m[1] || "f",
+    );
+
+  it("draws the dashboard's Mon–Fri squares in the app's six states, with a legend", () => {
+    const monitor = between('id="monwrap"', 'class="mside"');
+    const rows = Object.fromEntries(
+      [
+        ...monitor.matchAll(
+          /<tr data-f="[^"]*"><td class="nm">.*?<\/span>([^<]+)<\/td><td>(.*?)<\/td>/g,
+        ),
+      ].map((m) => [m[1], squares(m[2])]),
+    );
+    // Ayesha's missing day and Dinesh's week are the red cross, not empty boxes.
+    expect(rows["Ayesha C."]).toEqual(["p", "p", "p", "p", "m"]);
+    expect(rows["Dinesh K."]).toEqual(["m", "m", "m", "m", "m"]);
+    expect(rows["Nadia F."]).toEqual(["p", "p", "p", "p", "p"]);
+    // The legend names all six.
+    const legend = monitor.slice(monitor.indexOf('class="mleg"'));
+    for (const word of [
+      "Posted",
+      "Missing",
+      "Not posted yet today",
+      "On leave",
+      "Holiday",
+      "Later this week",
+    ]) {
+      expect(legend).toContain(word);
+    }
+    expect(squares(legend)).toEqual(["p", "m", "d", "l", "h", "f"]);
+  });
+
+  it("shows the hero dashboard's Tuesday: today outlined, Dinesh's Monday missing, and a legend", () => {
+    const laptop = between('class="lscreen"', 'class="lbase"');
+    expect(laptop).toContain('class="lleg"');
+    const dinesh = laptop.match(/Dinesh K\.<\/td><td>(.*?)<\/td>/)[1];
+    expect(squares(dinesh)).toEqual(["m", "d", "f", "f", "f"]);
+    const imali = laptop.match(/Imali J\.<\/td><td>(.*?)<\/td>/)[1];
+    expect(squares(imali)).toEqual(["p", "t", "f", "f", "f"]);
+  });
+
+  it("uses the app's four coloured metrics, and the app's sidebar", () => {
+    for (const part of [
+      between('class="lmet"', "<table"),
+      between('class="mmet"', 'class="mgrid"'),
+    ]) {
+      for (const [label, tone] of [
+        ["Filed this week", "tn-acc"],
+        ["Compliance", "tn-ok"],
+        ["Needs correction", "tn-corr"],
+        ["Open blockers", "tn-warn"],
+      ]) {
+        expect(part).toMatch(new RegExp(`${label}</span><b class="${tone}"`));
+      }
+    }
+    const nav = between('class="lnav"', "</ul>");
+    for (const item of [
+      "Review desk",
+      "Team dashboard",
+      "People",
+      "Projects",
+      "This week",
+      "My reports",
+      "Team updates",
+    ]) {
+      expect(nav).toContain(item);
+    }
+  });
+
+  it("draws the day cards as the app does: type marks, a key blocker, a conversation", () => {
+    const week = between('id="track"', 'id="report"');
+    expect(week.match(/class="day"/g)).toHaveLength(5);
+    // The seven type colours' marks, not grey tags.
+    expect(week).toContain('class="mk c1"');
+    expect(week).toContain('class="mk c2"');
+    expect(week).toContain('class="mk c5"');
+    expect(week).toContain('class="mk c7"');
+    expect(week).not.toContain('class="tt"');
+    // The key blocker, with its Key flag; the thread as a conversation with a reply, no grey box.
+    expect(week).toMatch(
+      /class="d-blk"><span class="lab">Blockers<\/span><p class="bl">.*<em>Key<\/em>/,
+    );
+    expect(week).toContain('class="d-cmt"');
+    expect(week).toContain('class="rp"');
+    expect(week).toContain("Manager</span>");
+    // Hours on the right of each line; the header carries the weekday, the date and the hours.
+    expect(week).toMatch(
+      /<b>Mon<span class="dt">14 Sep<\/span><\/b><span class="d-h">7\.5 h<\/span>/,
+    );
+  });
+
+  it("draws the week report with 'Set status', a framed approval box and the current Draft chip", () => {
+    const report = between('id="report"', "</section>");
+    expect(report).toContain("Set status");
+    expect(html).not.toContain("Set a status");
+    expect(report).toContain('class="chip md c-draft">Draft');
+    expect(report).toMatch(/class="ucheck"><i><\/i>Ask for approval/);
+    expect(report).toContain('class="mk c7"');
+  });
+
+  it("draws the single-day card and the ledger's pieces with the same marks and chips", () => {
+    const one = between('id="one"', 'id="five"');
+    expect(one).toContain('class="mk c1"');
+    expect(one).toContain("<em>Key</em>");
+    const sides = between('id="sides"', 'id="limits"');
+    expect(sides).toContain('class="mk c2"');
+    expect(sides).toContain('class="tchip dn">Done');
+    expect(sides).toContain('class="chip md c-none">Not started');
+    expect(sides).toContain('class="cm"');
+  });
+
+  it("puts the privacy statement in the right-hand column of the permissions block", () => {
+    const right = between('class="mx-right"', "</section>");
+    expect(right).toContain('class="mtab"');
+    expect(right.indexOf('class="notrack"')).toBeGreaterThan(
+      right.indexOf('class="mtab"'),
+    );
+    expect(text(right)).toContain(
+      "No activity tracking, no screenshots, no idle timers. Only what people choose to write.",
     );
   });
 });

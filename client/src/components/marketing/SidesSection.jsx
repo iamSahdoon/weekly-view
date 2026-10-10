@@ -37,20 +37,38 @@ export function SidesSection() {
                 <h3>The daily update</h3>
                 <div className="frag">
                   <div className="fr-row hd">
-                    <span>Tue 15 Sep</span>
+                    <span>
+                      Tue<span className="dt">15 Sep</span>
+                    </span>
                     <span>7 h</span>
                   </div>
                   <div className="fr-row">
-                    <b>Booking flow</b>
+                    <span className="fr-t">
+                      <b>Booking flow</b>
+                      <span className="d-ty">
+                        <i className="mk c1"></i>Development
+                      </span>
+                    </span>
                     <span>4.5 h</span>
                   </div>
                   <div className="fr-row">
-                    <b>Login timeout</b>
+                    <span className="fr-t">
+                      <b>Login timeout</b>
+                      <span className="d-ty">
+                        <i className="mk c2"></i>Testing
+                      </span>
+                    </span>
                     <span>2.5 h</span>
                   </div>
-                  <p className="fr-blk">
-                    Blocker: waiting on API keys from the client
-                  </p>
+                  <div className="fr-blk">
+                    <span className="lab">Blockers</span>
+                    <p className="bl">
+                      <span className="bt">
+                        Waiting on API keys from the client
+                      </span>
+                      <em>Key</em>
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="m">
@@ -72,19 +90,19 @@ export function SidesSection() {
                 <div className="frag">
                   <div className="fr-row hd">
                     <span>Week 38 report</span>
-                    <span className="chip c-draft">Draft</span>
+                    <span className="chip md c-draft">Draft</span>
                   </div>
                   <div className="fr-row">
                     <b>Booking flow</b>
-                    <span>In progress</span>
+                    <span className="tchip">In progress</span>
                   </div>
                   <div className="fr-row">
                     <b>Login timeout</b>
-                    <span>Done</span>
+                    <span className="tchip dn">Done</span>
                   </div>
                   <div className="fr-row">
                     <b>Code review</b>
-                    <span>Done</span>
+                    <span className="tchip dn">Done</span>
                   </div>
                 </div>
               </div>
@@ -106,10 +124,10 @@ export function SidesSection() {
                 <h3>Review</h3>
                 <div className="frag">
                   <div className="fr-chips">
-                    <span className="chip c-draft">Draft</span>
-                    <span className="chip c-subm">Submitted</span>
-                    <span className="chip c-corr">Needs correction</span>
-                    <span className="chip c-appr">Approved</span>
+                    <span className="chip md c-draft">Draft</span>
+                    <span className="chip md c-subm">Submitted</span>
+                    <span className="chip md c-corr">Needs correction</span>
+                    <span className="chip md c-appr">Approved</span>
                   </div>
                 </div>
               </div>
@@ -139,10 +157,18 @@ export function SidesSection() {
                     <b>rev 1, sent back</b>
                     <span>Fri 18:05</span>
                   </div>
-                  <p className="fr-cmt">
-                    Nadia F.: Login timeout is marked Done, but Tuesday's tests
-                    still fail.
-                  </p>
+                  <div className="fr-cmt">
+                    <div className="cm">
+                      <span className="avs">NF</span>
+                      <b>Nadia F.</b>
+                      <span className="rc">Manager</span>
+                      <time>rev 1 · sent back</time>
+                    </div>
+                    <p>
+                      Login timeout is marked Done, but Tuesday’s tests still
+                      fail.
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="m">
@@ -163,8 +189,13 @@ export function SidesSection() {
                 <h3>Not started</h3>
                 <div className="frag">
                   <div className="fr-row">
-                    <b>Dinesh K.</b>
-                    <span className="chip c-none">Not started</span>
+                    <span className="fr-t ro">
+                      <span className="av" aria-hidden="true">
+                        DK
+                      </span>
+                      <b>Dinesh K.</b>
+                    </span>
+                    <span className="chip md c-none">Not started</span>
                   </div>
                 </div>
               </div>

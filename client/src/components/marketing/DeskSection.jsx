@@ -101,16 +101,32 @@ export function DeskSection() {
               <div className="mmet">
                 <div>
                   <span>Filed this week</span>
-                  <b>
+                  <b className="tn-acc">
                     <span data-count="6" data-dur="1000">
                       6
                     </span>
                     <small> / 8</small>
                   </b>
+                  <p className="sub">
+                    <span data-count="2" data-dur="700">
+                      2
+                    </span>{" "}
+                    not yet filed
+                  </p>
+                </div>
+                <div>
+                  <span>Compliance</span>
+                  <b className="tn-ok">
+                    <span data-count="75" data-dur="1100">
+                      75
+                    </span>
+                    %
+                  </b>
+                  <p className="sub">this week</p>
                 </div>
                 <div>
                   <span>Needs correction</span>
-                  <b className="c">
+                  <b className="tn-corr">
                     <span data-count="1" data-dur="700">
                       1
                     </span>
@@ -118,233 +134,329 @@ export function DeskSection() {
                 </div>
                 <div>
                   <span>Open blockers</span>
-                  <b>
+                  <b className="tn-warn">
                     <span data-count="3" data-dur="900">
                       3
                     </span>
                   </b>
+                  <p className="sub">
+                    raised by{" "}
+                    <span data-count="3" data-dur="900">
+                      3
+                    </span>{" "}
+                    people
+                  </p>
                 </div>
               </div>
               <div className="mgrid">
-                <div className="mscroll" role="region" aria-label="Team table">
-                  <table className="mtbl" id="mt" data-in="">
-                    <thead>
-                      <tr>
-                        <th scope="col" className="c-p">
-                          Person
-                        </th>
-                        <th scope="col" className="c-u">
-                          Mon to Fri
-                        </th>
-                        <th scope="col" className="c-j">
-                          Project
-                        </th>
-                        <th scope="col" className="r c-h">
-                          Hours
-                        </th>
-                        <th scope="col" className="c-b">
-                          Blocker
-                        </th>
-                        <th scope="col" className="r c-s">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr data-f="">
-                        <td className="nm">Nadia F.</td>
-                        <td>
-                          <span
-                            className="ups"
-                            role="img"
-                            aria-label="5 of 5 days posted"
-                          >
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                          </span>
-                        </td>
-                        <td>Client A</td>
-                        <td className="r">38.5</td>
-                        <td>
-                          <span className="dash">–</span>
-                        </td>
-                        <td className="r">
-                          <span className="chip c-appr">Approved</span>
-                        </td>
-                      </tr>
-                      <tr data-f="corr blk">
-                        <td className="nm">Ruwan P.</td>
-                        <td>
-                          <span
-                            className="ups"
-                            role="img"
-                            aria-label="5 of 5 days posted"
-                          >
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                          </span>
-                        </td>
-                        <td>Internal tools</td>
-                        <td className="r">41</td>
-                        <td>
-                          <span className="chip c-corr">Tue</span>
-                        </td>
-                        <td className="r">
-                          <span className="chip c-corr">Needs correction</span>
-                        </td>
-                      </tr>
-                      <tr data-f="blk">
-                        <td className="nm">Imali J.</td>
-                        <td>
-                          <span
-                            className="ups"
-                            role="img"
-                            aria-label="5 of 5 days posted"
-                          >
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                          </span>
-                        </td>
-                        <td>Client A</td>
-                        <td className="r">37.5</td>
-                        <td>
-                          <span className="chip c-corr">Tue</span>
-                        </td>
-                        <td className="r">
-                          <span className="chip c-subm">Submitted</span>
-                        </td>
-                      </tr>
-                      <tr data-f="">
-                        <td className="nm">Tharindu S.</td>
-                        <td>
-                          <span
-                            className="ups"
-                            role="img"
-                            aria-label="5 of 5 days posted"
-                          >
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                          </span>
-                        </td>
-                        <td>Client A</td>
-                        <td className="r">40</td>
-                        <td>
-                          <span className="dash">–</span>
-                        </td>
-                        <td className="r">
-                          <span className="chip c-subm">Submitted</span>
-                        </td>
-                      </tr>
-                      <tr data-f="blk">
-                        <td className="nm">Ayesha C.</td>
-                        <td>
-                          <span
-                            className="ups"
-                            role="img"
-                            aria-label="4 of 5 days posted"
-                          >
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i></i>
-                          </span>
-                        </td>
-                        <td>Marketing</td>
-                        <td className="r">30</td>
-                        <td>
-                          <span className="chip c-corr">Mon</span>
-                        </td>
-                        <td className="r">
-                          <span className="chip c-draft">Draft</span>
-                        </td>
-                      </tr>
-                      <tr data-f="none">
-                        <td className="nm">Dinesh K.</td>
-                        <td>
-                          <span
-                            className="ups"
-                            role="img"
-                            aria-label="no days posted"
-                          >
-                            <i></i>
-                            <i></i>
-                            <i></i>
-                            <i></i>
-                            <i></i>
-                          </span>
-                        </td>
-                        <td>Internal tools</td>
-                        <td className="r">–</td>
-                        <td>
-                          <span className="dash">–</span>
-                        </td>
-                        <td className="r">
-                          <span className="chip c-none">Not started</span>
-                        </td>
-                      </tr>
-                      <tr data-f="">
-                        <td className="nm">Malith W.</td>
-                        <td>
-                          <span
-                            className="ups"
-                            role="img"
-                            aria-label="5 of 5 days posted"
-                          >
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                          </span>
-                        </td>
-                        <td>R&amp;D</td>
-                        <td className="r">39</td>
-                        <td>
-                          <span className="dash">–</span>
-                        </td>
-                        <td className="r">
-                          <span className="chip c-appr">Approved</span>
-                        </td>
-                      </tr>
-                      <tr data-f="">
-                        <td className="nm">Sanduni B.</td>
-                        <td>
-                          <span
-                            className="ups"
-                            role="img"
-                            aria-label="5 of 5 days posted"
-                          >
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                            <i className="p"></i>
-                          </span>
-                        </td>
-                        <td>R&amp;D</td>
-                        <td className="r">36</td>
-                        <td>
-                          <span className="dash">–</span>
-                        </td>
-                        <td className="r">
-                          <span className="chip c-subm">Submitted</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div className="mleft">
+                  <div
+                    className="mscroll"
+                    role="region"
+                    aria-label="Team table"
+                  >
+                    <table className="mtbl" id="mt" data-in="">
+                      <thead>
+                        <tr>
+                          <th scope="col" className="c-p">
+                            Person
+                          </th>
+                          <th scope="col" className="c-u">
+                            Updates
+                          </th>
+                          <th scope="col" className="c-j">
+                            Projects
+                          </th>
+                          <th scope="col" className="r c-h">
+                            Hours
+                          </th>
+                          <th scope="col" className="c-b">
+                            Blocker
+                          </th>
+                          <th scope="col" className="r c-s">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr data-f="">
+                          <td className="nm">
+                            <span className="av" aria-hidden="true">
+                              NF
+                            </span>
+                            Nadia F.
+                          </td>
+                          <td>
+                            <span
+                              className="ups"
+                              role="img"
+                              aria-label="5 of 5 days posted"
+                            >
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                            </span>
+                          </td>
+                          <td>Client A</td>
+                          <td className="r">38.5</td>
+                          <td>
+                            <span className="dash">–</span>
+                          </td>
+                          <td className="r">
+                            <span className="chip md c-appr">Approved</span>
+                          </td>
+                        </tr>
+                        <tr data-f="corr blk">
+                          <td className="nm">
+                            <span className="av" aria-hidden="true">
+                              RP
+                            </span>
+                            Ruwan P.
+                          </td>
+                          <td>
+                            <span
+                              className="ups"
+                              role="img"
+                              aria-label="5 of 5 days posted"
+                            >
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                            </span>
+                          </td>
+                          <td>Internal tools</td>
+                          <td className="r">41</td>
+                          <td>
+                            <span className="chip c-corr">Tue</span>
+                          </td>
+                          <td className="r">
+                            <span className="chip md c-corr">
+                              Needs correction
+                            </span>
+                          </td>
+                        </tr>
+                        <tr data-f="blk">
+                          <td className="nm">
+                            <span className="av" aria-hidden="true">
+                              IJ
+                            </span>
+                            Imali J.
+                          </td>
+                          <td>
+                            <span
+                              className="ups"
+                              role="img"
+                              aria-label="5 of 5 days posted"
+                            >
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                            </span>
+                          </td>
+                          <td>Client A</td>
+                          <td className="r">37.5</td>
+                          <td>
+                            <span className="chip c-corr">Tue</span>
+                          </td>
+                          <td className="r">
+                            <span className="chip md c-subm">Submitted</span>
+                          </td>
+                        </tr>
+                        <tr data-f="">
+                          <td className="nm">
+                            <span className="av" aria-hidden="true">
+                              TS
+                            </span>
+                            Tharindu S.
+                          </td>
+                          <td>
+                            <span
+                              className="ups"
+                              role="img"
+                              aria-label="5 of 5 days posted"
+                            >
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                            </span>
+                          </td>
+                          <td>Client A</td>
+                          <td className="r">40</td>
+                          <td>
+                            <span className="dash">–</span>
+                          </td>
+                          <td className="r">
+                            <span className="chip md c-subm">Submitted</span>
+                          </td>
+                        </tr>
+                        <tr data-f="blk">
+                          <td className="nm">
+                            <span className="av" aria-hidden="true">
+                              AC
+                            </span>
+                            Ayesha C.
+                          </td>
+                          <td>
+                            <span
+                              className="ups"
+                              role="img"
+                              aria-label="4 of 5 days posted, Friday missing"
+                            >
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="m"></i>
+                            </span>
+                          </td>
+                          <td>Marketing</td>
+                          <td className="r">30</td>
+                          <td>
+                            <span className="chip c-corr">Mon</span>
+                          </td>
+                          <td className="r">
+                            <span className="chip md c-draft">Draft</span>
+                          </td>
+                        </tr>
+                        <tr data-f="none">
+                          <td className="nm">
+                            <span className="av" aria-hidden="true">
+                              DK
+                            </span>
+                            Dinesh K.
+                          </td>
+                          <td>
+                            <span
+                              className="ups"
+                              role="img"
+                              aria-label="No days posted: all five missing"
+                            >
+                              <i className="m"></i>
+                              <i className="m"></i>
+                              <i className="m"></i>
+                              <i className="m"></i>
+                              <i className="m"></i>
+                            </span>
+                          </td>
+                          <td>Internal tools</td>
+                          <td className="r">–</td>
+                          <td>
+                            <span className="dash">–</span>
+                          </td>
+                          <td className="r">
+                            <span className="chip md c-none">Not started</span>
+                          </td>
+                        </tr>
+                        <tr data-f="">
+                          <td className="nm">
+                            <span className="av" aria-hidden="true">
+                              MW
+                            </span>
+                            Malith W.
+                          </td>
+                          <td>
+                            <span
+                              className="ups"
+                              role="img"
+                              aria-label="5 of 5 days posted"
+                            >
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                            </span>
+                          </td>
+                          <td>R&amp;D</td>
+                          <td className="r">39</td>
+                          <td>
+                            <span className="dash">–</span>
+                          </td>
+                          <td className="r">
+                            <span className="chip md c-appr">Approved</span>
+                          </td>
+                        </tr>
+                        <tr data-f="">
+                          <td className="nm">
+                            <span className="av" aria-hidden="true">
+                              SB
+                            </span>
+                            Sanduni B.
+                          </td>
+                          <td>
+                            <span
+                              className="ups"
+                              role="img"
+                              aria-label="5 of 5 days posted"
+                            >
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                              <i className="p"></i>
+                            </span>
+                          </td>
+                          <td>R&amp;D</td>
+                          <td className="r">36</td>
+                          <td>
+                            <span className="dash">–</span>
+                          </td>
+                          <td className="r">
+                            <span className="chip md c-subm">Submitted</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <ul
+                    className="mleg"
+                    aria-label="What the update squares mean"
+                  >
+                    <li>
+                      <span className="ups">
+                        <i className="p"></i>
+                      </span>
+                      Posted
+                    </li>
+                    <li>
+                      <span className="ups">
+                        <i className="m"></i>
+                      </span>
+                      Missing
+                    </li>
+                    <li>
+                      <span className="ups">
+                        <i className="d"></i>
+                      </span>
+                      Not posted yet today
+                    </li>
+                    <li>
+                      <span className="ups">
+                        <i className="l"></i>
+                      </span>
+                      On leave
+                    </li>
+                    <li>
+                      <span className="ups">
+                        <i className="h"></i>
+                      </span>
+                      Holiday
+                    </li>
+                    <li>
+                      <span className="ups">
+                        <i className=""></i>
+                      </span>
+                      Later this week
+                    </li>
+                  </ul>
                 </div>
                 <div className="mside">
                   <h3>Open blockers</h3>

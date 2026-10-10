@@ -153,7 +153,15 @@ describe("the pills fit their text", () => {
   };
 
   it("sizes the pills, chips and tags from their content", () => {
-    for (const cls of ["samp", "samp-u", "pill", "chip", "vd", "tt", "fbtn"]) {
+    for (const cls of [
+      "samp",
+      "samp-u",
+      "pill",
+      "chip",
+      "vd",
+      "tchip",
+      "fbtn",
+    ]) {
       const rule = body(`.landing .${cls}`);
       expect(rule, cls).not.toBeNull();
       expect(rule, cls).not.toMatch(/(?:^|;)(?:height|width:(?!max-content))/);
@@ -185,5 +193,81 @@ describe("the pills fit their text", () => {
     expect(samp).toMatch(/border:1px dashed/);
     expect(samp).toMatch(/border-radius:999px/);
     expect(samp).toMatch(/white-space:nowrap/);
+  });
+});
+
+// The mock-ups show the app as it is now: the landing page's own copy of the app's light palette
+// (--l-app-*) must equal the app's tokens, so a change to tokens.css cannot leave them behind.
+describe("the mock-ups' palette is the app's", () => {
+  const tokens = readFileSync(path.join(SRC, "styles/tokens.css"), "utf8");
+  const light = tokens.slice(
+    tokens.indexOf(":root"),
+    tokens.indexOf('[data-theme="dark"]'),
+  );
+  const appToken = (name) =>
+    new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`)
+      .exec(light)?.[1]
+      .toUpperCase();
+  const landing = (name) =>
+    new RegExp(`--l-app-${name}:(#[0-9A-Fa-f]{6})`)
+      .exec(css)?.[1]
+      .toUpperCase();
+
+  it.each([
+    "paper",
+    "card",
+    "tint",
+    "tint2",
+    "ink",
+    "body",
+    "mut",
+    "hair",
+    "hair2",
+    "rule",
+    "acc",
+    "acc-d",
+    "acc-l",
+    "on-acc",
+    "st-draft-fg",
+    "st-draft-bg",
+    "st-draft-bd",
+    "st-subm-fg",
+    "st-subm-bg",
+    "st-subm-bd",
+    "st-corr-fg",
+    "st-corr-bg",
+    "st-corr-bd",
+    "st-appr-fg",
+    "st-appr-bg",
+    "st-appr-bd",
+    "st-none-fg",
+    "st-none-bd",
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "c6",
+    "c7",
+  ])("--l-app-%s equals the same token in tokens.css", (name) => {
+    expect(landing(name)).toBeTruthy();
+    expect(landing(name)).toBe(appToken(name));
+  });
+
+  it("the reference's mock-up names read that palette, none restates a colour", () => {
+    const code = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const name of [
+      "u-paper",
+      "u-card",
+      "u-ink",
+      "u-acc",
+      "st-draft-fg",
+      "st-corr-bg",
+      "st-appr-fg",
+    ]) {
+      expect(new RegExp(`--l-${name}:var\\(--l-app-`).test(code), name).toBe(
+        true,
+      );
+    }
   });
 });

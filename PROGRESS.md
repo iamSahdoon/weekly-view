@@ -1408,6 +1408,72 @@ and colours are as they were.
 - **Not seen:** the real Bricolage Grotesque (blocked here). The line breaks, and so which verdicts sit beside the text and which
   drop to their own line, will move a little with it.
 
+### C10 owner feedback: privacy statement placement; mock-ups match the app (2026-10-10)
+Both are owner decisions, noted as rules 8 and 9 of `brand_design_strategy.md` §6.0.
+- **Privacy statement.** "No activity tracking, no screenshots, no idle timers. Only what people choose to write." is now inside
+  the right-hand column of the "Who can do what" block (`.mx-right`), under the permissions table, centred in the height that
+  column has left beside the list (auto margins). From **1024 px** up the block is two columns (the collapse used to be at
+  1060 px); below it, the list, the table and then the statement stack. Typography unchanged. Looked at 1440 and 1024 px.
+- **Palette.** `landing.css` now carries the app's light palette as **`--l-app-*`** tokens (paper … rule, acc, the four status
+  sets and the dashed none chip, the seven type colours c1–c7), scoped to `.landing`. The reference's `--l-u-*` / `--l-st-*`
+  names alias them, so every mock-up reads one palette. No app CSS is imported; no landing token reaches the app. A test
+  (`landingIsolation.test.js`, 35 cases) asserts each `--l-app-*` equals the same token in `tokens.css`.
+- **What changed per mock-up** (size, placement, framing, tilt/fan and the animations are as they were):
+  - *Hero laptop (the manager's dashboard):* sidebar is the app's (Review desk with its `2`, Team dashboard active with the left
+    bar, People, Projects, This week, My reports, Team updates); the three invented metrics became the app's four coloured ones —
+    **Filed** blue, **Compliance** green, **Needs correction** red, **Open blockers** amber (the counter that the update flies
+    into); the Mon–Fri squares are the app's six states (posted cobalt, missing red ×, today blue outline, leave hatch, holiday
+    dots, later faint outline) with a small legend; Dinesh's Monday is the red ×, Ayesha's Tuesday and Dinesh's Tuesday are "today,
+    not posted yet", Imali's Tuesday fills as the update lands; column "Mon to Fri" is "Updates"; chips are the current, stronger
+    status colours. The "Posted today" and "Week so far" cells are gone (not in the app), so the script's hours counter went too.
+  - *Hero phone:* the bottom tab bar is gone (the app has none); the top bar is the app's (menu, "This week"); the day strip is the
+    app's week strip (Tue selected with the ink bar and today's blue bar); the panel header is "Tue 15 Sep · 7 h · Not posted" and the
+    "Not posted" turns to "Posted 17:42" when the update is sent (the button is the app's plain primary `Post update`, not a
+    morphing label); "What did you do?", type marks inside the Task and Type fields, "Blockers · Optional" with the app's
+    placeholder "What is holding work up?", the "Open to team comments" checkbox, `Save` and `Post update`. The flying note carries
+    the blocker style (key bar).
+  - *Week scene, the five day cards:* the app's day card — weekday, date and hours in the header, a strip with the comment count
+    and the "Open to team comments" switch, work lines as task over project, the type with its **colour mark** (not a grey tag),
+    what was done, hours right-aligned; the Tuesday blocker is the app's **key blocker** row (2 px cobalt bar, resolve box, `Key`)
+    under a "Blockers" label; the comment is a **conversation** (avatar, name, `Manager` chip, time, text, and Imali's reply hanging
+    off a hairline — the reply is hidden on viewports shorter than 820 px so the card fits). The "report is built from these five
+    days" line is the landing's own caption and is as it was.
+  - *Week report:* **"Set status"** (was "Set a status"), the **Draft chip** in the current yellow, **"Ask for approval"** framed like
+    the app's button (ticked, cobalt edge and tint), type colour marks under each task, `Submit` in the app's primary.
+  - *Single-day card (problem section):* the same day card in small — weekday, date and hours, task with project and the type mark,
+    hours right, the key-blocker row; the `SAMPLE DATA` tag is the app's dashed tag.
+  - *Manager's monitor:* the four coloured metrics with the app's sub-lines ("2 not yet filed", "this week", "raised by 3 people");
+    Compliance added (75 %); the squares, the legend, status chips (Approved / Needs correction / Submitted / Draft / dashed Not
+    started) in the app's colours; Person cells have the app's square initials; columns read "Updates" and "Projects"; Ayesha's
+    Friday and all five of Dinesh's days are the red ×. The filter buttons and the "Open blockers" list are the page's own interactive
+    story and are as they were. At 360 px the metrics are 2 × 2 and the chips take the app's small size so none is clipped.
+  - *Ledger pieces:* the daily update has type marks and the key-blocker row; the weekly report shows the Draft chip and the app's
+    task-status chips (`In progress`, `Done` in green); the four status chips are the current colours; the revision comment shows
+    avatar, name, `Manager` chip and "rev 1 · sent back" (it stays on the tint, as overall comments do in the app, design §3.4);
+    "Not started" is the dashed chip with the square initials.
+  - *Checked and left alone:* the "Open blockers" side list, the filter buttons, the day rail, the "who can do what" table and rows
+    (the page's own UI, not the product's).
+- **Pills and chips fit their text.** Chips: `min-height` (18 px, or 22 px for the `md` size), side padding, `nowrap`, no fixed width
+  or height; the status chips in the narrow table are the small size. The browser fit check (DejaVu Sans, DejaVu Sans Mono,
+  Liberation Serif and Inter forced onto the page; 1440, 1024, 360 and 320 px; sign-up closed and open; reduced motion on, and
+  motion on for DejaVu Sans) found **no overflow and no sideways scroll**, covering every `.pill`, `.chip`, `.tchip`, `.samp`,
+  `.samp-u`, `.vd`, `.fbtn`, `.ucheck`, `.ubtn`, `.usec`, `.post`, role chip and legend item. It first caught the narrow table's
+  "Needs correction" chip clipped at 360 px; fixed as above.
+- **Looked at** (headless Chromium, fallback fonts): 1440 px with motion — the hero, the week at Tue and the report, the monitor,
+  the ledger, the "who can do what" block; 1366 × 768 and 1024 × 800 — the pinned week at Tue and the report (the Tuesday card fits;
+  this is why the reply hides on short screens); 360 px with motion — the hero, the week cards, the monitor, the single-day card, the
+  "who can do what" block; 1024 px — the hero and the block; static (reduced motion) at 1440 and 1024 — the day cards as rows. **Not
+  looked at by eye:** the static 360 px layout of the hero and ledger (measured only), the other status states the mock-ups do not
+  show, hover and focus states, and the real Bricolage Grotesque (blocked here; line breaks will move).
+- **Fonts, as I read the instruction.** "Mock-ups use the app's fonts as the landing reference already does": the reference draws its
+  mock-ups in the page's own typeface, and the landing checklist (brand §12) forbids Chivo, Instrument Sans and JetBrains Mono on
+  the page, so the mock-ups stay in Bricolage Grotesque, with tabular figures where the app uses mono. If you meant the product's
+  three families inside the frames, that is a separate change (it loads fonts on the landing page).
+- **Tests:** `LandingPage.test.jsx` (`m-hrs` removed from the ids the motion needs; seven cases for the mock-ups: the squares in the
+  monitor and the hero, the legend, the four metrics and sidebar, the day cards, the report, the single card and ledger, and the
+  privacy statement's place) and `landingIsolation.test.js` (35 palette cases, the reference names reading that palette, the pill
+  rule list now naming `tchip`). Lint clean; server 385, client **564** (was 521).
+
 **Owner: how to test C10 by hand** (the demo and the landing page need no database; steps 1–9 need only the client)
 1. In a terminal: copy `client/.env.example` to `client/.env` if you have not, then `npm --prefix client run dev`, and open
    http://localhost:5173/ **with the API not running**. You should see the green landing page, and the one big button reads

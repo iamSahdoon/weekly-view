@@ -103,19 +103,41 @@ export function ProblemSection() {
             </div>
             <div className="one" id="one">
               <div className="one-h">
-                <b>Tue 15 Sep</b>
+                <b>
+                  Tue<span className="dt">15 Sep</span>
+                  <span className="one-hr">7 h</span>
+                </b>
                 <span className="samp-u">SAMPLE DATA</span>
               </div>
               <div className="one-r">
-                <b>Booking flow</b>
+                <span>
+                  <b>
+                    Booking flow<small>Client A</small>
+                  </b>
+                  <span className="d-ty">
+                    <i className="mk c1"></i>Development
+                  </span>
+                </span>
                 <span>4.5 h</span>
               </div>
               <div className="one-r">
-                <b>Login timeout</b>
+                <span>
+                  <b>
+                    Login timeout<small>Client A</small>
+                  </b>
+                  <span className="d-ty">
+                    <i className="mk c2"></i>Testing
+                  </span>
+                </span>
                 <span>2.5 h</span>
               </div>
               <div className="one-k">
-                Blocker: waiting on API keys from the client
+                <p className="bl">
+                  <span className="bt">
+                    Waiting on API keys from the client
+                  </span>
+                  <em>Key</em>
+                </p>
               </div>
               <div className="one-f">
                 <span>Imali J. · posted 17:42</span>
