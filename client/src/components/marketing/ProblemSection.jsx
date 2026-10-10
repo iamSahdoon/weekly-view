@@ -21,7 +21,7 @@ export function ProblemSection() {
       <div className="wrap">
         <div className="pb-head">
           <p className="eyebrow">Why it helps</p>
-          <h2 id="prob-h" className="wipe" data-in="">
+          <h2 id="prob-h" data-head="">
             From scattered updates to one short note a day.
           </h2>
         </div>

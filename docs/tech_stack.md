@@ -68,6 +68,7 @@ design tokens from `product_design_system.md`.
 | Class merging | **clsx** + **tailwind-merge**                 | `^2` / `^3` | A `cn()` helper so component variants override base classes predictably                                                                                                                                                            |
 | Primitives    | **@radix-ui/react-\***                        | `^1` each   | Unstyled — keyboard nav and focus trapping without hand-rolling it, fully styled by our tokens                                                                                                                                     |
 | Animation     | **motion**                                    | `^12`       | Fixed input                                                                                                                                                                                                                        |
+| Landing motion | **gsap** (with ScrollTrigger, ScrollToPlugin) | `^3`       | Landing page only — owner decision, landing polish (see §10) |
 | Charts        | **recharts**                                  | `^3`        | Fixed input                                                                                                                                                                                                                        |
 | Icons         | **lucide-react**                              | latest      | Rendered at `strokeWidth={1.5}` for the thin restrained stroke                                                                                                                                                                     |
 | Toasts        | **sonner**                                    | `^2`        | Must be restyled to tokens — see §6.7                                                                                                                                                                                              |
@@ -966,6 +967,7 @@ Not omissions — decisions, to be revisited if WeeklyView takes real users.
     "axios": "^1.7.0",
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
+    "gsap": "^3.15.0",
     "lucide-react": "^0.460.0",
     "motion": "^12.0.0",
     "react": "^19.0.0",
@@ -995,6 +997,14 @@ Not omissions — decisions, to be revisited if WeeklyView takes real users.
   }
 }
 ```
+
+**Owner decision (landing polish, 2026-10-10): `gsap` is added for the landing page only.** GSAP 3 with
+its ScrollTrigger and ScrollToPlugin runs the landing page's two scroll stories (scrubbed, snapping to
+each step), its entrances, the hero parallax and the footer's week. It is imported by
+`hooks/useLandingMotion.js` alone, which `LandingPage` alone imports, so it ships in the landing chunk and
+is never loaded by the app or the demo (`landingIsolation.test.js` asserts both). The app's own motion
+stays `motion` (§1.2). GSAP is free under its "Standard 'no charge' license" (gsap.com/standard-license).
+anime.js was considered and not added.
 
 `vitest` is on the client for one reason: the constants parity test
 (`project_structure.md` §7.1), which asserts that the client's copy of the shared

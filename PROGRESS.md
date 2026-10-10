@@ -1574,6 +1574,98 @@ Not a stage. Owner problem: visitors did not understand what WeeklyView is or wh
 12. **With the real font**, look at the headlines and captions for awkward line breaks (they were only seen in a
     fallback face here). Then open http://localhost:5173/signin: it is the ordinary cobalt sign-in, no green.
 
+### Landing polish: centred layout, GSAP scroll stories, new footer (owner request, 2026-10-10)
+Not a stage. Branch `claude/landing-polish-motion` from `main`. Recorded as owner decisions in
+`brand_design_strategy.md` §6.0 rule 11 (layout, motion, footer) and `tech_stack.md` §10 (`gsap`, landing only);
+`frontend_architecture.md` §9.16 and the `useLandingMotion.js` line of `project_structure.md` point to them. Copy and
+section order are rule 10's, unchanged (the footer's links and line are new).
+- **Design references.** `emilkowalski/skills` cloned again into the scratchpad (outside the repo); `apple-design`
+  read and applied: transform/opacity only, strong ease-out and no overshoot on anything that is not thrown,
+  interruptible scroll-linked motion (the scrub follows the scroll both ways), reduced motion = final states,
+  restraint (one short entrance per element, nothing loops).
+- **Layout (owner bug).** Hero: `min-height: 100svh`, content centred under the nav (top and bottom space equal at
+  1440 and 1920; at 1280×720 it fits with ~40px to spare). Week story: heading + caption + counter are one group
+  (the caption sits a fixed gap under the meta line, no longer pushed to the middle), centred against the
+  mock-up; the stage is as tall as its tallest card or the report, the cards share a top edge and the row moves so
+  the card in front (then the report) is centred, with the day rail riding just above it. Dashboard: scaled to the
+  room under its heading, and the heading and dashboard are centred as one group.
+- **GSAP (new dependency, owner-approved).** `gsap@^3.15` in `client/package.json`, imported only by
+  `hooks/useLandingMotion.js` (a test asserts this and that only `LandingPage` imports the hook). The build puts it
+  in the `LandingPage` chunk only (193 kB, 65.7 kB gzipped; the app's entry chunk holds just the lazy `import()`).
+  What it runs: the two stories (scrub 0.6 s, snapping to a resting point in each step, both directions, no
+  momentum projection so no step is skipped); each line drawn along its path and drawn back as its step ends, the
+  head last, the ring settling onto its target (scale 1.12 → 1 + fade), the dashboard's spotlight gliding between
+  targets; the typed captions, timed to the step; heading groups, cards, line icons, counters (0.6 s, 16–20px,
+  70–80 ms stagger); the closing arc drawn with the scroll; a 28px / 72px parallax on the hero's laptop / phone;
+  the footer's week and wordmark; in-page links glide (ScrollTrigger's snapping turns CSS smooth scroll off, so the
+  old `scroll-behavior: smooth` rule is gone). Everything lives in one `gsap.matchMedia()`, reverted on unmount.
+- **One deliberate change from the brief: the pin is CSS `position: sticky`, not ScrollTrigger's `pin`.** Both
+  were built and measured. ScrollTrigger's `pin` switches the panel between the page and `position: fixed`;
+  frame-by-frame it held still once `anticipatePin` (which pinned 50px early) was removed, but Chrome's
+  layout-shift score was **7.78** for one pass down and up through the stories, against **0.0008** with sticky,
+  with identical frame times. That score feeds Core Web Vitals (search ranking) for a public page, so the
+  panels are sticky and ScrollTrigger does the scrub and snap. Reversible: passing `pin: panel` and an `end`
+  back to `pinStory` and dropping the sticky heights restores ScrollTrigger pinning (see *Open questions*).
+- **Footer.** Under the closing band: "One square a day" with five squares (Mon–Fri: posted, posted, missing,
+  posted, holiday) that fill in on view and a Posted · Missing · Holiday legend that lights with them; link columns
+  **Product** (The week, For managers, Privacy, FAQ) and **Get started** (Live demo, Sign in); a WeeklyView wordmark
+  fitted to the column's width in any typeface (`aria-hidden`), rising into place as the page ends; and © year ·
+  "No activity tracking. Ever." · "Every name on this page belongs to a fictional sample team."
+- **Checks.** `npm run lint` clean. `npm test`: server 385 (unchanged), client **580** (was 574): the GSAP-import
+  isolation test, four footer tests and the heading-group test. `vite build` OK.
+- **Looked at in headless Chromium** (Google Fonts blocked, so a fallback face), motion on: 1440×900 hero and
+  steps of both stories; 1920×1080, 1280×720 and 1024×768 the hero, week steps 2/5/6/8 and dashboard steps 4/10;
+  360×780 the hero, stacked stories, privacy and footer; the footer at 1440 and 360. Motion off (reduced motion):
+  1440 full page and 360 full page: no pin, nothing hidden or drawn, every caption listed. **Wide font** (DejaVu
+  Sans forced): 1440 week step 4, dashboard step 4 and footer; 1024 week step 5 and footer; 360 footer — nothing
+  clips, the wordmark still fits. **No sideways scroll** at any of these.
+  **Measured:** scrolling both stories down and back with wheel input: 60 fps (frame p50 and p95 16.7–16.8 ms),
+  no long task, no page error, layout shift 0.0008; the panel's on-screen position matched the expected value on
+  every frame entering and leaving the pin; after scrolling the whole page no entrance target is left hidden (1440
+  and 360), the counters end on their values; a nav link glides to its section and moves focus there.
+  **Cleanup:** navigating inside the app from `/` to `/signin` leaves 0 ScrollTriggers, no pin spacer, no
+  `landing-active` class and no inline style on `<html>`/`<body>`; going back re-creates them and the stories
+  work.
+- **Not verified:** the real Bricolage Grotesque; Firefox and Safari; trackpad and touch momentum on a real
+  device (snap feel); a screen reader on the footer; the feel of the timings at full speed by eye (screenshots
+  freeze them); windows shorter than 700px.
+
+**Owner: how to check the landing polish by hand** (no API or database needed)
+1. In a terminal at the repo root: `npm --prefix client install` (adds `gsap`), copy `client/.env.example` to
+   `client/.env` if you have not, then `npm --prefix client run dev`. Open http://localhost:5173/ in a window
+   1440px wide or more.
+2. **Hero:** the copy and the laptop/phone sit in the middle of the first screen, with about the same space above
+   (under the nav) and below. The headline's words rise in, then the line under it, the button and the two doors.
+   Scroll a little: the phone drifts up faster than the laptop.
+3. Scroll to **"Follow one person's week."** It stays put while you scroll. The heading, the caption and the
+   "1 / 8" counter are one block on the left, level with the day card on the right; the Mon–Fri rail sits just
+   above the card. Stop scrolling anywhere: the page settles on the nearest step in the direction you were going.
+4. Step through to 8 / 8: each caption types itself; a sand line draws from the caption to its target, the arrow
+   arrives last and a ring settles on the target. Scroll **back up**: the line draws itself back and the previous
+   step returns.
+5. **"The manager's side":** the heading and caption sit above the dashboard and the whole group is centred. Each
+   step dims the rest of the dashboard; the bright area glides to the next target. The Show buttons switch by
+   themselves at steps 7–10.
+6. Keep scrolling: section headings (small label, heading, line under it) rise in together, cards arrive one after
+   another, the icons draw themselves, and the closing arc draws as you approach "Write the day. Read the week."
+7. **Footer:** the five squares fill in Monday to Friday (posted, posted, missing, posted, holiday) and the legend
+   lights with them; the big WeeklyView rises into place as you reach the bottom. Click **Privacy** in the footer:
+   the page glides up to that section.
+8. Click **FAQ** in the top nav from the top of the page: the page glides there.
+9. Try **1280×720** (dev tools → device toolbar → responsive, type the size): the hero and both stories still fit
+   the screen, nothing cut off at the bottom.
+10. **Phone:** responsive 360 wide, reload. Nothing pins; the stories are numbered lists above their cards; the
+    footer stacks (squares, then the two link columns side by side, then the wordmark, then the bottom row) and
+    nothing scrolls sideways.
+11. **Reduced motion:** Windows Settings → Accessibility → Visual effects → Animation effects **off**; reload at a
+    wide window. Nothing moves, pins or types; every caption is listed; the footer's squares are already filled.
+    Turn animation effects back on.
+12. **Leaving the page:** click **Sign in**: the ordinary cobalt sign-in screen, no green. In dev tools → Network,
+    filter "gsap" or "LandingPage": the landing chunk (which holds GSAP) is loaded on `/` only, not when you open
+    `/signin` or `/demo` directly in a new tab.
+13. **With the real font** (Bricolage loads on your machine), look at the headlines, captions and the footer's
+    wordmark: it should run edge to edge of the content column without being cut off.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -2208,6 +2300,10 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- **Landing polish, to confirm or change:** the stories' panels are pinned with CSS `position: sticky` (ScrollTrigger
+  does the scrub and snap) instead of ScrollTrigger's own `pin`, because the GSAP pin scored a layout shift of 7.78
+  in Chrome against 0.0008 for sticky (see *Landing polish*). Say if you want the GSAP pin anyway; it is a small,
+  reversible change.
 - ~~C10, to confirm or change~~ **Resolved (owner, 2026-10-10):** all twelve C10 decisions accepted as built — see *C10 decisions*; the weekend look of the team table was fixed (see *C10 owner answers*). (Was: the twelve decisions, especially 3 (the demo bar's surface is `--d-panel`, not `--ink`), 4 (its way out is always `Sign in`), 6 (the pill on panels only) and 10 (the open-sign-up wording of the landing page's FAQ).) The landing page and the demo were checked in a browser with fallback fonts only; see *C10 checks*.
 - ~~C8, to confirm or change~~ **Resolved (owner, 2026-10-09):** all twelve C8 decisions accepted as built — see *C8 decisions*. (Was: the twelve decisions, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).)
 - **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.

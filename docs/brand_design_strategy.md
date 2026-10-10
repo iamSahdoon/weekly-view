@@ -468,6 +468,35 @@ sees the real thing.
     types or draws: the same steps are a numbered list **above** the mock-up they explain, and every mock-up
     shows its final state. Scrolling writes only `transform`, `opacity` and SVG attributes from geometry
     measured on load and resize.
+11. **Owner decision (landing polish, 2026-10-10): centred layout, GSAP motion, a new footer.** The copy and the
+    section order of rule 10 are unchanged.
+    - **Layout.** The hero fills the first screen (`min-height: 100svh`), its copy and mock-up centred in the
+      room below the 76px nav with equal space above and below. In each pinned story the heading, caption and
+      step counter are one group, centred against the mock-up in the pinned screen; the week's cards share a
+      top edge and the row moves so the card in front (then the report) sits in the middle, with the day rail
+      just above it; the dashboard is scaled to the room left under its heading and the two are centred as one.
+    - **Motion (GSAP, landing only — `tech_stack.md` §10).** The stories' panels are `position: sticky` in a
+      section as tall as the story; GSAP's ScrollTrigger reads the progress, smooths it (scrub) and brings the
+      scroll to rest on a step, in either direction. (ScrollTrigger's own pin was tried and dropped: it moves
+      the panel between the page and `position: fixed`, which Chrome scores as a layout shift — about 7.8 for
+      one pass through both stories — while sticky scores 0.) Each step's line is drawn along its path and
+      drawn back as the step ends; its arrowhead arrives last and its ring settles onto the target (scale
+      1.12 → 1 with a fade); on the dashboard the dim's spotlight glides from one target to the next. Captions
+      are still typed when their step arrives. Section headings (eyebrow, heading, lede), cards, the line icons
+      and the dashboard's numbers enter once, short (0.6 s), small (16–20px) and staggered (70–80 ms), with a
+      strong ease-out; the closing arc draws with the scroll; the hero's laptop and phone drift apart slightly
+      (28px and 72px) as the hero leaves. In-page links glide with GSAP (ScrollTrigger's snapping turns the
+      page's CSS smooth scroll off). Everything is `transform`/`opacity` (and SVG stroke and path attributes);
+      under `prefers-reduced-motion` nothing is hidden, pinned, scrubbed, typed or drawn, and below 1000px the
+      stories stay stacked.
+    - **Footer** (replaces §7.12 for the landing page). Under the closing band ("Write the day. Read the week."
+      and its pill, rule 10 #8), the footer has: a week of five squares (Mon–Fri) labelled "One square a day",
+      which fill in on view — posted, posted, missing, posted, holiday — with a Posted · Missing · Holiday legend
+      whose entries light as their first square lands; two link columns, **Product** (The week, For managers,
+      Privacy, FAQ) and **Get started** (Live demo, Sign in); a WeeklyView wordmark fitted to the column's full
+      width, which rises into place as the page ends; and a bottom row: © year · "No activity tracking. Ever." ·
+      "Every name on this page belongs to a fictional sample team." The squares use landing tokens (sand for
+      posted), not the product palette: they are the landing's own motif, not a mock-up.
 
 ### 6.1 Job of the page
 

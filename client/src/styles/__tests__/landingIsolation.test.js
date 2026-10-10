@@ -133,6 +133,23 @@ describe("nothing of the landing page reaches the app", () => {
     expect(html).not.toMatch(/Bricolage/i);
   });
 
+  // GSAP (owner decision, landing polish; tech_stack.md §10) runs the landing page's motion only:
+  // one hook imports it, and only the landing page imports that hook, so it stays in that chunk.
+  it("GSAP is imported by useLandingMotion alone, and that hook by LandingPage alone", () => {
+    const importersOf = (pattern) =>
+      walk(SRC)
+        .filter((f) => /\.(jsx?)$/.test(f) && !f.includes("__tests__"))
+        .filter((f) => pattern.test(readFileSync(f, "utf8")))
+        .map((f) => path.relative(SRC, f).replaceAll("\\", "/"))
+        .sort();
+    expect(
+      importersOf(/from\s+["']gsap(?:\/[^"']*)?["']|import\(\s*["']gsap/),
+    ).toEqual(["hooks/useLandingMotion.js"]);
+    expect(
+      importersOf(/from\s+["'][^"']*useLandingMotion(?:\.js)?["']/),
+    ).toEqual(["pages/LandingPage.jsx"]);
+  });
+
   it("landing.css is imported by LandingPage and by nothing else", () => {
     const importers = walk(SRC)
       .filter((f) => /\.(jsx?|css)$/.test(f))

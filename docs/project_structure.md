@@ -676,7 +676,7 @@ client/
 │   │   ├── useActiveSection.js        # IntersectionObserver for the form rail
 │   │   ├── useHasMounted.js           # lets charts animate data changes but not mount
 │   │   ├── usePermissions.js          # lib/permissions bound to the current user
-│   │   ├── useLandingMotion.js        # v11's vanilla motion kit (reveals, split headings, counters, scroll scenes) and the two guided scroll stories, as one effect hook
+│   │   ├── useLandingMotion.js        # the landing page's motion, as one effect hook: the hero's typed blocker, the two guided scroll stories, entrances, parallax and the footer's week (GSAP + ScrollTrigger, imported here only)
 │   │   ├── useReportQueries.js        # TanStack Query hooks wrapping reportService (incl. team updates)
 │   │   ├── useReviewQueries.js        # review desk, review actions, comments
 │   │   ├── useDashboardQueries.js

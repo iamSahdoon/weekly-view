@@ -4,12 +4,7 @@ import { Words } from "./Words.jsx";
 export function FinalSection({ signupOpen }) {
   return (
     <section className="final s-deep" aria-labelledby="fin-h">
-      <svg
-        className="farc"
-        viewBox="0 0 1300 560"
-        aria-hidden="true"
-        data-in=""
-      >
+      <svg className="farc" viewBox="0 0 1300 560" aria-hidden="true">
         <path
           pathLength="1"
           data-draw=""
