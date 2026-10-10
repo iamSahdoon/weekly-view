@@ -877,6 +877,15 @@ requires a redeploy, not just a settings save.
 
 ---
 
+### 7.5 Alternative: the API on Vercel (owner decision)
+
+Render may ask for a payment card. As an alternative the API can run on **Vercel** as a
+serverless function: `server/api/index.js` connects to MongoDB once per warm instance and passes
+each request to the unchanged `app.js`; `server/vercel.json` rewrites every path to it. The client
+stays on Vercel either way. Step-by-step instructions for both options: `docs/DEPLOYMENT.md`.
+
+---
+
 ## 8. Deliberately deferred
 
 Not omissions — decisions, to be revisited if WeeklyView takes real users.
