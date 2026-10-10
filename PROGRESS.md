@@ -1772,6 +1772,58 @@ the week panel. `USER_MANUAL.md` §14 and §37 mention the squares in the strip 
 16. Narrow the window to about 360 px (or the device toolbar) and repeat 3, 4 and 7: nothing runs off the side,
     "My projects" stays on one line, and all five day tabs fit.
 
+### Landing: text-only wordmark in header and footer (owner request, 2026-10-10)
+Not a stage; **C11 is still next.** Branch `claude/landing-wordmark` from `main`. Recorded as an owner decision in
+`brand_design_strategy.md` §6.0 rule 12 (§1.3 points to it). Only the landing page's nav brand and footer wordmark
+changed; the app's `BrandMark` (sidebar, sign-in screens, boot splash, error pages) keeps the glyph, and no landing
+colour, font, token or other motion changed.
+- **Header.** The `[ | ]` SVG is gone; the link reads "WeeklyView" and keeps `href="#top"` and
+  `aria-label="WeeklyView home"`. The bar's row is now a grid that puts the wordmark, the section links, "Sign in"
+  and the pill's text on **one baseline** and centres the row in the bar (before, each box was centred, which left
+  the larger wordmark's baseline 2px below the links'). Its left edge is the `.wrap` edge at every width.
+- **Footer.** The SVG and its gap are gone; the text spans the column. CSS sizes it to the column first
+  (`clamp(40px, 19.2cqi, 240px)` on the footer's `.wrap` as an inline-size container), then `useLandingMotion`
+  fits it exactly in whatever face loaded. Two bugs in the old fit were fixed on the way: (1) it scaled in one
+  step, but Bricolage's optical-size axis draws small sizes wider, so at 360px it overflowed by 15px and the "w"
+  was cut off — the fit now refines until it settles and never ends wider than the column; (2) under
+  reduced motion, the page-wide 1ms transition meant the fit measured the old size and left the wordmark about
+  half the column wide — the wordmark now has no transitions. The last letter's negative tracking is given back as
+  right padding so its ink is not clipped (it was, at 1440). The gap to the rule above the © line is now set from
+  the descender: about 39 / 33 / 28 / 20px at 1440 / 1024 / 768 / 360 (it was 37px at 1440 but 9px at 360).
+  `aria-hidden="true"`, `data-wordmark` and the rise into place are kept.
+- **CSS removed:** `.mark svg` (both sizes), `.mark`'s `gap`/`margin-right:auto`, `.ft-mark svg` and the span's
+  flex/gap.
+- **Checks.** `npm run lint` clean. `npm test`: server 385, client 580 (unchanged counts; isolation tests green).
+  `vite build` OK.
+- **Looked at in headless Chromium, with the real Bricolage Grotesque** (Google Fonts loaded this time): header and
+  footer at 1440, 1920, 1200, 1024, 768 and 360. Measured: header baselines equal (wordmark, links, Sign in;
+  the pill's text within 0.13px); wordmark's left edge = `.wrap` edge; footer wordmark one line, box edges on the
+  column's edges, ink within 1–3px of each edge (the letters' side bearings), no overflow, no sideways scroll.
+  **Wide font** (DejaVu Sans forced on every landing element): same widths — fits on one line, no overflow, the
+  "y" descender not clipped. **Reduced motion** at 1440, 1024, 768, 360: same sizes as with motion.
+- **Not verified:** Firefox and Safari; Windows font rendering; widths between the ones listed.
+
+**Owner: how to check the wordmark by hand** (no API or database needed)
+1. In a terminal at the repo root: `git fetch origin` then `git checkout claude/landing-wordmark`.
+2. If you have not before: copy `client/.env.example` to `client/.env`, then run `npm --prefix client install`.
+3. Run `npm --prefix client run dev` and open http://localhost:5173/ in Chrome, in a window 1440px wide or more.
+4. **Header:** top left reads just **WeeklyView**, with no bracket icon. Its left edge lines up with the left edge of
+   the hero's text below it. Look along the bar: the bottoms of the letters in "WeeklyView", "Why it helps",
+   "Sign in" and "See the live demo" sit on one line.
+5. Click **WeeklyView** in the header after scrolling down: the page glides back to the top.
+6. Scroll to the bottom. The big **WeeklyView** has no icon in front of it; its "W" starts at the left edge of the
+   squares above it and its last "w" ends at the right edge of "Live demo"/"Get started" — nothing is cut off, no
+   gap at the start. It rises into place as you reach the bottom.
+7. Below it, the line and "© 2026 WeeklyView" sit a short, even distance under the tail of the "y".
+8. Open dev tools (F12) → the device toolbar icon (Ctrl+Shift+M) → **Responsive**, and type widths **1024**, **768**
+   and **360** in turn (reload each time). At each: the header wordmark starts at the content edge and is level with
+   the button; the footer wordmark is one line, edge to edge, not cut off; nothing scrolls sideways.
+9. **Reduced motion:** Windows Settings → Accessibility → Visual effects → **Animation effects off**; reload at a
+   wide window and at 360. The footer wordmark is still edge to edge (before this change it was about half
+   width). Turn animation effects back on.
+10. **The app keeps its glyph:** open http://localhost:5173/signin — the cobalt sign-in screen still shows the
+    bracket icon next to WeeklyView. Open http://localhost:5173/demo, pick a role: the sidebar shows it too.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds

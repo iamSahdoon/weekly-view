@@ -96,9 +96,10 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .rail{position:fixed;left:0;top:0;width:100%;height:2px;background:var(--l-acc);transform-origin:0 50%;transform:scaleX(0);z-index:50;pointer-events:none}
 .landing .top{position:fixed;left:0;right:0;top:0;z-index:40;transition:background-color .3s linear,box-shadow .3s linear}
 .landing .top.scrolled{background:var(--l-hdr);box-shadow:0 1px 0 var(--l-ln)}
-.landing .top .wrap{display:flex;align-items:center;gap:24px;min-height:76px}
-.landing .mark{display:inline-flex;align-items:center;gap:10px;font-weight:750;font-size:21px;line-height:1.3;letter-spacing:-.02em;text-decoration:none;min-height:44px;margin-right:auto}
-.landing .mark svg{width:22px;height:22px;flex:none}
+/* one row: the text wordmark (owner decision, rule 12) on the column's left edge, the nav and the account on the right;
+   the items share a baseline and the row is centred in the bar */
+.landing .top .wrap{display:grid;grid-template-columns:minmax(0,1fr);grid-auto-flow:column;align-items:baseline;align-content:center;gap:24px;min-height:76px}
+.landing .mark{justify-self:start;display:inline-flex;align-items:center;font-weight:750;font-size:21px;line-height:1.3;letter-spacing:-.02em;text-decoration:none;min-height:44px}
 .landing .nl{display:flex;gap:26px;font-size:15px}
 .landing .nl a{position:relative;color:var(--l-fg2);text-decoration:none;padding:12px 0;transition:color .2s linear}
 .landing .nl a::after{content:"";position:absolute;left:0;right:0;bottom:7px;height:1.5px;background:var(--l-acc);transform:scaleX(0);transform-origin:100% 50%;transition:transform .35s var(--l-ease-m)}
@@ -620,7 +621,7 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .final .pill{margin-top:44px}
 /* ───────── FOOTER (owner decision, landing polish): the week's squares, the links, the wordmark ───────── */
 .landing .foot{position:relative;background:var(--l-bg2);overflow:hidden}
-.landing .foot .wrap{padding-top:40px;padding-bottom:28px}
+.landing .foot .wrap{padding-top:40px;padding-bottom:28px;container-type:inline-size}
 .landing .ft-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:48px 72px;align-items:start;padding:44px 0 52px;border-top:1px solid var(--l-ln)}
 .landing .ft-h{margin-bottom:16px;font-size:14px;font-weight:650;line-height:1.35;color:var(--l-acc)}
 .landing .fw-days{display:flex;gap:10px}
@@ -642,9 +643,13 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .ft-cols a{position:relative;display:inline-flex;align-items:center;min-height:40px;font-size:17px;line-height:1.3;color:var(--l-fg);text-decoration:none}
 .landing .ft-cols a::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:1.5px;background:var(--l-acc);transform:scaleX(0);transform-origin:100% 50%;transition:transform .35s var(--l-ease-m)}
 .landing .ft-cols a:hover::after{transform:scaleX(1);transform-origin:0 50%}
-.landing .ft-mark{margin:0;overflow:hidden;font-size:min(14vw,200px);font-weight:750;line-height:1;letter-spacing:-.045em;white-space:nowrap;color:var(--l-fg)}
-.landing .ft-mark > span{display:inline-flex;align-items:center;gap:.08em;padding:.04em 0 .14em}
-.landing .ft-mark svg{flex:none;width:.74em;height:.74em}
+/* the text wordmark (owner decision, rule 12) spans the column: sized to it here, then fitted exactly in any typeface
+   by useLandingMotion; the right padding gives back the last letter's negative tracking so its ink is not clipped,
+   the bottom padding keeps a deep descender (a fallback face's "y") inside the clip, and with the margin sets the
+   gap from the descender to the rule above the © line. No transitions: the fit measures straight after setting a size,
+   and the reduced-motion rule's 1ms transitions would hand it the old one */
+.landing .ft-mark{margin:0 0 14px;overflow:hidden;transition-property:none;font-size:clamp(40px,19.2cqi,240px);font-weight:750;line-height:1;letter-spacing:-.045em;white-space:nowrap;color:var(--l-fg)}
+.landing .ft-mark > span{display:inline-block;padding:.04em .045em .09em 0;transition-property:none}
 .landing .ft-bot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 24px;padding-top:22px;border-top:1px solid var(--l-ln);font-size:14px;line-height:1.5;color:var(--l-fg3)}
 .landing .ft-promise{color:var(--l-fg);font-weight:600}
 /* ───────── responsive ───────── */
@@ -710,8 +715,7 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .trail{width:400px;height:650px}}
 @media (max-width:640px){.landing .wrap{padding:0 18px}
 .landing .top .wrap{min-height:68px;gap:12px}
-.landing .mark{font-size:18px;gap:8px}
-.landing .mark svg{width:19px;height:19px}
+.landing .mark{font-size:18px}
 .landing .acct{gap:12px;font-size:14px}
 .landing .acct .si{font-size:14px}
 .landing .pill.sm{font-size:14px;padding:0 14px}
