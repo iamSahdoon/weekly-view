@@ -630,7 +630,9 @@ client/
 │   │   │   ├── LinkPreviewGate.jsx    # added in C1: A7 before the invite / reset form
 │   │   │   └── LinkExpired.jsx        # added in C1: the one expired-link state
 │   │   └── marketing/                 # the landing page's sections, ported from landing-reference/index.html (brand §6.0)
-│   │       ├── HeroSection.jsx · WeekSection.jsx · ProblemSection.jsx · DeskSection.jsx · SidesSection.jsx · LimitsSection.jsx · QuestionsSection.jsx · FinalSection.jsx   # added in C10: one per section of the reference; Hero, Questions and Final take `signupOpen`
+│   │       ├── HeroSection.jsx · ProblemSection.jsx · WeekSection.jsx · DeskSection.jsx · PrivacySection.jsx · DemoSection.jsx · QuestionsSection.jsx · FinalSection.jsx   # added in C10, one per section, in page order (landing revamp: Sides and Limits gone, Privacy and Demo added — brand §6.0 rule 10); Hero, Questions and Final take `signupOpen`
+│   │       ├── StoryCaptions.jsx      # added in the landing revamp: the two scroll stories' captions — the pinned, typed column and the stacked numbered notes
+│   │       ├── storySteps.js          # added in the landing revamp: the stories' steps (kicker, sentence, the dashboard's filter)
 │   │       ├── CtaPill.jsx            # added in C10: the pill link (solid with the arrow circle, or ghost) — always a plain <a>, so the landing styles never outlive the page
 │   │       ├── Words.jsx              # added in C10: a heading's words in their masks (the reference split them in its script)
 │   │       └── __tests__/LandingPage.test.jsx  # added in C10: the CTA swap, the honesty rules, the ids the motion needs, no hex in the components
@@ -674,7 +676,7 @@ client/
 │   │   ├── useActiveSection.js        # IntersectionObserver for the form rail
 │   │   ├── useHasMounted.js           # lets charts animate data changes but not mount
 │   │   ├── usePermissions.js          # lib/permissions bound to the current user
-│   │   ├── useLandingMotion.js        # v11's vanilla motion kit (reveals, split headings, counters, scroll scenes) as one effect hook
+│   │   ├── useLandingMotion.js        # v11's vanilla motion kit (reveals, split headings, counters, scroll scenes) and the two guided scroll stories, as one effect hook
 │   │   ├── useReportQueries.js        # TanStack Query hooks wrapping reportService (incl. team updates)
 │   │   ├── useReviewQueries.js        # review desk, review actions, comments
 │   │   ├── useDashboardQueries.js

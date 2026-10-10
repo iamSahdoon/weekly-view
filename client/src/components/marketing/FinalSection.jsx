@@ -18,11 +18,11 @@ export function FinalSection({ signupOpen }) {
       </svg>
       <div className="wrap">
         <h2 id="fin-h" data-split="">
-          <Words text="Write one day. Then read it from the other side." />
+          <Words text="Write the day. Read the week." />
         </h2>
         <p data-reveal="">
-          Open the demo as the team member, the manager or the admin. Every
-          control works on sample data, and a refresh resets it.
+          One short note a day, and Friday&rsquo;s report builds itself. See it
+          in the demo: no sign-up, and nothing is saved.
         </p>
         <div className="fin-acts">
           {signupOpen ? (

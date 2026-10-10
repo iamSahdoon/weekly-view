@@ -1283,7 +1283,9 @@ the code keeps it that way:
 - **Source:** `landing-reference/index.html` is built and is the reference.
   Port it to `LandingPage` + `components/marketing/`, its CSS to `styles/landing.css`, and
   its inline script to `hooks/useLandingMotion.js` (reveals, split headings, counters,
-  scroll scenes; a no-op under `prefers-reduced-motion`). Keep its copy.
+  scroll scenes; a no-op under `prefers-reduced-motion`). Keep its copy — except where the
+  owner has since changed it: the section order, the copy and the two guided scroll stories
+  are `brand_design_strategy.md` §6.0 rule 10.
 - **Scoped, never global:** every landing rule sits under a `.landing` root and every
   landing token is prefixed (`--l-*`), so none can reach the app. `landing.css` is imported
   by `LandingPage` alone, so it ships in the landing chunk and is never loaded when a

@@ -1502,6 +1502,78 @@ Both are owner decisions, noted as rules 8 and 9 of `brand_design_strategy.md` �
    (☰): the drawer slides in under the bar.
 10. **Nothing leaks:** from the landing page click **Sign in**: the ordinary sign-in screen (cobalt, Chivo headings, no green). In dev tools → Network, filter "Bricolage": it appears on `/` only, not on `/signin` and not on `/demo`.
 
+### Landing revamp: guided scroll story and plain-language copy (owner request, 2026-10-10)
+Not a stage. Owner problem: visitors did not understand what WeeklyView is or why they would want it. Branch
+`claude/landing-story-revamp` from `main`. The new order and every line of copy are recorded as owner decisions in
+`brand_design_strategy.md` §6.0 rule 10 (rule 9 is marked superseded; rule 6 now names the Privacy section);
+`frontend_architecture.md` §9.16 points to it where it said "keep its copy".
+- **Design references.** `emilkowalski/skills` was cloned into the scratchpad (outside the repo) and read —
+  `apple-design`, `emil-design-eng`, `animate`, the performance cheatsheet. Applied: transform/opacity only on
+  scroll, no reads in the scroll path, strong ease-out, nothing from `scale(0)` (the dashboard squares now start at
+  `scale(.6)` + transparent), short staggers, restraint (the tally, the ledger and the server-check animation are
+  gone), reduced motion = final states. **21st.dev could not be reached from this environment** (the proxy refused
+  the tunnel, 403); the patterns used (sticky scroll story, product-tour spotlight, typed caption) are ideas only.
+  No dependency was added; Motion was not needed (the existing vanilla kit does it).
+- **What changed.** Section order: hero → before/after → the team member's week → the manager's side → Private
+  where it matters → demo invitation → FAQ → final. New: `PrivacySection.jsx` (from `LimitsSection.jsx`),
+  `DemoSection.jsx`, `StoryCaptions.jsx`, `storySteps.js`; removed: `SidesSection.jsx`, `LimitsSection.jsx`.
+  `WeekSection`, `DeskSection`, `ProblemSection`, `HeroSection`, `QuestionsSection`, `FinalSection`, the nav, the
+  tab title and description are rewritten; `useLandingMotion.js` keeps reveals, headings, the hero's typed blocker
+  and the filters, drops the old week, problem, monitor, ledger and server scripts, and adds the two stories.
+- **The stories.** From 1000px with motion: the week pins for 8 steps, the dashboard for 10. Each step types one
+  caption (an `aria-hidden` copy over the real sentence, which stays in the DOM), draws a sand line to its target
+  and rings it; the dashboard dims the rest and its Show buttons switch Everyone → Needs correction → Not started →
+  Has blocker. The dashboard keeps a 1240px design width while pinned and is scaled to fit. Below 1000px and under
+  reduced motion: numbered captions above each mock-up, nothing pinned, typed or drawn.
+- **Checks.** `npm run lint` clean. `npm test`: server 385 (unchanged), client **574** (was 564):
+  `LandingPage.test.jsx` 30 (the order, the hero's what/who, the before/after, the old copy gone, ≤15-word
+  captions, the steps' order and filters, one target per step, real caption text in the DOM with the typed copy
+  `aria-hidden`, Tuesday's teammate comment, the privacy cards and closed disclosure, the demo's three links, plus
+  the CTA, honesty and mock-up cases kept); `landingIsolation.test.js` 50 (the Sides/Limits pill guards removed with
+  their elements; three new: the stacked fallback, the 1000px pin, the overlay caption). `vite build` OK.
+- **Looked at in headless Chromium** (fonts blocked, so the fallback face): 1440×900 every step of both stories;
+  1024×768 every step of both; 360×780 the hero, the before/after and the stacked stories; reduced motion full page
+  at 1440 and 360; the hero at 1440, 1024, 360. **Wide font:** DejaVu Sans forced on every landing element at
+  1024×768 (every step) and 360 (sections; reduced-motion full page): captions fit their column, no sideways scroll.
+  **No sideways scroll** at 1440, 1024, 360 (one 10px overflow at 360 from a reveal's start offset was fixed with
+  `overflow-x:clip` on the sections). **Sign-up open** (bootstrap mocked `available: true`): three "Create your
+  account" links (nav, hero, final). **Performance:** scrolling through both stories and back up at 60–80px steps
+  logged no long task (>50ms) and no page error; scrolling back restores the right day and caption.
+- **Not verified:** the real Bricolage Grotesque (line breaks will move a little); Firefox and Safari; touch
+  scrolling on a real phone; a screen reader reading the captions; widths between 1000 and 1024 and above 1440;
+  very short desktop windows under 700px tall (the dashboard scales down to fit, untested by eye); the typing's feel
+  at full speed by eye (screenshots catch it mid-way).
+
+**Owner: how to check the revamp by hand** (no API or database needed)
+1. In a terminal: copy `client/.env.example` to `client/.env` if you have not, then run `npm --prefix client run dev`
+   and open http://localhost:5173/ in a wide window (1280px or more).
+2. **Hero:** you should read, top to bottom, "A web app for daily updates and weekly reports", "Short daily notes. A
+   weekly report that builds itself.", and "For teams and their managers…". The phone types the blocker and it flies
+   to the laptop, as before.
+3. Scroll once: **"From scattered updates to one short note a day."** — two cards, *Before / In most teams…* and
+   *After / With WeeklyView…*, with an arrow between them.
+4. Keep scrolling into **"Follow one person's week."** The section stays put while you scroll. Check, step by step
+   (the counter under the caption reads 1/8 … 8/8): Monday's header is ringed; then the first work line; then the
+   "7.5 h" (the line goes over the top of the card); Tuesday arrives and its blocker is ringed; then Tharindu's
+   comment; the day rail runs to Friday; the cards stack and the **Week 38 report** rises; the statuses fill in and
+   the line points at *Ask for approval* and *Submit*. Each caption types itself once per step.
+5. Scroll **back up** a little: the previous step's caption and line come back.
+6. Keep going into **"The manager's side"**. The dashboard pins with a caption above it (1/10 … 10/10): the four
+   numbers are ringed in turn and the rest of the dashboard dims; then the Updates column; then the legend; then the
+   **Show** buttons switch by themselves — Everyone, Needs correction (one row), Not started (Dinesh), Has blocker
+   (three rows). After the pin ends you can still click the buttons yourself.
+7. **Private where it matters:** three cards and the line "No activity tracking…". Click **See exactly who sees
+   what**: the table opens; click again to close.
+8. **Try both sides yourself:** three role cards; click one — the address is `/demo` and the chooser opens. Go back.
+9. **FAQ**: open two or three questions. **Final band**: "Write the day. Read the week." and the demo button.
+10. **Phone width:** dev tools → device toolbar → 360px wide, reload. Nothing pins: each group of numbered captions
+    sits above the card it explains, the dashboard has its numbered list above it, and nothing scrolls sideways.
+11. **Reduced motion:** turn on your system's "reduce motion" (Windows: Settings → Accessibility → Visual effects →
+    Animation effects off), reload at a wide window. Nothing pins, types or draws; every caption is shown as a list
+    above its mock-up and every mock-up is in its final state.
+12. **With the real font**, look at the headlines and captions for awkward line breaks (they were only seen in a
+    fallback face here). Then open http://localhost:5173/signin: it is the ordinary cobalt sign-in, no green.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -2162,6 +2234,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- The landing revamp added `components/marketing/{PrivacySection,DemoSection,StoryCaptions}.jsx` and `storySteps.js`, and removed `SidesSection.jsx` and `LimitsSection.jsx` (`LimitsSection` became `PrivacySection`); `project_structure.md` §3.1 is updated.
 - C10 added `components/ui/SampleDataPill.jsx`, `hooks/useIsDemo.js`, eight section components, `CtaPill.jsx` and `Words.jsx` in `components/marketing/`, `client/.prettierignore` and four test files (`demo/__tests__/{demoCast.test.js,demoEntry.test.jsx}`, `components/marketing/__tests__/LandingPage.test.jsx`, `styles/__tests__/landingIsolation.test.js`); `AuthPanel` takes `padding="none"`; `project_structure.md` §3.1 and §6 are updated. `DemoEntryPage`, `DemoBar`, `MarketingLayout`, `LandingPage`, `useLandingMotion` and `landing.css` were in the tree. `pages.js` names `LandingPage` and `DemoEntryPage`.
 - C9 added `components/shell/{ErrorBoundary,ErrorStates}.jsx`, `components/report/PrintFooter.jsx`, `hooks/{useNewMarks,useRouteFocus,usePrintTheme}.js`, `lib/clearMarkers.js`, `services/markerService.js` (in the tree), `styles/print.css` and four test files (`demo/__tests__/demoMarkers.test.js`, `lib/__tests__/clearMarkers.test.js`, `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`); `project_structure.md` §3.1 and §6 are updated. The page-level error boundary is in `AppShell` as well as `RootLayout` (see C9 decisions).
 - C8 added `pages/{ProjectsPage,HolidaysPage,UsersPage,PeoplePage,PersonProfilePage,AccountPage}.jsx` (all in the tree), `components/project/{ProjectModal,ProjectsListTable}.jsx`, `components/holiday/HolidayModal.jsx`, ten files in `components/user/` (see the tree), `ui/{DropdownMenu,DatePicker,Meter}.jsx` (in the tree), `schemas/{projectSchema,userSchema}.js`, `lib/{peopleParams,passwordStrength}.js` and five test files; it deleted `pages/PendingPage.jsx`. `project_structure.md` §3.1 and §6 are updated.

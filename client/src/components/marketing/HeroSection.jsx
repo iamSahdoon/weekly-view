@@ -6,16 +6,18 @@ export function HeroSection({ signupOpen }) {
     <section className="hero s-sp" id="top" aria-labelledby="h1">
       <div className="wrap hgrid">
         <div className="hcopy">
+          <p className="eyebrow hero-k">
+            A web app for daily updates and weekly reports
+          </p>
           <h1 id="h1" data-split="" style={{ "--l-d": "80ms" }}>
-            <Words text="One update." />{" "}
+            <Words text="Short daily notes." />{" "}
             <em>
-              <Words text="Both sides of the desk." from={2} />
+              <Words text="A weekly report that builds itself." from={3} />
             </em>
           </h1>
           <p className="sub">
-            Each person posts a few lines when their day ends. Their manager
-            reads the same lines on one dashboard, and on Friday they become the
-            weekly report.
+            For teams and their managers. Write a few lines each day, and read
+            the whole team&rsquo;s week on one page.
           </p>
           <div className="acts">
             {signupOpen ? (
@@ -50,7 +52,7 @@ export function HeroSection({ signupOpen }) {
               className="stage sent landed"
               id="stage"
               role="img"
-              aria-label="A laptop on a desk shows the team dashboard for Tuesday 15 September, with a phone in front of it. On the phone, Imali J. adds the blocker Waiting on API keys from the client to her update and posts it. The update crosses to the dashboard: open blockers go from 2 to 3, posted today from 5 to 6 of 8, and her row now shows Tuesday's update and the blocker. Sample data."
+              aria-label="A laptop shows the team dashboard for Tuesday 15 September, with a phone in front of it. On the phone, Imali J. writes her note for the day, adds the blocker Waiting on API keys from the client, and posts it. The note reaches the dashboard: open blockers go from 2 to 3, and her row shows Tuesday as posted, with the blocker. Sample data."
             >
               <span className="desk-edge"></span>
               <div className="lap">
@@ -433,12 +435,12 @@ export function HeroSection({ signupOpen }) {
         </div>
         <div className="doors">
           <a className="door" href="#week">
-            <b>Writing the update?</b>
-            <span>Follow one week, Monday to Friday</span>
+            <b>On the team?</b>
+            <span>Follow one person&rsquo;s week</span>
           </a>
           <a className="door" href="#desk">
-            <b>Reading the week?</b>
-            <span>Skip to the manager's view</span>
+            <b>Leading the team?</b>
+            <span>See the manager&rsquo;s side</span>
           </a>
         </div>
       </div>

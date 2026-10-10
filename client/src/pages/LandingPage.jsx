@@ -2,10 +2,10 @@ import { useLayoutEffect, useRef } from "react";
 import { DeskSection } from "../components/marketing/DeskSection.jsx";
 import { FinalSection } from "../components/marketing/FinalSection.jsx";
 import { HeroSection } from "../components/marketing/HeroSection.jsx";
-import { LimitsSection } from "../components/marketing/LimitsSection.jsx";
+import { DemoSection } from "../components/marketing/DemoSection.jsx";
+import { PrivacySection } from "../components/marketing/PrivacySection.jsx";
 import { ProblemSection } from "../components/marketing/ProblemSection.jsx";
 import { QuestionsSection } from "../components/marketing/QuestionsSection.jsx";
-import { SidesSection } from "../components/marketing/SidesSection.jsx";
 import { WeekSection } from "../components/marketing/WeekSection.jsx";
 import { useBootstrapStatus } from "../hooks/useAuthQueries.js";
 import { useLandingMotion } from "../hooks/useLandingMotion.js";
@@ -19,9 +19,10 @@ import "../styles/landing.css";
 
 const FONT_HREF =
   "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap";
-const TITLE = "WeeklyView: one update, both sides of the desk";
+const TITLE =
+  "WeeklyView: short daily notes, a weekly report that builds itself";
 const DESCRIPTION =
-  "Each person posts a few lines when their day ends. Their manager reads the same lines on one dashboard, and on Friday they become the weekly report.";
+  "A web app for teams and their managers. Write a few lines each day, read the whole team's week on one page, and let Friday's report build itself.";
 
 // What the page changes outside its own root, undone when it unmounts: the class that
 // turns the area behind the page green, Bricolage Grotesque (the app never fetches it),
@@ -77,11 +78,11 @@ export default function LandingPage() {
   return (
     <MarketingLayout rootRef={rootRef} signupOpen={signupOpen}>
       <HeroSection signupOpen={signupOpen} />
-      <WeekSection />
       <ProblemSection />
+      <WeekSection />
       <DeskSection />
-      <SidesSection />
-      <LimitsSection />
+      <PrivacySection />
+      <DemoSection />
       <QuestionsSection signupOpen={signupOpen} />
       <FinalSection signupOpen={signupOpen} />
     </MarketingLayout>

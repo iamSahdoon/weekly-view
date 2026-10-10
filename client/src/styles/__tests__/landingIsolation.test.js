@@ -10,6 +10,12 @@ import { describe, expect, it } from "vitest";
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const css = readFileSync(path.join(SRC, "styles/landing.css"), "utf8");
 
+// The declarations of one top-level rule, found by its exact selector.
+const body = (selector) => {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?:^|\\n)${escaped}\\{([^}]*)\\}`).exec(css)?.[1] ?? null;
+};
+
 // Every rule's selectors and every at-rule, with comments removed.
 function rules(source) {
   const text = source.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -145,23 +151,8 @@ describe("nothing of the landing page reaches the app", () => {
 // asserted from the CSS — that the text clears the curved ends in a wide font — was checked in a
 // browser with DejaVu Sans, Verdana, DejaVu Sans Mono and Liberation Serif forced onto the page.)
 describe("the pills fit their text", () => {
-  const body = (selector) => {
-    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return (
-      new RegExp(`(?:^|\\n)${escaped}\\{([^}]*)\\}`).exec(css)?.[1] ?? null
-    );
-  };
-
   it("sizes the pills, chips and tags from their content", () => {
-    for (const cls of [
-      "samp",
-      "samp-u",
-      "pill",
-      "chip",
-      "vd",
-      "tchip",
-      "fbtn",
-    ]) {
+    for (const cls of ["samp", "samp-u", "pill", "chip", "fbtn"]) {
       const rule = body(`.landing .${cls}`);
       expect(rule, cls).not.toBeNull();
       expect(rule, cls).not.toMatch(/(?:^|;)(?:height|width:(?!max-content))/);
@@ -169,30 +160,34 @@ describe("the pills fit their text", () => {
     }
   });
 
-  it("keeps the SAMPLE DATA pill's own padding where a column rule would reach it", () => {
-    // `.lhead span` styles the ledger's column titles and also matches the pill inside the middle one.
-    expect(body(".landing .lhead span")).toMatch(/padding:0 0 18px/);
-    const guard = body(".landing .lhead .samp");
-    expect(guard).toMatch(/padding:3px 10px/);
-    expect(guard).toMatch(/white-space:nowrap/);
-    expect(guard).toMatch(/font-size:12px/);
-  });
-
-  it('sizes the verdict pills of "Who can do what" from their text, capped at their column', () => {
-    const vd = body(".landing .vd");
-    expect(vd).toMatch(/width:max-content/);
-    expect(vd).toMatch(/max-width:100%/);
-    expect(vd).toMatch(/padding:3px 10px/);
-    expect(vd).toMatch(/border-radius:999px/);
-    // No nowrap: a pill wider than its column wraps inside itself instead of overflowing it.
-    expect(vd).not.toMatch(/white-space:nowrap/);
-  });
-
   it("keeps the dashed border and the pill radius", () => {
     const samp = body(".landing .samp");
     expect(samp).toMatch(/border:1px dashed/);
     expect(samp).toMatch(/border-radius:999px/);
     expect(samp).toMatch(/white-space:nowrap/);
+  });
+});
+
+// The guided scroll stories (owner decision, landing revamp): the pinned captions and the guide exist
+// only while a story is pinned; everywhere else (phones, reduced motion, no script) the stacked notes
+// are what shows. The typed copy is laid over the real sentence, so typing never moves the layout.
+describe("the scroll stories fall back to the stacked layout", () => {
+  it("hides the pinned captions and the guide unless the story is pinned", () => {
+    expect(body(".landing .story-caps")).toBe("display:none");
+    expect(body(".landing .guide")).toBe("display:none");
+    expect(css).toMatch(/\.landing \.pin \.story-caps\{display:block\}/);
+    expect(css).toMatch(
+      /\.landing \.pin \.notes,\.landing \.desk\.pin \.notes\{display:none\}/,
+    );
+  });
+
+  it("pins only from 1000px up", () => {
+    expect(css).toMatch(/@media \(min-width:1000px\)\{\.landing \.week\.pin\{/);
+  });
+
+  it("lays the typed copy over the real sentence", () => {
+    expect(body(".landing .cap-full")).toBe("color:transparent");
+    expect(body(".landing .cap-ty")).toMatch(/position:absolute/);
   });
 });
 

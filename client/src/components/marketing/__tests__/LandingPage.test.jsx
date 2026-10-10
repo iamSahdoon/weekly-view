@@ -2,13 +2,14 @@ import { readFileSync, readdirSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import MarketingLayout from "../../../layouts/MarketingLayout.jsx";
+import { DemoSection } from "../DemoSection.jsx";
 import { DeskSection } from "../DeskSection.jsx";
 import { FinalSection } from "../FinalSection.jsx";
 import { HeroSection } from "../HeroSection.jsx";
-import { LimitsSection } from "../LimitsSection.jsx";
+import { PrivacySection } from "../PrivacySection.jsx";
 import { ProblemSection } from "../ProblemSection.jsx";
 import { QuestionsSection } from "../QuestionsSection.jsx";
-import { SidesSection } from "../SidesSection.jsx";
+import { DESK_STEPS, WEEK_STEPS } from "../storySteps.js";
 import { WeekSection } from "../WeekSection.jsx";
 
 // The landing page as markup (brand §6–§8, §12; frontend_architecture.md §9.16). The page's
@@ -20,11 +21,11 @@ const page = (signupOpen) =>
   renderToStaticMarkup(
     <MarketingLayout signupOpen={signupOpen}>
       <HeroSection signupOpen={signupOpen} />
-      <WeekSection />
       <ProblemSection />
+      <WeekSection />
       <DeskSection />
-      <SidesSection />
-      <LimitsSection />
+      <PrivacySection />
+      <DemoSection />
       <QuestionsSection signupOpen={signupOpen} />
       <FinalSection signupOpen={signupOpen} />
     </MarketingLayout>,
@@ -34,6 +35,7 @@ const text = (html) =>
     .replace(/<[^>]+>/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
     .replace(/\s+/g, " ");
 const hrefs = (html) => [...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
 
@@ -119,25 +121,25 @@ describe("the sections", () => {
       "r-imali",
       "r-hrs",
       "replay",
+      "prob",
+      "one",
       "week",
       "track",
       "report",
       "wk-stage",
+      "wk-caps",
+      "wk-guide",
       "dayfill",
       "dr-ind",
       "dayrail",
-      "prob",
-      "pile",
-      "one",
-      "five",
       "desk",
       "monwrap",
       "mt",
       "fcount",
-      "sides",
-      "srv",
-      "srv-node",
-      "srv-dot",
+      "dk-caps",
+      "dk-guide",
+      "private",
+      "demo",
       "faq",
       "main",
     ];
@@ -149,68 +151,196 @@ describe("the sections", () => {
   it("splits the two headings into word masks and keeps the words in reading order", () => {
     const html = page(false);
     expect(html.match(/class="wi"/g).length).toBe(
-      "One update. Both sides of the desk.".split(" ").length +
-        "Write one day. Then read it from the other side.".split(" ").length,
+      "Short daily notes. A weekly report that builds itself.".split(" ")
+        .length + "Write the day. Read the week.".split(" ").length,
     );
-    expect(text(html)).toContain("One update. Both sides of the desk.");
+    expect(text(html)).toContain(
+      "Short daily notes. A weekly report that builds itself.",
+    );
   });
 });
 
-describe("Who can do what, in plain language (owner decision)", () => {
+describe("the page tells the story in order, in plain language (owner decision, landing revamp)", () => {
   const html = page(false);
-  const section = html.slice(
-    html.indexOf('id="mx-h"'),
-    html.indexOf('class="mtab"'),
-  );
-  const rows = [...section.matchAll(/<li>(.*?)<\/li>/gs)].map((m) => ({
-    sentence: text(m[1].replace(/<span class="vd[^>]*>.*$/s, "")).trim(),
-    verdict: text(
-      m[1].match(/<span class="vd (?:ok|no)">(.*?)<\/span>/s)?.[1] ?? "",
-    ).trim(),
-    kind: m[1].match(/class="vd (ok|no)"/)?.[1],
-  }));
+  const at = (id) => html.indexOf(`id="${id}"`);
+  const section = (id) =>
+    html.slice(at(id), html.indexOf("</section>", at(id)));
 
-  it("keeps the heading and has the owner's subtitle and top box", () => {
-    expect(section).toContain("Who can do what");
-    expect(text(section)).toContain(
-      "WeeklyView checks every action, so people can only do what their role allows.",
-    );
-    expect(text(section)).toContain("WeeklyView checks");
-    expect(text(section)).toContain(
-      "who you are and what you’re allowed to do",
-    );
+  it("runs hero → before/after → the week → the dashboard → privacy → demo → FAQ → final", () => {
+    const order = [
+      "top",
+      "prob",
+      "week",
+      "desk",
+      "private",
+      "demo",
+      "faq",
+      "fin-h",
+    ].map(at);
+    expect(order.every((i) => i > 0)).toBe(true);
+    expect([...order].sort((x, y) => x - y)).toEqual(order);
   });
 
-  it("has the five examples, in order, with their verdicts", () => {
-    expect(rows.map((r) => [r.sentence, r.verdict, r.kind])).toEqual([
-      ["Tharindu (teammate) reads Imali’s daily updates", "Allowed", "ok"],
-      [
-        "Tharindu (teammate) tries to open Imali’s weekly report",
-        "Not allowed: managers only",
-        "no",
-      ],
-      ["Nadia (manager) comments on Imali’s weekly report", "Allowed", "ok"],
-      [
-        "Nadia (manager) tries to change Imali’s report",
-        "Not allowed: comments only",
-        "no",
-      ],
-      [
-        "Nadia (manager) tries to approve her own report",
-        "Not allowed: no one approves their own",
-        "no",
-      ],
+  it("says in the hero what it is and who it is for", () => {
+    const hero = text(section("top"));
+    expect(hero).toContain("A web app for daily updates and weekly reports");
+    expect(hero).toContain("For teams and their managers.");
+  });
+
+  it("shows the problem as a before and an after", () => {
+    const prob = text(section("prob"));
+    expect(prob).toContain("In most teams…");
+    expect(prob).toContain("With WeeklyView…");
+    expect(prob).toContain(
+      "Updates are scattered across chat, meetings and docs.",
+    );
+    expect(prob).toContain("Friday’s report builds itself from the five days.");
+  });
+
+  it("drops the copy the owner found unclear", () => {
+    const all = text(html);
+    for (const gone of [
+      "Right now the week gets written five times",
+      "The limits are in the product",
+      "good manners",
+      "Written for the writer",
+    ]) {
+      expect(all).not.toContain(gone);
+    }
+  });
+
+  it("keeps every caption short and friendly", () => {
+    for (const step of [...WEEK_STEPS, ...DESK_STEPS]) {
+      expect(step.text.split(/\s+/).length, step.text).toBeLessThanOrEqual(15);
+      expect(step.text).not.toContain("!");
+    }
+  });
+
+  it("walks the team member's week in the order the owner asked for", () => {
+    expect(WEEK_STEPS.map((s) => s.kicker)).toEqual([
+      "Monday",
+      "A work line",
+      "Hours",
+      "A blocker",
+      "Team comments",
+      "Wednesday to Friday",
+      "Friday’s report",
+      "Submit",
     ]);
   });
 
-  it("puts each name in bold", () => {
-    expect(section.match(/<b>(Tharindu|Nadia)<\/b>/g)).toHaveLength(5);
+  it("switches the dashboard's Show buttons in order: Everyone, Needs correction, Not started, Has blocker", () => {
+    expect(DESK_STEPS.slice(0, 6).map((s) => s.kicker)).toEqual([
+      "Filed this week",
+      "Compliance",
+      "Needs correction",
+      "Open blockers",
+      "The squares",
+      "The legend",
+    ]);
+    expect(DESK_STEPS.slice(6).map((s) => s.f)).toEqual([
+      "all",
+      "corr",
+      "none",
+      "blk",
+    ]);
+    expect(DESK_STEPS[1].text).toContain("expected reports are in");
   });
 
-  it("no longer talks about servers, requests or refusals", () => {
-    expect(text(section)).not.toMatch(
-      /server|request|refused|Imali J\.|week 38/i,
+  it("points every step at something on the mock-up, once", () => {
+    for (const [id, steps] of [
+      ["week", WEEK_STEPS],
+      ["desk", DESK_STEPS],
+    ]) {
+      const part = section(id);
+      steps.forEach((step, n) => {
+        expect(
+          part.match(new RegExp(`data-t="${n}"`, "g")),
+          `${id} ${n}`,
+        ).toHaveLength(1);
+      });
+      expect(part).not.toContain(`data-t="${steps.length}"`);
+    }
+    // the squares' ring spans the column, down to the last row
+    expect(section("desk").match(/data-t-end="4"/g)).toHaveLength(1);
+  });
+
+  it("keeps each caption's real words in the DOM, the typed copy hidden from screen readers", () => {
+    for (const [id, steps] of [
+      ["week", WEEK_STEPS],
+      ["desk", DESK_STEPS],
+    ]) {
+      const part = section(id);
+      const caps = part.slice(part.indexOf('class="caps"'));
+      for (const step of steps) {
+        // in the pinned column, and again in the stacked notes
+        expect(caps).toContain(
+          `<span class="cap-full">${step.text.replace(/'/g, "&#x27;")}</span>`,
+        );
+        expect(text(part).split(step.text).length - 1, step.text).toBe(2);
+      }
+      const typed = [...part.matchAll(/<span class="cap-ty"([^>]*)><\/span>/g)];
+      expect(typed).toHaveLength(steps.length);
+      for (const t of typed) expect(t[1]).toContain('aria-hidden="true"');
+    }
+  });
+
+  it("makes the comment on Tuesday a teammate's, on a day opened to the team", () => {
+    const week = section("week");
+    const tue = week.slice(week.indexOf("Tue<span"), week.indexOf("Wed<span"));
+    expect(tue).toContain('class="sw on"');
+    expect(tue).toContain("Tharindu S.");
+    expect(tue).not.toContain('class="rc"');
+  });
+});
+
+describe("Private where it matters (owner decision, landing revamp)", () => {
+  const html = page(false);
+  const part = html.slice(
+    html.indexOf('id="private"'),
+    html.indexOf("</section>", html.indexOf('id="private"')),
+  );
+
+  it("has the three plain benefits and the privacy promise", () => {
+    const words = text(part);
+    expect(words).toContain("Private where it matters.");
+    for (const claim of [
+      "Your weekly report goes to managers only.",
+      "Managers comment. Your words stay yours.",
+      "Nobody approves their own work.",
+    ]) {
+      expect(words).toContain(claim);
+    }
+    expect(words).toContain(
+      "No activity tracking, no screenshots, no idle timers. Only what people choose to write.",
     );
+  });
+
+  it("keeps the rules table behind a closed 'See exactly who sees what'", () => {
+    const details = part.slice(part.indexOf('<details class="whosees">'));
+    expect(part).toContain('<details class="whosees">');
+    expect(text(details)).toContain("See exactly who sees what");
+    expect(details).toContain('<table class="who"');
+    expect(details).toContain("Only if it&#x27;s opened to the team");
+    expect(details).toContain("Yes, except their own");
+  });
+
+  it("no longer has the server-check animation", () => {
+    expect(html).not.toContain('id="srv"');
+    expect(html).not.toContain('class="vd');
+  });
+});
+
+describe("the demo invitation", () => {
+  const html = page(false);
+  const part = html.slice(
+    html.indexOf('id="demo"'),
+    html.indexOf("</section>", html.indexOf('id="demo"')),
+  );
+  it("offers the three roles, each a plain link to the demo", () => {
+    expect(part.match(/<a class="role" href="\/demo">/g)).toHaveLength(3);
+    for (const role of ["Team member", "Manager", "Admin"])
+      expect(text(part)).toContain(role);
   });
 });
 
@@ -299,14 +429,13 @@ describe("the mock-ups show the app as it is now (owner decision, C10)", () => {
     expect(week).not.toContain('class="tt"');
     // The key blocker, with its Key flag; the thread as a conversation with a reply, no grey box.
     expect(week).toMatch(
-      /class="d-blk"><span class="lab">Blockers<\/span><p class="bl">.*<em>Key<\/em>/,
+      /class="d-blk"[^>]*><span class="lab">Blockers<\/span><p class="bl">.*<em>Key<\/em>/,
     );
     expect(week).toContain('class="d-cmt"');
     expect(week).toContain('class="rp"');
-    expect(week).toContain("Manager</span>");
     // Hours on the right of each line; the header carries the weekday, the date and the hours.
     expect(week).toMatch(
-      /<b>Mon<span class="dt">14 Sep<\/span><\/b><span class="d-h">7\.5 h<\/span>/,
+      /<b>Mon<span class="dt">14 Sep<\/span><\/b><span class="d-h"[^>]*>7\.5 h<\/span>/,
     );
   });
 
@@ -319,25 +448,12 @@ describe("the mock-ups show the app as it is now (owner decision, C10)", () => {
     expect(report).toContain('class="mk c7"');
   });
 
-  it("draws the single-day card and the ledger's pieces with the same marks and chips", () => {
-    const one = between('id="one"', 'id="five"');
+  it("draws the single-day card with the same marks and chips", () => {
+    const one = between('id="one"', "</article>");
     expect(one).toContain('class="mk c1"');
     expect(one).toContain("<em>Key</em>");
-    const sides = between('id="sides"', 'id="limits"');
-    expect(sides).toContain('class="mk c2"');
-    expect(sides).toContain('class="tchip dn">Done');
-    expect(sides).toContain('class="chip md c-none">Not started');
-    expect(sides).toContain('class="cm"');
-  });
-
-  it("puts the privacy statement in the right-hand column of the permissions block", () => {
-    const right = between('class="mx-right"', "</section>");
-    expect(right).toContain('class="mtab"');
-    expect(right.indexOf('class="notrack"')).toBeGreaterThan(
-      right.indexOf('class="mtab"'),
-    );
-    expect(text(right)).toContain(
-      "No activity tracking, no screenshots, no idle timers. Only what people choose to write.",
+    expect(between('id="desk"', "</section>")).toContain(
+      'class="chip md c-none">Not started',
     );
   });
 });
@@ -345,7 +461,7 @@ describe("the mock-ups show the app as it is now (owner decision, C10)", () => {
 describe("the components carry no colour of their own", () => {
   const files = [
     ...readdirSync(new URL("..", import.meta.url))
-      .filter((f) => f.endsWith(".jsx"))
+      .filter((f) => /\.jsx?$/.test(f))
       .map((f) => new URL(`../${f}`, import.meta.url)),
     new URL("../../../layouts/MarketingLayout.jsx", import.meta.url),
     new URL("../../../pages/LandingPage.jsx", import.meta.url),

@@ -420,7 +420,7 @@ sees the real thing.
 6. **What v11 does not override**, and still binds: the honesty rules (§6.4, §8, §10) —
    no customer logos, no testimonials, no pricing, no "workspace", no hard-coded team
    size; `SAMPLE DATA` on every product surface; the exact status and vocabulary words
-   (§1.4); the permission claims in the Limits section, which must match
+   (§1.4); the permission claims in the Privacy section (rule 10), which must match
    `requirments_doc.md` §4; reduced-motion behaviour; accessibility.
 7. **One thing v11 does not yet do:** its only primary action is "See the live demo".
    The page must also ask `GET /api/auth/bootstrap` and, when sign-up is open, make
@@ -434,10 +434,40 @@ sees the real thing.
    is restated as landing-scoped `--l-app-*` tokens in `landing.css` (a test keeps them equal to `tokens.css`);
    the mock-ups' size, placement, framing and animation are as in the reference. The page's own font is used
    inside the frames (no product font reaches the landing page).
-9. **Owner decision (C10, 2026-10-10): the privacy statement moves.** "No activity tracking, no screenshots, no
-   idle timers. Only what people choose to write." sits in the right-hand column of the "Who can do what"
-   block from 1024px up, under the permissions table and centred in the height left beside the list; below
-   1024px it follows the stacked list. Its type is unchanged.
+9. ~~**Owner decision (C10, 2026-10-10): the privacy statement moves**~~ into the right-hand column of the
+   "Who can do what" block. *Superseded by rule 10:* that block is gone, and the statement now closes the
+   Privacy section's three cards.
+10. **Owner decision (landing revamp, 2026-10-10): the page tells one plain-language story.** Visitors did not
+    understand what WeeklyView is; copy such as "Right now the week gets written five times" and "The limits
+    are in the product, not left to good manners" explained nothing. This rule overrides the reference's
+    section order and copy (rule 5); the look (green, Bricolage Grotesque, pills, `.landing`, the `--l-*`
+    tokens), the mock-ups (rule 8) and the bootstrap swap of the primary action (rule 7) are unchanged.
+    **Section order and copy:**
+
+    | # | Section (`id`) | Copy (as built) |
+    | --- | --- | --- |
+    | 1 | Hero (`#top`) | Eyebrow "A web app for daily updates and weekly reports"; h1 "Short daily notes. *A weekly report that builds itself.*"; sub "For teams and their managers. Write a few lines each day, and read the whole team's week on one page."; the two doors "On the team? / Follow one person's week" and "Leading the team? / See the manager's side". The laptop-and-phone animation is kept. |
+    | 2 | Before → after (`#prob`) | Eyebrow "Why it helps"; h2 "From scattered updates to one short note a day."; card **Before — In most teams…**: "Updates are scattered across chat, meetings and docs." · "Managers keep asking "where are we with this?"" · "On Friday, someone rebuilds the week from memory."; card **After — With WeeklyView…**: "Everyone writes one short note when their day ends." · "Managers read the whole team's week on one page." · "Friday's report builds itself from the five days." |
+    | 3 | The team member's week (`#week`) | Eyebrow "For the team member"; h2 "Follow one person's week."; lede "Imali is on the team. Here is what she writes each day, and what happens on Friday." Eight steps (kicker · caption): Monday · "Each day ends with a short note: a few minutes, not a meeting." — A work line · "Each line says the task, its type, and what was done." — Hours · "Hours make the week add up, with no timesheet to fill in." — A blocker · "Stuck? Add a blocker. Your manager and team see it that evening." — Team comments · "Open a day to comments, and a teammate can help right there." — Wednesday to Friday · "The rest of the week is the same: one short note a day." — Friday's report · "On Friday, your five days fill in the weekly report for you." — Submit · "Give each task a status and submit. Asking for approval is optional." Tuesday's comment is now a teammate's (Tharindu S.), on a day opened to team comments. |
+    | 4 | The manager's side (`#desk`) | Eyebrow "For managers"; h2 "The manager's side: the whole week on one page."; lede "Everyone's daily notes roll into one dashboard. Here is what each part of it tells you." Ten steps: Filed this week · "How many weekly reports are in so far." — Compliance · "How many of the expected reports are in. Anyone on leave isn't expected." — Needs correction · "Reports sent back for a fix, waiting on their author." — Open blockers · "Everything holding the team up, gathered from the daily notes." — The squares · "One square per person per day, so gaps show at a glance." — The legend · "Blue is posted, a red cross is missing, and hatched is on leave." — Show: Everyone · "The whole team's week, one row per person." — Show: Needs correction · "Who has a report to fix, so you can help them finish." — Show: Not started · "Who hasn't begun this week. A fact, never a telling-off." — Show: Has blocker · "Who is stuck right now, so you can unblock them first." The tally (34 of 40 · 8 · 1) is gone. |
+    | 5 | Private where it matters (`#private`) | Replaces "Limits" and "Who can do what". Eyebrow "Privacy"; h2 "Private where it matters."; lede "Write honestly. Each part of the week reaches only the people it is for."; three cards — "Your weekly report goes to managers only." / "Teammates read your daily notes, never your weekly report." · "Managers comment. Your words stay yours." / "They can approve a report or send it back, but never rewrite it." · "Nobody approves their own work." / "A manager's own report is reviewed by another manager or an admin."; the promise "No activity tracking, no screenshots, no idle timers. Only what people choose to write."; the rules table kept only inside a closed "See exactly who sees what" disclosure. The server-check animation is gone. |
+    | 6 | Demo invitation (`#demo`) | Eyebrow "The live demo"; h2 "Try both sides yourself."; "Pick a role and click around. Everything works on sample data, and a refresh starts over."; three links to `/demo` — Team member "Write today's note and send the weekly report." · Manager "Read the team dashboard and review a report." · Admin "Invite people and set the team's holidays."; the honesty note "New, and saying so." (§6.4) moves here. |
+    | 7 | FAQ (`#faq`) | "Asked before rolling it out." Six questions, tightened: Is this employee monitoring? · Who can read what I write? · How long does the weekly report take? · What if my manager sends a report back? · Do we need Slack, email or another tool? · How does a team start? (the last keeps the open/closed sign-up wording). |
+    | 8 | Final call to action | h2 "Write the day. Read the week."; "One short note a day, and Friday's report builds itself. See it in the demo: no sign-up, and nothing is saved."; the bootstrap swap as before. |
+
+    The "Both sides" ledger is dropped. With it the page no longer draws the revision list (§12 "Version history");
+    the correction loop is told in words by the FAQ ("…The version that was sent back is kept, not replaced.").
+    The nav reads Why it helps · For the team · For managers · Privacy · FAQ.
+
+    **How the two stories behave.** From 1000px wide, with motion allowed, each story pins: one caption at a
+    time is typed in its column (the team member's on the left, the manager's above the dashboard) while a
+    sand line is drawn to the exact element it explains and a ring marks it; on the dashboard the rest dims and
+    the Show buttons switch as the visitor scrolls. Captions are one sentence, at most 15 words. The real
+    sentence is always in the DOM for screen readers; the typed text is an `aria-hidden` copy laid over it, so
+    typing never moves the layout. Below 1000px, and under `prefers-reduced-motion` at any width, nothing pins,
+    types or draws: the same steps are a numbered list **above** the mock-up they explain, and every mock-up
+    shows its final state. Scrolling writes only `transform`, `opacity` and SVG attributes from geometry
+    measured on load and resize.
 
 ### 6.1 Job of the page
 
