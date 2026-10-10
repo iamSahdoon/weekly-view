@@ -36,6 +36,7 @@ export function WorkLineRow({
   projects,
   onRemove,
   canRemove,
+  ...rowProps
 }) {
   const id = useId();
   const { control, register } = form;
@@ -56,7 +57,10 @@ export function WorkLineRow({
   const invalid = (field) => (describe(field) ? true : undefined);
 
   return (
-    <li className="flex flex-col gap-6 border-b border-hair pb-11 md:border-b-0 md:pb-0">
+    <li
+      className="flex flex-col gap-6 border-b border-hair pb-11 md:border-b-0 md:pb-0"
+      {...rowProps}
+    >
       <div className="grid grid-cols-2 gap-8 md:grid-cols-[240px_180px_minmax(0,1fr)_90px_var(--ctrl-h)]">
         <Controller
           control={control}

@@ -1,3 +1,4 @@
+import { cn } from "../../lib/cn.js";
 import { WEEKDAYS } from "../../lib/constants.js";
 import { updatesSentence } from "../../lib/dashboardData.js";
 
@@ -50,12 +51,28 @@ const STATES = {
 };
 
 function Cell({ state }) {
+  return <DaySquare state={state} />;
+}
+
+/**
+ * One Updates square on its own, for wherever a day's state is shown (polish,
+ * 2026-10-10): the week strip on This week and above the form, the leave and holiday
+ * line. 14px in tables, 10px beside text. Decorative — the words say the same.
+ */
+export function DaySquare({ state, size = 14, className }) {
+  const style = { ...(STATES[state] ?? STATES.future) };
+  // At 10px the 4px dot grid holds two dots; a 3px grid keeps it reading as dots.
+  if (state === "holiday" && size < 14) style.backgroundSize = "3px 3px";
   return (
     <span
       aria-hidden="true"
       data-state={state}
-      style={STATES[state] ?? STATES.future}
-      className="box-border inline-block size-[14px] shrink-0"
+      style={style}
+      className={cn(
+        "box-border inline-block shrink-0",
+        size < 14 ? "size-[10px]" : "size-[14px]",
+        className,
+      )}
     />
   );
 }

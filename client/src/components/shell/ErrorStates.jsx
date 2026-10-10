@@ -32,7 +32,7 @@ export function PageError({ reset }) {
 export function StandaloneError({ reset }) {
   useDocumentTitle("Something went wrong");
   return (
-    <main className="flex min-h-[100dvh] flex-col items-center bg-paper px-16 pt-96">
+    <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-paper px-16 pt-52 pb-[14vh]">
       <BrandMark className="mb-32 text-[20px]" />
       <div className="w-full max-w-[560px]">
         <Panel reset={reset} />

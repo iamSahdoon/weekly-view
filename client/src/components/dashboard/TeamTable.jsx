@@ -169,6 +169,7 @@ export function TeamTable({
               keepHeader
               emptyState={
                 <EmptyState
+                  variant="filtered"
                   title="No one matches this status."
                   action={
                     status.length > 0 ? (

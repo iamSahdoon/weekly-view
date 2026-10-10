@@ -214,6 +214,8 @@ the content column, not across the sidebar.
   - _Hover:_ background `--tint`, text `--ink`. 120ms.
   - _Active:_ background `--acc-l`, text and icon `--acc-txt`, **2px `--acc` left
     bar**. Weight stays 400 — the bar and tint carry the state, not bold text.
+    *(Owner decision, polish 2026-10-10: the tint and bar are one layer that slides from
+    the page you left to the one you opened, 200ms — §8.5, entry 23.)*
   - _Focus-visible:_ the universal ring, 2px `--acc`, inset (§6.0).
   - _Count_ (review desk only): right-aligned, **mono 11px** `--mut`, tabular — the
     number of reports asking for approval that this manager hasn't opened yet. No
@@ -357,6 +359,11 @@ inline error panel (§6.15).
 | Grid                     | 12 columns, `24px` gutter                                                        |
 | In-page H1               | Chivo 700 28px, −.035em, `--ink`, optional `--mut` 14px support line `6px` below |
 
+> **Owner decision (polish, 2026-10-10) — containers keep to the left.** A page's container
+> starts at the content column's left gutter instead of centring in it. The top-bar title
+> sits at that edge, so a narrow page (Holidays, Account at `doc` width) lines up under its
+> own title instead of floating in the middle of a wide screen. Max widths are unchanged.
+
 Pages whose top-bar title is sufficient (_Report history_, _Users_, _Holidays_,
 _Team updates_, _Review desk_) skip the in-page H1 and start with the filter bar. Pages
 that are a document or a briefing (_This week_, _Team dashboard_, _Profile_, _Projects_)
@@ -409,10 +416,20 @@ a first impression, and a returning user should never be shown it again.
   on load, or the earliest missing day if there is one. **It does not animate** — the
   landing page's sweep is a marketing device, banned in-product (§8.4). Once the report is
   submitted and not sent back, cells stay selectable but their updates read-only.
+
+  > **Owner decision (polish, 2026-10-10) — one square language.** Every cell carries its
+  > day's **Updates square** (§3.7) at `10px` beside the label, in place of the posted-only
+  > 6×6 square: solid cobalt posted, the red × missing, the cobalt outline today, the hatch on
+  > leave, the dots on a holiday, a faint outline later in the week — so the strip, the team
+  > table, the profile and the legend read the same. Cells you can open get a hover tint.
+  > The strip still never sweeps; only the chosen day's 2px bar slides to the day you pick,
+  > and the day panel's new content fades in from the side it came from (§8.5, 25–26).
 - **Leave and holiday strip.** A single `--tint` line under the week strip, present only
   when there is something to say: "On leave: Dinesh K., Malith W." and, if the week has a
   holiday, "Holiday Thu 17 Sep: Vesak Full Moon Poya Day". Names as plain text. A person
-  on leave sees "You're on leave" with a `Turn off` text button.
+  on leave sees "You're on leave" with a `Turn off` text button. *(Owner decision, polish
+  2026-10-10: each item leads with its 10px Updates square — the leave hatch, the holiday
+  dots — instead of a middle-dot separator, so the line wraps cleanly on a phone.)*
 - **Day panel.** Specified in §4.11: the composer for the selected day, or the posted
   update with its lines, blockers and comment threads.
 - **Correction panel (conditional).** Only when status is _Needs correction_. Background
@@ -425,7 +442,10 @@ a first impression, and a returning user should never be shown it again.
   asked for. Body, a 2-col definition grid: _Days posted_ (`3 of 4` — holidays and leave
   excluded), _Hours logged_, _Tasks_, _Projects_, _Key blocker_, _Last saved_. Absent
   values render `—` in `--mut`. Beneath, when the week has **overall comments**, the
-  newest in full with its author and "+ 2 more" linking to the week's threads.
+  newest in full with its author and "+ 2 more" linking to the week's threads. *(Owner
+  decision, polish 2026-10-10: the grid is 3 columns from 640px and 2 below, values in mono
+  14px (was 13px); _Key blocker_, free text, takes the last row across the grid; _Days
+  posted_ carries the week's five 10px Updates squares after its count.)*
 - **My projects panel** (every role). One row per active project the person is assigned
   to: name, a §6.25 progress bar, and "8 days left" or "overdue by 2 days" in 12px. The
   days/hours toggle sits in the panel header. Absent when the person has no projects.
@@ -968,7 +988,12 @@ separated by `32px`.
 
 Product screens outside the shell: no sidebar, no top bar.
 
-**Shared layout.** Full-viewport `--paper`. A centred `420px` column. At the top, the
+**Shared layout.** Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
+polish 2026-10-10: the column starts `18vh` down, never less than `52px` (`32px` below
+480px), so it sits in the upper middle of the screen rather than hugging the top; a fixed
+offset, not flex centring, so nothing jumps when a skeleton gives way to a taller form. The
+demo chooser shares it, and each of its three choices gains the nav's 2px `--acc` bar and a
+`--mut` chevron on hover — §8.5, entry 31.)* At the top, the
 brand glyph + wordmark (Chivo 800, 20px). Then a Chivo 700 28px heading, an optional
 `--mut` 14px line, then the form in a `--card` panel with 1px `--hair`, `32px` padding,
 fields at `44px`. Below the panel, one secondary text link. Nothing else — no marketing
@@ -1566,6 +1591,10 @@ Icon-only buttons are square at the same heights; icon gap `8px`.
 
 - Transition: `background-color 120ms linear, border-color 120ms linear`;
   `transform 80ms var(--ease-out)` on press only.
+- *Owner decision (polish, 2026-10-10):* the press is `scale(.97)` on **every** variant
+  (and on a link drawn as a button), 120ms `--ease-out`, so every button answers on
+  pointer-down — §8.5, entry 2′. Tailwind 4's `scale-*` sets the `scale` property, so that
+  is the property that transitions.
 - **No arrow appended to a button label.** No `→`, ever.
 - Labels are sentence case, verb-first, and identical to the outcome they produce.
 
@@ -1699,6 +1728,10 @@ Checkbox; the difference is the inner square and the grouping semantics.
 `--tint` sub-block — never a second bordered card. This single rule prevents the
 cards-inside-cards look more than any other.
 
+- *Owner decision (polish, 2026-10-10):* the 44px header is a minimum. On a narrow screen
+  its actions (a segmented control, the SAMPLE DATA pill) wrap under the title, which never
+  breaks across lines.
+
 ### 6.10 Table
 
 See §5.
@@ -1790,6 +1823,15 @@ itself from your daily updates.
 
 **No eyebrow label, no illustration, no icon, no emoji.** Exactly one action, or none.
 Copy states what would be here and how to make it exist; it never apologises.
+
+> **Owner decision (polish, 2026-10-10) — the week mark.** Above the title sits the product's
+> own mark: five `10px` Updates squares, `4px` apart, `16px` above the title, `aria-hidden`.
+> It is the squares' language (§3.7), not an illustration or icon, so the rule above stands.
+> `new` (a list nothing has filled yet): the first square in the 2px `--acc` "today" outline,
+> the rest 1px `--rule`. `filtered` (nothing matches): all five dashed `--rule`. `system`
+> (404, 403, a report you can't read): five plain `--rule` squares. The whole-page states
+> (404 and 403 in the shell) are optically centred in the content area, a little above the
+> middle (`fill`), instead of sitting under the top bar over a blank screen.
 
 ### 6.18 Avatar
 
@@ -2057,6 +2099,36 @@ than merely shortened.
 - Shimmer sweeps on skeletons.
 - Confetti or any celebratory motion on approval, beyond entry 14.
 - Page-load entrance staggering of any kind.
+
+### 8.5 Owner decision — whole-app polish (2026-10-10)
+
+> **Owner decision (polish pass after C10, 2026-10-10).** The app should not feel like a
+> generic website, so the inventory in §8.2 gains the entries below. Every one is caused by
+> something the person did, stays under 220ms, moves only `opacity` and position, and is
+> covered by `MotionConfig reducedMotion="user"` or the §8.3 block (it jumps, or becomes a
+> fade). §8.4 still stands in full: nothing animates on page load, nothing staggers, nothing
+> is scroll-linked. Entry 2 is widened (all variants, `.97`); entries 7 and 8 gain a 2%
+> scale from the trigger.
+
+| #   | Interaction                         | Property                               | Duration     | Easing        | How                              | Trigger           |
+| --- | ----------------------------------- | -------------------------------------- | ------------ | ------------- | -------------------------------- | ----------------- |
+| 2′  | Button press — **every variant**    | `scale(.97)` (Tailwind's `scale`)      | 120ms        | `--ease-out`  | CSS                              | pointer-down      |
+| 7′  | Popover / menu                      | opacity, `translateY(-2px) scale(.98)` from the trigger (Radix origin) | 140 / 100ms | `--ease-out` / linear | CSS | click |
+| 23  | Sidebar: the active item            | the tint and 2px bar slide to the new item | 200ms    | `--ease-out`  | **Motion** (`layoutId`)          | navigation        |
+| 24  | Segmented control selection         | the `--acc-l` fill slides              | 180ms        | `--ease-out`  | **Motion** (`layoutId`)          | click / arrows    |
+| 25  | Week strip: the chosen day's bar    | the 2px `--ink` bar slides             | 180ms        | `--ease-out`  | **Motion** (`layoutId`)          | click / arrows    |
+| 26  | Day switch (This week, Team updates)| new content: opacity, 8px from the side it came from | 180ms | `--ease-out` | **Motion** (`ContentSwap`) | day chosen |
+| 27  | A row the person adds (work line, blocker, plan item, achievement, link) | opacity, `translateY(4px)` | 200ms | `--ease-out` | CSS (`[data-appended]`) | "Add a …" |
+| 28  | A comment or reply the person just posted | opacity, `translateY(4px)`       | 200ms        | `--ease-out`  | CSS (`.wv-settle-in`)            | post              |
+| 29  | Autosave state change               | the words fade in; the 6px square fills | 120 / 160ms | `--ease-out` / linear | CSS                  | save              |
+| 30  | Light ↔ dark switch                 | background, border and text colours cross-fade | 200ms | `ease`     | CSS (`.wv-theme-easing`, 260ms)  | Appearance switch |
+| 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
+
+- **Reduced motion:** 23–25 jump; 26 is a fade with no travel (`useReducedMotion`); 27–29 and
+  31 are cut to 1ms by §8.3; 30 stays — it is colour only, and a gentle cross-fade is kinder
+  than a full-screen brightness jump (Apple's guidance, the owner's reference).
+- **Not animated, on purpose:** keyboard focus moves, table sorting and paging, data
+  refetches, chart first paint, metric numbers, status chips other than entry 14.
 
 ---
 

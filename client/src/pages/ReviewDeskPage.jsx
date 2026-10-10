@@ -121,6 +121,7 @@ export default function ReviewDeskPage() {
                 isFetching={desk.isFetching}
                 emptyState={
                   <EmptyState
+                    variant="filtered"
                     title="No reports match these filters."
                     action={
                       <Button variant="secondary" onClick={clear}>

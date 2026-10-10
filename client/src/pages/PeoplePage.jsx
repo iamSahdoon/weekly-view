@@ -82,6 +82,7 @@ export default function PeoplePage() {
   ];
   const emptyFiltered = (
     <EmptyState
+      variant="filtered"
       title="No one matches these filters."
       action={
         <Button variant="secondary" onClick={clear}>

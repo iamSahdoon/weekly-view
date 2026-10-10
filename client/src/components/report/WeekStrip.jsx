@@ -1,14 +1,18 @@
-import { useRef } from "react";
+import { motion as Motion } from "motion/react";
+import { useId, useRef } from "react";
 import { WEEKDAYS, WEEKDAY_SHORT } from "../../lib/constants.js";
 import { cn } from "../../lib/cn.js";
 import { formatHours } from "../../lib/format.js";
+import { DaySquare } from "../dashboard/UpdatesCell.jsx";
 import { NewMarker } from "../ui/NewMarker.jsx";
 import { Tooltip } from "../ui/Tooltip.jsx";
 
 // The five-day strip — the daily-update control (design §3.1, frontend_architecture.md
 // §8.3). Five equal cells, Mon–Fri, 1px --hair dividers; each is a tab that opens its
 // day in the panel beneath. Holiday, leave, not-on-team and future cells can't be
-// chosen, and the arrow keys skip them. It never animates (design §8.4).
+// chosen, and the arrow keys skip them. The strip itself is static (design §8.4: no
+// sweep); only the chosen day's bar slides to the day you pick (polish, 2026-10-10:
+// 180ms --ease-out, Motion layoutId; it jumps under reduced motion).
 //
 //   days      the report's posted days (for hours and comment counts), or []
 //   holidays  { [weekday]: { name } }
@@ -30,6 +34,7 @@ export function WeekStrip({
   panelId,
 }) {
   const refs = useRef({});
+  const group = useId();
   const selectable = WEEKDAYS.filter((d) => SELECTABLE.has(dayStates[d]));
   // One tab stop: the chosen day, or the first that can be chosen.
   const tabStop = selectable.includes(selected) ? selected : selectable[0];
@@ -78,12 +83,22 @@ export function WeekStrip({
             className={cn(
               "focus-halo relative flex min-w-0 flex-col justify-center gap-2 px-11 text-left max-sm:items-center max-sm:px-4",
               CELL[state] ?? CELL.future,
-              canSelect ? "cursor-pointer" : "cursor-default",
-              // The chosen day: a 2px --ink bar along the top.
-              isSelected &&
-                "before:absolute before:inset-x-0 before:top-0 before:h-2 before:bg-ink",
+              canSelect
+                ? "cursor-pointer transition-colors duration-[120ms] ease-linear"
+                : "cursor-default",
+              canSelect && !isSelected && HOVER[state],
             )}
           >
+            {/* The chosen day: a 2px --ink bar along the top. */}
+            {isSelected && (
+              <Motion.span
+                layoutId={`week-strip-${group}`}
+                aria-hidden="true"
+                data-testid="strip-selected"
+                className="absolute inset-x-0 top-0 h-2 bg-ink"
+                transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+              />
+            )}
             <span
               className={cn(
                 "flex items-center gap-6 text-dense font-medium",
@@ -99,9 +114,8 @@ export function WeekStrip({
               <span className="sr-only sm:hidden">
                 {WEEKDAY_SHORT[weekday]}
               </span>
-              {state === "posted" && (
-                <span aria-hidden="true" className="size-6 shrink-0 bg-acc" />
-              )}
+              {/* The day's Updates square — the dashboard's shapes (polish). */}
+              <DaySquare state={state ?? "future"} size={10} />
             </span>
             {size === "full" && (
               <CellDetail state={state} day={day} holiday={holidays[weekday]} />
@@ -118,6 +132,13 @@ export function WeekStrip({
     </div>
   );
 }
+
+// A day you can open answers the pointer (polish, 2026-10-10).
+const HOVER = {
+  posted: "hover:bg-tint",
+  missing: "hover:bg-st-corr-bg/70",
+  today: "hover:bg-acc-l/70",
+};
 
 const CELL = {
   posted: "bg-card",

@@ -65,6 +65,7 @@ export default function ReportHistoryPage() {
 
   const emptyFiltered = (
     <EmptyState
+      variant="filtered"
       title="No reports match these filters."
       action={
         <Button variant="secondary" onClick={clear}>

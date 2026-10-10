@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { draftKey, useDayDrafts } from "../../context/DayDraftsContext.jsx";
 import { useAuth } from "../../hooks/useAuth.js";
+import { useAppendMotion } from "../../hooks/useAppendMotion.js";
 import { useProjects } from "../../hooks/useProjectQueries.js";
 import { usePutDay } from "../../hooks/useReportQueries.js";
 import { useMyTasks } from "../../hooks/useTaskQueries.js";
@@ -185,6 +186,8 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
   });
   const lines = useFieldArray({ control: form.control, name: "lines" });
   const blockers = useFieldArray({ control: form.control, name: "blockers" });
+  const addedLine = useAppendMotion();
+  const addedBlocker = useAppendMotion();
   const { isDirty, errors } = form.formState;
 
   // Text carried over a day switch is kept but not "saved" until Save is pressed.
@@ -370,11 +373,17 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
                   projects={projects}
                   canRemove={lines.fields.length > 1}
                   onRemove={() => removeLine(index)}
+                  {...addedLine.props(index)}
                 />
               ))}
             </ol>
             {lines.fields.length < MAX_LINES && (
-              <DashedButton onClick={() => lines.append(blankLine())}>
+              <DashedButton
+                onClick={() => {
+                  addedLine.mark(lines.fields.length);
+                  lines.append(blankLine());
+                }}
+              >
                 Add a line
               </DashedButton>
             )}
@@ -388,7 +397,11 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
             {blockers.fields.length > 0 && (
               <ul className="flex flex-col gap-8">
                 {blockers.fields.map((field, index) => (
-                  <li key={field.id} className="flex items-center gap-8">
+                  <li
+                    key={field.id}
+                    className="flex items-center gap-8"
+                    {...addedBlocker.props(index)}
+                  >
                     <Input
                       aria-label={`Blocker ${index + 1}`}
                       placeholder="What is holding work up?"
@@ -411,7 +424,12 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
               </ul>
             )}
             {blockers.fields.length < MAX_BLOCKERS && (
-              <DashedButton onClick={() => blockers.append({ text: "" })}>
+              <DashedButton
+                onClick={() => {
+                  addedBlocker.mark(blockers.fields.length);
+                  blockers.append({ text: "" });
+                }}
+              >
                 Add a blocker
               </DashedButton>
             )}

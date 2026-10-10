@@ -13,6 +13,7 @@ import { EndLeaveDialog } from "../components/user/EndLeaveDialog.jsx";
 import { PageContainer } from "../components/shell/PageContainer.jsx";
 import { PageHeader } from "../components/shell/PageHeader.jsx";
 import { Button } from "../components/ui/Button.jsx";
+import { ContentSwap } from "../components/ui/ContentSwap.jsx";
 import { InlineError } from "../components/ui/InlineError.jsx";
 import { QueryView } from "../components/ui/QueryView.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
@@ -198,12 +199,12 @@ export default function ThisWeekPage() {
           ) : (
             <>
               <div id={PANEL_ID} ref={panelRef} role="tabpanel">
-                <DayPanel
-                  key={`${weekKey}:${weekday}`}
-                  week={view}
-                  weekday={weekday}
-                  isOwn
-                />
+                <ContentSwap
+                  swapKey={`${weekKey}:${weekday}`}
+                  order={WEEKDAYS.indexOf(weekday)}
+                >
+                  <DayPanel week={view} weekday={weekday} isOwn />
+                </ContentSwap>
               </div>
 
               {view.report?.status === "needs_correction" && (

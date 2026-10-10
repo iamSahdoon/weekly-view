@@ -15,6 +15,8 @@ export default function NotFoundPage() {
   useDocumentTitle(user ? null : "Page not found");
   const content = (
     <EmptyState
+      variant="system"
+      fill={Boolean(user)}
       title="That page doesn’t exist."
       action={
         <Button asChild>
@@ -36,8 +38,8 @@ export default function NotFoundPage() {
     );
   }
   return (
-    <main className="flex min-h-[100dvh] flex-col items-center bg-paper px-16 pt-96">
-      <BrandMark className="mb-32 text-[20px]" />
+    <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-paper px-16 pt-52 pb-[14vh]">
+      <BrandMark className="text-[20px]" />
       {content}
     </main>
   );

@@ -232,6 +232,7 @@ function Profile({ person, me }) {
                         keepHeader
                         emptyState={
                           <EmptyState
+                            variant="filtered"
                             title="No weeks match these filters."
                             action={
                               <Button variant="secondary" onClick={clear}>

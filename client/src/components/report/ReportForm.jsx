@@ -9,6 +9,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
+import { useAppendMotion } from "../../hooks/useAppendMotion.js";
 import { useActiveSection } from "../../hooks/useActiveSection.js";
 import { useAutosave } from "../../hooks/useAutosave.js";
 import { useHolidaysForWeek } from "../../hooks/useHolidayQueries.js";
@@ -379,11 +380,16 @@ function TextList({ form, name, itemLabel, addLabel, blank }) {
     control: form.control,
     name,
   });
+  const appended = useAppendMotion();
   return (
     <div className="flex flex-col gap-8">
       <ol className="flex flex-col gap-8">
         {fields.map((field, i) => (
-          <li key={field.id} className="flex max-w-[600px] items-start gap-8">
+          <li
+            key={field.id}
+            className="flex max-w-[600px] items-start gap-8"
+            {...appended.props(i)}
+          >
             <Field
               error={form.formState.errors[name]?.[i]?.text}
               className="flex-1"
@@ -407,7 +413,10 @@ function TextList({ form, name, itemLabel, addLabel, blank }) {
       </ol>
       <AddButton
         disabled={fields.length >= LIST_MAX}
-        onClick={() => append(blank())}
+        onClick={() => {
+          appended.mark(fields.length);
+          append(blank());
+        }}
       >
         {addLabel}
       </AddButton>
@@ -476,6 +485,7 @@ function AchievementList({ form, achievements }) {
     control: form.control,
     name: "achievements",
   });
+  const appended = useAppendMotion();
   const toggle = (i) => {
     const turnOn = !achievements?.[i]?.isKey;
     fields.forEach((_, j) =>
@@ -494,7 +504,7 @@ function AchievementList({ form, achievements }) {
         {fields.map((field, i) => {
           const isKey = Boolean(achievements?.[i]?.isKey);
           return (
-            <KeyRow key={field.id} isKey={isKey} plain>
+            <KeyRow key={field.id} isKey={isKey} plain {...appended.props(i)}>
               <KeyFlag
                 checked={isKey}
                 onToggle={() => toggle(i)}
@@ -529,7 +539,10 @@ function AchievementList({ form, achievements }) {
       </ul>
       <AddButton
         disabled={fields.length >= LIST_MAX}
-        onClick={() => append(blankAchievement())}
+        onClick={() => {
+          appended.mark(fields.length);
+          append(blankAchievement());
+        }}
       >
         Add an achievement
       </AddButton>
@@ -543,6 +556,7 @@ function LinkList({ form }) {
     control: form.control,
     name: "links",
   });
+  const appended = useAppendMotion();
   const errors = form.formState.errors.links;
   return (
     <div className="flex flex-col gap-8">
@@ -552,6 +566,7 @@ function LinkList({ form }) {
           <li
             key={field.id}
             className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto] items-start gap-x-20 gap-y-8 max-md:grid-cols-[minmax(0,1fr)_auto]"
+            {...appended.props(i)}
           >
             <Field error={errors?.[i]?.label} className="max-md:col-start-1">
               <Input
@@ -587,7 +602,10 @@ function LinkList({ form }) {
       </ul>
       <AddButton
         disabled={fields.length >= LIST_MAX}
-        onClick={() => append(blankLink())}
+        onClick={() => {
+          appended.mark(fields.length);
+          append(blankLink());
+        }}
       >
         Add a link
       </AddButton>
@@ -597,9 +615,10 @@ function LinkList({ form }) {
 
 // A flaggable row (design §4.5): selected, it gains a 2px --acc left bar; the change
 // crossfades over 160ms.
-function KeyRow({ isKey, plain = false, children }) {
+function KeyRow({ isKey, plain = false, children, ...rowProps }) {
   return (
     <li
+      {...rowProps}
       className={cn(
         "relative flex items-start gap-11 pl-11 transition-colors duration-[160ms] ease-linear",
         "before:absolute before:inset-y-0 before:left-0 before:w-2 before:transition-colors before:duration-[160ms]",
