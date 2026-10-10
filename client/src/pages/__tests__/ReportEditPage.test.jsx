@@ -23,7 +23,7 @@ let store;
 beforeAll(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 7, 10, 0));
-  store = createDemoStore();
+  store = createDemoStore(undefined, { team: false });
 });
 afterAll(() => vi.useRealTimers());
 

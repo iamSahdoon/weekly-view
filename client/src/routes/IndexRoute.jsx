@@ -1,15 +1,13 @@
 import { Suspense } from "react";
-import { Navigate } from "react-router-dom";
 import { AppBootSplash } from "../components/shell/AppBootSplash.jsx";
-import { BrandMark } from "../components/shell/BrandMark.jsx";
 import { RouteFallback } from "../components/shell/RouteFallback.jsx";
 import { useAuth } from "../hooks/useAuth.js";
-import { ThisWeekPage } from "./pages.js";
+import { DemoEntryPage, LandingPage, ThisWeekPage } from "./pages.js";
 
 // "/" branches on the session (frontend_architecture.md §4.1). Signed in it is
-// ThisWeekPage (C4); signed out, the landing page or the demo chooser (C10). Until
-// C10 a redirect to /signin stands in; the demo's signed-out entry is a bare
-// placeholder.
+// ThisWeekPage; signed out it is the landing page, or in the demo the perspective
+// chooser. Each is its own chunk: the landing page carries its own stylesheet and
+// typeface, and the demo's chunk is one the normal app never downloads.
 export default function IndexRoute() {
   const { status, user, isDemo } = useAuth();
   if (status === "loading") return <AppBootSplash />;
@@ -20,12 +18,10 @@ export default function IndexRoute() {
       </Suspense>
     );
   }
-  if (!isDemo) return <Navigate to="/signin" replace />;
+  const SignedOut = isDemo ? DemoEntryPage : LandingPage;
   return (
-    <main className="min-h-[100dvh] bg-paper px-16 py-52">
-      <div className="mx-auto max-w-[420px]">
-        <BrandMark className="mb-32 text-[20px]" />
-      </div>
-    </main>
+    <Suspense fallback={<AppBootSplash />}>
+      <SignedOut />
+    </Suspense>
   );
 }

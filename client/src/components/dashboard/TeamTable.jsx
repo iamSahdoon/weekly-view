@@ -13,6 +13,7 @@ import { RoleChip } from "../ui/RoleChip.jsx";
 import { StatusChip } from "../ui/StatusChip.jsx";
 import { Table } from "../ui/Table.jsx";
 import { UpdatesCell, UpdatesLegend } from "./UpdatesCell.jsx";
+import { SampleDataPill } from "../ui/SampleDataPill.jsx";
 
 // The team table (design §3.7): everyone who files is a row — managers and admins too.
 // Its own header carries the status filter, so it visibly filters this table and nothing
@@ -128,7 +129,12 @@ export function TeamTable({
   return (
     <section aria-label="Team" className="flex flex-col gap-11">
       <div className="flex min-h-[30px] flex-wrap items-center justify-between gap-11">
-        <h2 className="font-display text-panel-sm font-bold text-ink">Team</h2>
+        <div className="flex min-w-0 items-center gap-8">
+          <h2 className="font-display text-panel-sm font-bold text-ink">
+            Team
+          </h2>
+          <SampleDataPill />
+        </div>
         <MultiSelect
           label="Status"
           options={STATUS_OPTIONS}

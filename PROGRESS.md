@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C10**
+**Next stage: C11**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -22,7 +22,7 @@
 | C7 | Dashboard and charts | done |
 | C8 | Projects, users, holidays, people, profile, account | done |
 | C9 | "New" markers, system states, print | done |
-| C10 | Demo chooser and bar, landing page | not started |
+| C10 | Demo chooser and bar, landing page | done |
 | C11 | Verification, deployment, README | not started |
 
 ### S0 checks (2026-10-03)
@@ -1225,6 +1225,283 @@ throw-away Atlas database, never one you want to keep; password for every accoun
    and the panel offers **Try again**. Remove the line and click **Try again**. (Revert the edit afterwards.)
 9. Do steps 2, 4 and 7 in the **dark** theme too, and step 2 in a 360 px-wide window.
 
+### C10 checks (2026-10-10)
+Local only. No database was used at all: the demo and the landing page need no API, and the one server started
+was Vite. Atlas, `MONGODB_URI`, `server/.env` and `npm run seed` were never touched; the server's tests ran on
+their in-memory MongoDB as always. Vite was stopped and the throw-away `client/.env` (a copy of `.env.example`,
+git-ignored) deleted at the end.
+- `npm run lint`: clean. `npm test`: green — server 385 (unchanged), client **511** (was 473; new:
+  `demo/__tests__/demoCast.test.js` 10, `demo/__tests__/demoEntry.test.jsx` 9,
+  `components/marketing/__tests__/LandingPage.test.jsx` 10, `styles/__tests__/landingIsolation.test.js` 9, and one
+  changed assertion in `demoCoverage.test.js`). `vite build` OK: the landing page is its own chunk with its own
+  stylesheet, `DemoEntryPage` and the demo are chunks the main bundle does not contain, and the main stylesheet
+  holds no `--l-*` token, no `.landing` rule and no `Bricolage`.
+- **The done-when grep:** `grep -ril "Bricolage\|#123F35\|#F2B880" client/src` matches `styles/landing.css`,
+  `pages/LandingPage.jsx` and the tests that name them, nothing else (`landingIsolation.test.js` asserts it).
+- **What was built**
+  - *Demo.* `DemoEntryPage` (the chooser), `DemoBar` (36 px, in `AppShell`, which now sets `--demo-h` to 36 px under
+    `/demo` and 0 elsewhere), `SampleDataPill` + `useIsDemo` + `Panel`'s `sample` prop (the pill is in the header of
+    the dashboard's four charts, team table, projects table and activity feed, This week's week and projects panels,
+    its recent weeks, the daily updates block, and the leave history), `useDemoSignIn`, `IndexRoute` (landing /
+    chooser / This week). The fixtures hold the **cast of brand §10** — Imali J., Nadia F., Sanduni B. and now Ruwan P.,
+    Tharindu S., Ayesha C., Dinesh K., Malith W. — with two more projects (Internal tools, Marketing), their tasks, and
+    weeks on dates relative to the day the demo starts.
+  - *Landing page.* `LandingPage`, `layouts/MarketingLayout.jsx`, eight section components, `CtaPill`, `Words`,
+    `hooks/useLandingMotion.js`, `styles/landing.css`. The markup, CSS and both scripts of
+    `landing-reference/index.html` were converted by a throw-away script and then read, not retyped.
+- **Fidelity to the reference, measured.** With the reference opened from disk and the port served by Vite, same
+  Chromium, fonts blocked in both: full-page screenshots at **1440, 1024 and 360 px with reduced motion are
+  pixel-identical** (0 differing pixels in 9444, 12159 and 13885 px of page). With motion on, viewport screenshots at
+  every 90 % of a screen of scroll — 15 stops at 1440 × 900 (the typed blocker, the pinned week, the folding problem,
+  the opening monitor, the ledger) — are **identical**; at 360 × 780, 19 of 20 are identical and the 20th differs by 0.24 %
+  of its pixels, the server-check dot caught at a different moment of its timed run. No page errors.
+- **The call to action, in a browser.** API unreachable (aborted): the demo is primary, no `/signup` link anywhere on the
+  page. Bootstrap answered `available: true` (mocked): the nav, the hero and the final band lead with **Create your
+  account**, with **See the live demo** beside the hero's and the final band's; the FAQ's last answer no longer says
+  signup is closed. A sleeping API shows the demo primary until the answer arrives.
+- **Isolation, in a browser.** On the landing page the theme toggle's value is `dark` and the page stays green;
+  `<html>` carries `landing-active` while it is mounted. Following **Sign in** (a full page load) the new page has no
+  Bricolage link, no `.landing` rule in any stylesheet, no `html` class, Chivo in its `<h1>`.
+- **The demo, checked at 1440 × 900 and 360 × 780, light and dark** (headless Chromium; each page opened as the
+  perspective that has it): the chooser; member — This week, My reports; manager — This week, Team dashboard, Review desk,
+  Team updates, Projects; admin — Users, Holidays, People. **No horizontal overflow, no page errors, `--demo-h` 36 px, the
+  bar 36 px high, no request to any API** (the demo ran with nothing listening). Screenshots were looked at for the
+  chooser (1440 light, 360 dark), the dashboard (1440 light scrolled and not, 360 light), This week (1440 and 360 dark),
+  the Review desk (360 dark), the review page (1440 light), Team updates (1440 light), Users (1440 dark), Holidays (360
+  dark), Projects (1440 dark), the 360 drawer with the bar above it, and the dashboard's loading state (the skeletons
+  show: each handler waits 150 ms). The rest of the 44 captures were checked by their measurements only.
+- **The flow, in a browser:** manager → Review desk shows 2 rows and a `2` in the sidebar → open Ruwan P.'s week →
+  Approve → the desk lists one row and the sidebar reads `1 waiting` → **Switch** → chooser → Team member (the bar now reads
+  Imali J., Member) → **refresh** → the chooser, no bar → manager again → the desk is back at 2 → **Start over** → the chooser at
+  `/demo`.
+- **Not verified:** the real fonts (Google Fonts is blocked on this machine, so every screenshot is in the fallback faces —
+  Bricolage, Chivo, Instrument Sans and JetBrains Mono were not seen, and the landing page's line breaks will move a
+  little with them); Firefox and Safari; touch; the real API's bootstrap answer (the open state used a mocked response, the
+  closed state an unreachable API); screen-reader output of the chooser and the bar; hover and press states of the bar
+  and the chooser rows, and the focus ring on the bar's buttons, by eye; the page at widths between 360 and 1440
+  other than 1024; the landing page in Firefox's and Safari's reduced-motion modes.
+- **Weekends:** as first built, a Saturday or Sunday showed everyone's Friday as **Missing**; fixed on owner request — see *C10 owner answers*. On a Friday the holiday is still next Monday, so it shows on Holidays and not in that week's squares.
+
+### C10 decisions — all twelve accepted as built (owner, 2026-10-10)
+1. **The fixtures have eight people; the unit tests keep three.** `buildFixtures(now, { team: false })` (through
+   `createDemoStore(undefined, { team: false })`) leaves only the three perspectives, and the existing demo and page tests
+   use it, so each rule is still read on the smallest data. `demoCast.test.js` reads the real fixtures on a frozen
+   Wednesday and on every day of a week. Your C6 note is done: **Ruwan P. and Ayesha C. are Submitted, asked for approval,
+   and are not the reviewing perspectives**, so the desk's default view has two rows for Nadia and for Sanduni, and the
+   sidebar's `2` and the new squares show.
+2. **The cast's shape.** All five new people are members. Last week: Ruwan Submitted (asked), Ayesha Submitted (asked),
+   Tharindu Approved by Nadia, Malith Approved by Sanduni, Dinesh no report. This week: Drafts for everyone with days behind
+   them; **Ayesha misses the first of them** (the Missing square), **Dinesh has posted nothing** (Not started, all
+   Missing), **Malith is on leave from Monday** (On leave, the hatched squares), and there is one **Company day off** (the
+   holiday square) on the next working day. Nadia and Sanduni also have a Draft this week, so the table has a square row
+   for everyone. Two projects added: Internal tools (a plan, 40 days) and Marketing (no plan, so "Set plan" shows).
+3. **The demo bar is `--d-panel`, not `--ink`.** Design §3.14 says `--ink` with `--d-text`; in the dark theme `--ink`
+   is near-white and the text would vanish. `--d-panel` is the dark band `tokens.css` reserves for the demo bar and is the same in
+   both themes; it has a hairline under it. Its two buttons are drawn from `--d-*` tokens, not the `inverted` `Button`
+   (which flips with the theme).
+4. **The bar's way out is always `Sign in`.** The demo answers A1 "bootstrap closed" (C1), so §3.14's "Create your account or
+   Sign in" resolves to `Sign in`, a plain link to `/signin`. Below 640 px the bar drops "Demo · you're" and the role (it
+   keeps the name); at 360 px all of SAMPLE DATA, the name, `Switch`, `Start over` and `Sign in` fit in the one 36 px row.
+5. **`Switch` signs out of the demo session and goes to the chooser; the store stays**, so what the visitor did is there
+   for the next person they pick. `Start over` is a full load of `/demo`; so is a refresh (FA1).
+6. **Where the SAMPLE DATA pill sits.** §3.14 says "every data panel"; the pages that are tables in the page itself (Reports,
+   Review desk, Users, Holidays, People, Projects) have no panel header, so they carry the pill through the demo bar only.
+   The chooser says "Back to the start page" (a plain link to `/`) — a line the design does not have.
+7. **Layout under the bar.** The shell's height is `100dvh - --demo-h`, the mobile drawer starts under the bar (the bar stays
+   visible and clickable above the backdrop), and the review and week pages' pinned rails subtract `--demo-h` from their
+   `max-h`. `--demo-h` is removed when the shell unmounts.
+8. **Landing: every link out is a plain `<a>`** — the demo (a different page load by design), and also `/signin` and
+   `/signup`. That keeps `landing.css` and the Bricolage link from ever being in a session that goes on to the app. The
+   page brings its own skip link; the app's (`wv-skip`) is hidden on it.
+9. **Landing: the reference's `html` classes (`js`, `motion`, `ready`) are on the `.landing` root**, the only place its
+   selectors read them. `.landing-active` on `<html>` is the one thing outside the root (the green behind and beyond the
+   page, the smooth scroll and its scroll padding). The reference's `window.WV` global is gone, its two scripts are one
+   effect (`useLandingMotion`) that undoes everything it adds, and the two split headings are `Words` in the markup, not a
+   script that rewrites React's text.
+10. **Landing: the open state's extras.** Brand §6.3 wants "Create your account" primary and the demo secondary. The hero gets
+    an outlined `See the live demo` pill and the line "Set up your first week in minutes. No sign-up to explore the demo."
+    (the brand's microcopy); the final band gets the same pair; the nav pill is the signup. The FAQ's last answer reads
+    "This copy has no account yet, so you can create the first." instead of "…signup here is closed" — otherwise the page
+    would say closed under a button that says create. The closed state is the reference as built.
+11. **`landing.css` is in `client/.prettierignore`** so it stays as the reference formats it (one line per rule) and can be
+    diffed against it. The scoping is `.landing` + one class (so +1 specificity everywhere, order unchanged) with five small
+    additions at the foot (Bricolage on h1–h4 against the app's global heading rule, underlined links against the app's reset,
+    the ghost pill, the hidden skip link, `html.landing-active` background).
+12. **The tab title** of the chooser is "Demo · WeeklyView"; the landing page's is the reference's "WeeklyView: one update,
+    both sides of the desk", with its description, and both are restored on leave.
+
+### C10 owner answers (2026-10-10)
+- **Decisions:** all twelve accepted as built (above).
+- **Weekend-aware fixtures.** On a Saturday or Sunday the whole week is behind the visitor, so the team table showed
+  everyone's Friday as Missing, which read as broken. `buildFixtures` now treats the week as fully behind on Sat/Sun
+  (`pastDays` is 5): Friday is posted for everyone who posts the other days. What stays missing is deliberate and
+  unchanged — **Ayesha C.'s Monday**, **Dinesh K.'s whole week** (Not started), **Malith W.** (on leave). The holiday stays
+  next Monday on a weekend (a weekday this week otherwise). Weekdays are unchanged (Friday still the day not yet posted).
+- **The member can still show submitting.** Imali's this-week Draft now has five posted days but no task statuses, so the
+  submit rules still refuse it (`VALIDATION_FAILED`) until a status is set on each task; then R7 accepts the week.
+  `demoCoverage.test.js`'s `submitReport` case still refuses (its comment now names the statuses, not Friday).
+- **Test:** `demoCast.test.js` has a case for a frozen **Saturday** and **Sunday**: the five squares posted for everyone but
+  the three deliberate cases, Friday missing only for Dinesh, the holiday on the Monday after, and Imali refused, then
+  setting statuses and submitting. Lint clean; server 385, client **513** (was 511).
+- **To look at by hand on a weekend:** open the demo as Manager → **Team dashboard**: Friday's square is blue for everyone
+  except Dinesh K. (red ×); Ayesha C.'s first square is a red ×; Malith W. is hatched. As Team member → **This week**: five
+  day cards; open the week's report and set a status on each task to submit. (Not looked at in a browser this round: only the
+  fixtures and the adapter's answers were tested.)
+
+### C10 fix: landing pills fit their text (2026-10-10)
+Owner report: the dashed SAMPLE DATA pill's text overflowed its rounded border with the real Bricolage Grotesque.
+- **Cause (in the reference too):** the ledger's column-title rule `.lhead span` (padding `0 0 18px`, 15 px, weight 650) also
+  matched the SAMPLE DATA pill inside the ledger's middle column, and out-ranked `.samp`. The pill lost its side padding, grew
+  to the title's size and bold weight and became 39 px tall, so the text touched the curved ends. The fallback face hid it
+  only because it is narrower than Bricolage.
+- **Fix, in `landing.css` only:** one rule, `.landing .lhead .samp`, restores the pill's own padding (`3px 10px`), 12 px,
+  weight 700, line-height 1.4 and `nowrap`. It has no width or height, so it is as wide and tall as its text in any font. The
+  dashed border and the pill radius are as the reference has them.
+- **How it was checked, without relying on the real font or screenshots:** a Playwright check (run from the scratchpad, not part
+  of the repo, because it needs a browser) forced each of **DejaVu Sans, Verdana's fallback, DejaVu Sans Mono and Liberation
+  Serif** onto every landing element, at **1440, 1024 and 360 px**, with the sign-up closed and open. For every pill, chip,
+  button, link and tag it checked that the text's box lies inside the element's box, that `scrollWidth` is not larger than
+  `clientWidth` (4 px of slack for an underlined button), and that a pill-shaped element (radius ≥ half its height, no icon) has at
+  least 35 % of its height of space between the text and each curved end. Elements: `.samp`, `.samp-u`, `.pill` (nav, hero, final
+  band, sm and xl, solid and ghost), `.chip`, `.fbtn` (the manager table's filter buttons), `.door`, `.replay`, `.vd`, `.tt`,
+  `.dayrail li`, `.dr-rep`, `.srv-node`, `.sel`, `.post`, `.ubtn`, `.faq summary`, `.lic`, `.fcount`, the nav and account links.
+  **Before the fix it failed once per run** (the `.samp` at 1440: 39.5 px tall, text 1 px from each end); **after, nothing
+  overflows in any font, width or state.** No other pill, button or link needed a change.
+- **The app's own dashed tag** (`SampleDataPill`, eight of them on the team dashboard) and the demo bar's tag, `Switch`, `Start
+  over` and `Sign in` were run through the same check in the demo at 1440 and 360 px with the same four faces: they fit, with
+  no change (the pill is `inline-flex` with side padding and no fixed size).
+- **A test keeps the CSS honest:** `landingIsolation.test.js` has three cases — the pills, chips, tags and filter buttons carry
+  padding and no `width` / `height`; the `.lhead .samp` guard exists with its padding, size and `nowrap`; `.samp` keeps its dashed
+  border, radius and `nowrap`. (The text-against-border check itself needs a browser and is the one above.) Lint clean;
+  server 385, client **516** (was 513).
+- **Still not seen:** the real Bricolage Grotesque (blocked here), so the fix is proven for wide fallback faces, not by eye
+  with the actual font.
+
+### C10 owner copy: plain-language "Who can do what" (2026-10-10)
+Owner decision: the block was too technical for non-technical visitors and its first example was misleading (it read as if
+a teammate opening a report were the only thing the page checked). Only the words changed, plus one added row; layout, styles
+and colours are as they were.
+- **Copy (landing, `LimitsSection.jsx`):** heading "Who can do what" (kept); subtitle "WeeklyView checks every action, so
+  people can only do what their role allows."; top box **WeeklyView checks** / "who you are and what you're allowed to do";
+  five rows — Tharindu (teammate) reads Imali's daily updates · *Allowed*; Tharindu (teammate) tries to open Imali's weekly
+  report · *Not allowed: managers only*; Nadia (manager) comments on Imali's weekly report · *Allowed*; Nadia (manager) tries to
+  change Imali's report · *Not allowed: comments only*; Nadia (manager) tries to approve her own report · *Not allowed: no one
+  approves their own*. The hidden sentence for screen readers reads "Examples of what WeeklyView allows and what it refuses."
+  The server-check animation walks all five rows (it reads the list, so nothing in the script changed). Owner-decision line added
+  to `brand_design_strategy.md` §7.9.
+- **The pills.** `.vd` is `width:max-content; max-width:100%` with its `3px 10px` padding, no fixed width or height: one line,
+  as wide as its text in any font, and when the row's text leaves no room it drops whole onto its own line. Only when one line of
+  it is wider than the column does its text wrap inside it, so it cannot overflow. **This is not `white-space:nowrap`** as
+  asked: with `nowrap` the longest verdict ("Not allowed: no one approves their own") overflowed the column in a wide font (the
+  check below caught it at 1440 and 360 px). A verdict's `max-content` width also made the grid column refuse to shrink in a wide
+  font (page-wide sideways scroll at 360 px), so `.mx > div` has `min-width:0`. Both are in `landing.css` under `.landing`.
+- **Checked in a browser at 1440, 1024, 360 and 320 px, sign-up closed and open,** with DejaVu Sans, DejaVu Sans Mono, Liberation
+  Serif and Inter forced onto every landing element: no pill, chip, button, link or tag overflows its box, the text clears each
+  pill's curved ends (the check now measures the curve's inset at each line of text, not a fixed fraction), and the page has no
+  sideways scroll. Screenshots of the block were looked at at 1440 px, 360 px, and 360 px in DejaVu Sans: five rows, each verdict
+  on the row's line or its own line, the longest verdict wrapping inside its pill only at 360 px in the fallback face.
+- **Tests:** `LandingPage.test.jsx` has four new cases (the heading, subtitle and top box; the five rows with their verdicts in
+  order, `ok` / `no`; the names in bold; no "server", "request", "refused", "Imali J." or "week 38" left in the block). The old
+  copy was not asserted anywhere. `landingIsolation.test.js` asserts the verdict pill's `max-content` sizing, its padding and radius
+  and the absence of `nowrap`; the generic pill rule now allows `width:max-content` and nothing else. Lint clean; server 385,
+  client **521** (was 516: four cases in `LandingPage.test.jsx`, one in `landingIsolation.test.js`).
+- **Not seen:** the real Bricolage Grotesque (blocked here). The line breaks, and so which verdicts sit beside the text and which
+  drop to their own line, will move a little with it.
+
+### C10 owner feedback: privacy statement placement; mock-ups match the app (2026-10-10)
+Both are owner decisions, noted as rules 8 and 9 of `brand_design_strategy.md` §6.0.
+- **Privacy statement.** "No activity tracking, no screenshots, no idle timers. Only what people choose to write." is now inside
+  the right-hand column of the "Who can do what" block (`.mx-right`), under the permissions table, centred in the height that
+  column has left beside the list (auto margins). From **1024 px** up the block is two columns (the collapse used to be at
+  1060 px); below it, the list, the table and then the statement stack. Typography unchanged. Looked at 1440 and 1024 px.
+- **Palette.** `landing.css` now carries the app's light palette as **`--l-app-*`** tokens (paper … rule, acc, the four status
+  sets and the dashed none chip, the seven type colours c1–c7), scoped to `.landing`. The reference's `--l-u-*` / `--l-st-*`
+  names alias them, so every mock-up reads one palette. No app CSS is imported; no landing token reaches the app. A test
+  (`landingIsolation.test.js`, 35 cases) asserts each `--l-app-*` equals the same token in `tokens.css`.
+- **What changed per mock-up** (size, placement, framing, tilt/fan and the animations are as they were):
+  - *Hero laptop (the manager's dashboard):* sidebar is the app's (Review desk with its `2`, Team dashboard active with the left
+    bar, People, Projects, This week, My reports, Team updates); the three invented metrics became the app's four coloured ones —
+    **Filed** blue, **Compliance** green, **Needs correction** red, **Open blockers** amber (the counter that the update flies
+    into); the Mon–Fri squares are the app's six states (posted cobalt, missing red ×, today blue outline, leave hatch, holiday
+    dots, later faint outline) with a small legend; Dinesh's Monday is the red ×, Ayesha's Tuesday and Dinesh's Tuesday are "today,
+    not posted yet", Imali's Tuesday fills as the update lands; column "Mon to Fri" is "Updates"; chips are the current, stronger
+    status colours. The "Posted today" and "Week so far" cells are gone (not in the app), so the script's hours counter went too.
+  - *Hero phone:* the bottom tab bar is gone (the app has none); the top bar is the app's (menu, "This week"); the day strip is the
+    app's week strip (Tue selected with the ink bar and today's blue bar); the panel header is "Tue 15 Sep · 7 h · Not posted" and the
+    "Not posted" turns to "Posted 17:42" when the update is sent (the button is the app's plain primary `Post update`, not a
+    morphing label); "What did you do?", type marks inside the Task and Type fields, "Blockers · Optional" with the app's
+    placeholder "What is holding work up?", the "Open to team comments" checkbox, `Save` and `Post update`. The flying note carries
+    the blocker style (key bar).
+  - *Week scene, the five day cards:* the app's day card — weekday, date and hours in the header, a strip with the comment count
+    and the "Open to team comments" switch, work lines as task over project, the type with its **colour mark** (not a grey tag),
+    what was done, hours right-aligned; the Tuesday blocker is the app's **key blocker** row (2 px cobalt bar, resolve box, `Key`)
+    under a "Blockers" label; the comment is a **conversation** (avatar, name, `Manager` chip, time, text, and Imali's reply hanging
+    off a hairline — the reply is hidden on viewports shorter than 820 px so the card fits). The "report is built from these five
+    days" line is the landing's own caption and is as it was.
+  - *Week report:* **"Set status"** (was "Set a status"), the **Draft chip** in the current yellow, **"Ask for approval"** framed like
+    the app's button (ticked, cobalt edge and tint), type colour marks under each task, `Submit` in the app's primary.
+  - *Single-day card (problem section):* the same day card in small — weekday, date and hours, task with project and the type mark,
+    hours right, the key-blocker row; the `SAMPLE DATA` tag is the app's dashed tag.
+  - *Manager's monitor:* the four coloured metrics with the app's sub-lines ("2 not yet filed", "this week", "raised by 3 people");
+    Compliance added (75 %); the squares, the legend, status chips (Approved / Needs correction / Submitted / Draft / dashed Not
+    started) in the app's colours; Person cells have the app's square initials; columns read "Updates" and "Projects"; Ayesha's
+    Friday and all five of Dinesh's days are the red ×. The filter buttons and the "Open blockers" list are the page's own interactive
+    story and are as they were. At 360 px the metrics are 2 × 2 and the chips take the app's small size so none is clipped.
+  - *Ledger pieces:* the daily update has type marks and the key-blocker row; the weekly report shows the Draft chip and the app's
+    task-status chips (`In progress`, `Done` in green); the four status chips are the current colours; the revision comment shows
+    avatar, name, `Manager` chip and "rev 1 · sent back" (it stays on the tint, as overall comments do in the app, design §3.4);
+    "Not started" is the dashed chip with the square initials.
+  - *Checked and left alone:* the "Open blockers" side list, the filter buttons, the day rail, the "who can do what" table and rows
+    (the page's own UI, not the product's).
+- **Pills and chips fit their text.** Chips: `min-height` (18 px, or 22 px for the `md` size), side padding, `nowrap`, no fixed width
+  or height; the status chips in the narrow table are the small size. The browser fit check (DejaVu Sans, DejaVu Sans Mono,
+  Liberation Serif and Inter forced onto the page; 1440, 1024, 360 and 320 px; sign-up closed and open; reduced motion on, and
+  motion on for DejaVu Sans) found **no overflow and no sideways scroll**, covering every `.pill`, `.chip`, `.tchip`, `.samp`,
+  `.samp-u`, `.vd`, `.fbtn`, `.ucheck`, `.ubtn`, `.usec`, `.post`, role chip and legend item. It first caught the narrow table's
+  "Needs correction" chip clipped at 360 px; fixed as above.
+- **Looked at** (headless Chromium, fallback fonts): 1440 px with motion — the hero, the week at Tue and the report, the monitor,
+  the ledger, the "who can do what" block; 1366 × 768 and 1024 × 800 — the pinned week at Tue and the report (the Tuesday card fits;
+  this is why the reply hides on short screens); 360 px with motion — the hero, the week cards, the monitor, the single-day card, the
+  "who can do what" block; 1024 px — the hero and the block; static (reduced motion) at 1440 and 1024 — the day cards as rows. **Not
+  looked at by eye:** the static 360 px layout of the hero and ledger (measured only), the other status states the mock-ups do not
+  show, hover and focus states, and the real Bricolage Grotesque (blocked here; line breaks will move).
+- **Fonts, as I read the instruction.** "Mock-ups use the app's fonts as the landing reference already does": the reference draws its
+  mock-ups in the page's own typeface, and the landing checklist (brand §12) forbids Chivo, Instrument Sans and JetBrains Mono on
+  the page, so the mock-ups stay in Bricolage Grotesque, with tabular figures where the app uses mono. If you meant the product's
+  three families inside the frames, that is a separate change (it loads fonts on the landing page).
+- **Tests:** `LandingPage.test.jsx` (`m-hrs` removed from the ids the motion needs; seven cases for the mock-ups: the squares in the
+  monitor and the hero, the legend, the four metrics and sidebar, the day cards, the report, the single card and ledger, and the
+  privacy statement's place) and `landingIsolation.test.js` (35 palette cases, the reference names reading that palette, the pill
+  rule list now naming `tchip`). Lint clean; server 385, client **564** (was 521).
+
+**Owner: how to test C10 by hand** (the demo and the landing page need no database; steps 1–9 need only the client)
+1. In a terminal: copy `client/.env.example` to `client/.env` if you have not, then `npm --prefix client run dev`, and open
+   http://localhost:5173/ **with the API not running**. You should see the green landing page, and the one big button reads
+   **See the live demo**. Look for any "Create your account" button anywhere: there should be none.
+2. Scroll from top to bottom, first at a wide window, then at 360 px wide (browser dev tools → device toolbar). Check: the hero's
+   typed blocker plays once and **Play it again** replays it; on a wide window the week section pins and walks Monday to Friday;
+   the manager table's **Needs correction / Not started / Has blocker** buttons filter it; the FAQ questions open; no sideways
+   scrolling at 360 px. Then switch your system to "reduce motion" and reload: everything is there, nothing moves or hides.
+3. **The signed-up state** (optional, needs the API): start `npm --prefix server run dev` against a **local, empty,
+   throw-away** MongoDB (not Atlas, not a database you keep), reload the landing page: the nav, the hero and the last band now
+   read **Create your account**, with **See the live demo** beside the first and last. Stop the API and reload: back to demo-only.
+4. Click **See the live demo**. The address is `/demo` and you see "Try WeeklyView" with three choices. Click **Manager**.
+5. In the sidebar, **Review desk** shows `2`. Open it: two reports (Ruwan P. and Ayesha C.). Open Ruwan's, type nothing, click
+   **Approve**. Go back to **Review desk**: one is left, and the sidebar says `1`. Open **Team dashboard**: a row of squares per
+   person — blue posted, red × missing, hatched on leave (Malith W.), and a dotted square for the day off on a weekday.
+6. Click **Switch** (top bar, next to your name) → the chooser → **Team member**. **My reports** has a small blue square (last
+   week was sent back); **This week** shows day cards. Post or edit a day, open a comment, and notice nothing is "saved":
+   press F5 and you are back at the chooser.
+7. Choose **Admin**: open **Users** and **Holidays**, add a holiday, change a person's role in the Role column, and open a
+   person's `⋯` menu. Click
+   **Start over** in the bar: you are at the chooser and everything you did is gone.
+8. **Dark theme:** inside the demo, bottom of the sidebar → your name → **Appearance → Dark**. The demo bar stays the same dark
+   band, the pages are dark, the dashed **SAMPLE DATA** tags show on the panels. Open http://localhost:5173/ in the same
+   browser: the landing page is still green (it ignores the theme).
+9. **Narrow:** at 360 px wide the bar is one row (SAMPLE DATA, your name, Switch, Start over, Sign in); open the menu
+   (☰): the drawer slides in under the bar.
+10. **Nothing leaks:** from the landing page click **Sign in**: the ordinary sign-in screen (cobalt, Chivo headings, no green). In dev tools → Network, filter "Bricolage": it appears on `/` only, not on `/signin` and not on `/demo`.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -1859,6 +2136,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- ~~C10, to confirm or change~~ **Resolved (owner, 2026-10-10):** all twelve C10 decisions accepted as built — see *C10 decisions*; the weekend look of the team table was fixed (see *C10 owner answers*). (Was: the twelve decisions, especially 3 (the demo bar's surface is `--d-panel`, not `--ink`), 4 (its way out is always `Sign in`), 6 (the pill on panels only) and 10 (the open-sign-up wording of the landing page's FAQ).) The landing page and the demo were checked in a browser with fallback fonts only; see *C10 checks*.
 - ~~C8, to confirm or change~~ **Resolved (owner, 2026-10-09):** all twelve C8 decisions accepted as built — see *C8 decisions*. (Was: the twelve decisions, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).)
 - **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.
@@ -1884,6 +2162,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C10 added `components/ui/SampleDataPill.jsx`, `hooks/useIsDemo.js`, eight section components, `CtaPill.jsx` and `Words.jsx` in `components/marketing/`, `client/.prettierignore` and four test files (`demo/__tests__/{demoCast.test.js,demoEntry.test.jsx}`, `components/marketing/__tests__/LandingPage.test.jsx`, `styles/__tests__/landingIsolation.test.js`); `AuthPanel` takes `padding="none"`; `project_structure.md` §3.1 and §6 are updated. `DemoEntryPage`, `DemoBar`, `MarketingLayout`, `LandingPage`, `useLandingMotion` and `landing.css` were in the tree. `pages.js` names `LandingPage` and `DemoEntryPage`.
 - C9 added `components/shell/{ErrorBoundary,ErrorStates}.jsx`, `components/report/PrintFooter.jsx`, `hooks/{useNewMarks,useRouteFocus,usePrintTheme}.js`, `lib/clearMarkers.js`, `services/markerService.js` (in the tree), `styles/print.css` and four test files (`demo/__tests__/demoMarkers.test.js`, `lib/__tests__/clearMarkers.test.js`, `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`); `project_structure.md` §3.1 and §6 are updated. The page-level error boundary is in `AppShell` as well as `RootLayout` (see C9 decisions).
 - C8 added `pages/{ProjectsPage,HolidaysPage,UsersPage,PeoplePage,PersonProfilePage,AccountPage}.jsx` (all in the tree), `components/project/{ProjectModal,ProjectsListTable}.jsx`, `components/holiday/HolidayModal.jsx`, ten files in `components/user/` (see the tree), `ui/{DropdownMenu,DatePicker,Meter}.jsx` (in the tree), `schemas/{projectSchema,userSchema}.js`, `lib/{peopleParams,passwordStrength}.js` and five test files; it deleted `pages/PendingPage.jsx`. `project_structure.md` §3.1 and §6 are updated.
 - C7 added `lib/dashboardParams.js`, `lib/dashboardData.js`, `demo/demoDashboardRoutes.js`, `components/ui/AvatarStack.jsx` (in the tree of §3.1 as `AvatarStack` of the `ui/` list, now a file) and five test files (`pages/__tests__/TeamDashboardPage.test.jsx`, `demo/__tests__/demoDashboard.test.js`, `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`); `project_structure.md` §3.1 and §6 are updated. `MetricCell` is built (`PersonalStrip` still draws its own three cells). `typeColor` in `chartTheme.js` is `TASK_TYPE_COLORS` itself, not a second copy.

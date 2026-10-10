@@ -41,7 +41,7 @@ const names = (rows) => rows.items.map((r) => r.user.name);
 const linesOf = (report) => report.days.flatMap((d) => d.lines);
 
 beforeEach(() => {
-  store = createDemoStore();
+  store = createDemoStore(undefined, { team: false });
   apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
   as("manager");
 });

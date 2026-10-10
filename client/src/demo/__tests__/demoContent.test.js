@@ -46,7 +46,7 @@ beforeAll(() => {
 afterAll(() => vi.useRealTimers());
 
 beforeEach(() => {
-  store = createDemoStore();
+  store = createDemoStore(undefined, { team: false });
   apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
   as("member");
 });

@@ -498,7 +498,8 @@ client/
 │   │   │   ├── Checkbox.jsx
 │   │   │   ├── Radio.jsx
 │   │   │   ├── StatusChip.jsx
-│   │   │   ├── Panel.jsx
+│   │   │   ├── Panel.jsx              # C10: `sample` puts the SAMPLE DATA pill in its header in the demo
+│   │   │   ├── SampleDataPill.jsx     # added in C10: the dashed mono pill of design §3.14, rendered only in the demo; the data panels' headers use it
 │   │   │   ├── Table.jsx
 │   │   │   ├── Pagination.jsx
 │   │   │   ├── Modal.jsx
@@ -629,6 +630,10 @@ client/
 │   │   │   ├── LinkPreviewGate.jsx    # added in C1: A7 before the invite / reset form
 │   │   │   └── LinkExpired.jsx        # added in C1: the one expired-link state
 │   │   └── marketing/                 # the landing page's sections, ported from landing-reference/index.html (brand §6.0)
+│   │       ├── HeroSection.jsx · WeekSection.jsx · ProblemSection.jsx · DeskSection.jsx · SidesSection.jsx · LimitsSection.jsx · QuestionsSection.jsx · FinalSection.jsx   # added in C10: one per section of the reference; Hero, Questions and Final take `signupOpen`
+│   │       ├── CtaPill.jsx            # added in C10: the pill link (solid with the arrow circle, or ghost) — always a plain <a>, so the landing styles never outlive the page
+│   │       ├── Words.jsx              # added in C10: a heading's words in their masks (the reference split them in its script)
+│   │       └── __tests__/LandingPage.test.jsx  # added in C10: the CTA swap, the honesty rules, the ids the motion needs, no hex in the components
 │   ├── demo/                          # the client-side demo — tech_stack.md §6.9
 │   │   ├── bootDemo.js                # builds the store, installs the adapter — dynamically imported by main.jsx
 │   │   ├── demoAdapter.js             # the custom Axios adapter
@@ -642,14 +647,16 @@ client/
 │   │   ├── demoDashboardRoutes.js     # added in C7: D1–D6 and D8 for the demo, by the server's rules; C8 adds D7
 │   │   ├── demoUserRoutes.js          # added in C6: U1 (the people list) for the demo; C8 adds U2–U7 and U11–U13
 │   │   ├── demoStore.js               # builds the in-memory store; rebuilt on refresh or Start over
-│   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates
+│   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates; C10 completes the brand §10 cast of eight; `buildFixtures(now, { team: false })` leaves only the three perspectives, which the unit tests of the rules use
 │   │   └── __tests__/
 │   │       ├── demoCoverage.test.js   # every services/ function answered by the adapter
 │   │       ├── demoWeeks.test.js      # added in C3: the demo's layers, comment rules, ten-minute window and "new" markers
 │   │       ├── demoDays.test.js       # added in C4: writing a day, holidays, leave, projects, R1/R2 on a frozen Wednesday
 │   │       ├── demoContent.test.js    # added in C5: R6 autosave and R7 submit / resubmit, with the server's codes
 │   │       ├── demoReview.test.js     # added in C6: the desk never lists your own report, the pinned revision, the 10-character send-back, R12's filters, U1
-│   │       └── demoDashboard.test.js  # added in C7: D1–D6 and D8 — people-first rows, `status` on D2 only, I11, I13, the eight-event feed
+│   │       ├── demoDashboard.test.js  # added in C7: D1–D6 and D8 — people-first rows, `status` on D2 only, I11, I13, the eight-event feed
+│   │       ├── demoCast.test.js       # added in C10: the full fixtures — eight people, a review desk with something in it, every square of the team table, on every day of the week
+│   │       └── demoEntry.test.jsx     # added in C10: the chooser, the demo bar, the SAMPLE DATA pill, switching keeps the store and a fresh boot resets it
 │   ├── hooks/
 │   │   ├── useAuth.js                 # reads AuthContext
 │   │   ├── useAuthQueries.js          # bootstrap status, link preview, login, signup, accept
@@ -663,6 +670,7 @@ client/
 │   │   ├── usePrintTheme.js           # added in C9: prints on the light theme whatever the screen's theme
 │   │   ├── useUnsavedGuard.js         # registers dirty state with UnsavedChangesContext
 │   │   ├── useDocumentTitle.js
+│   │   ├── useIsDemo.js               # added in C10: AuthContext's isDemo, false with no provider — for the SAMPLE DATA pill only
 │   │   ├── useActiveSection.js        # IntersectionObserver for the form rail
 │   │   ├── useHasMounted.js           # lets charts animate data changes but not mount
 │   │   ├── usePermissions.js          # lib/permissions bound to the current user
@@ -751,7 +759,8 @@ client/
 │   │       ├── dashboardData.test.js    # added in C7
 │   │       └── chartTheme.test.js       # added in C7: no hex, the seven category colours = the day panel's and the form's
 │   ├── styles/
-│   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0)
+│   │   ├── landing.css                # the landing page only: v11's green tokens and rules, scoped to .landing — never imported by the app (brand §6.0); kept as the reference formats it (client/.prettierignore)
+│   │   ├── __tests__/landingIsolation.test.js  # added in C10: every selector under .landing, every property --l-*, the landing words only in the landing files
 │   │   ├── tokens.css                 # design §9.3 verbatim: :root + [data-theme="dark"]
 │   │   ├── base.css                   # global element styles, focus ring, reduced motion
 │   │   ├── print.css                  # added in C9: the @media print stylesheet of design §3.4, imported by index.css
@@ -760,6 +769,7 @@ client/
 ├── vite.config.js
 ├── eslint.config.js                   # added in S0: flat config with react-hooks + react-refresh (the lint script needs one)
 ├── .prettierrc.json                   # added in S0: loads prettier-plugin-tailwindcss, which only runs when configured
+├── .prettierignore                    # added in C10: styles/landing.css stays as the reference formats it
 ├── vercel.json
 ├── .env.example
 └── package.json

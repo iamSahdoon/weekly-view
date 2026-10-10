@@ -3,6 +3,7 @@ import { weekNumberLabel } from "../../lib/dates.js";
 import { formatHours } from "../../lib/format.js";
 import { NewMarker } from "../ui/NewMarker.jsx";
 import { StatusChip } from "../ui/StatusChip.jsx";
+import { SampleDataPill } from "../ui/SampleDataPill.jsx";
 
 // Recent weeks on This week (design §3.1): five 40px rows — the week id in mono, the
 // hours in mono, a "new" marker when something on that week is unread, the status
@@ -15,12 +16,15 @@ export function RecentWeeksList({ rows }) {
       className="flex flex-col border border-hair bg-card"
     >
       <header className="flex h-44 items-center border-b border-hair px-20">
-        <h2
-          id="recent-weeks"
-          className="font-display text-panel font-bold text-ink"
-        >
-          Recent weeks
-        </h2>
+        <div className="flex min-w-0 items-center gap-8">
+          <h2
+            id="recent-weeks"
+            className="font-display text-panel font-bold text-ink"
+          >
+            Recent weeks
+          </h2>
+          <SampleDataPill />
+        </div>
       </header>
       {rows.length === 0 ? (
         <p className="px-20 py-14 text-dense text-mut">No earlier weeks yet.</p>

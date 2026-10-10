@@ -37,7 +37,7 @@ const LAST = addWeeks(THIS, -1);
 const long = "Thursday testing is missing from the notes.";
 
 beforeEach(() => {
-  store = createDemoStore();
+  store = createDemoStore(undefined, { team: false });
   apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
   as("admin");
 });

@@ -22,7 +22,7 @@ let client;
 let store;
 
 beforeEach(() => {
-  store = createDemoStore();
+  store = createDemoStore(undefined, { team: false });
   store.session.userId = PERSPECTIVES.admin;
   apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

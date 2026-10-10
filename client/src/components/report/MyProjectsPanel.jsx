@@ -1,6 +1,7 @@
 import { formatProgress } from "../../lib/format.js";
 import { ProjectProgress } from "../project/ProjectProgress.jsx";
 import { SegmentedControl } from "../ui/SegmentedControl.jsx";
+import { SampleDataPill } from "../ui/SampleDataPill.jsx";
 
 // My projects on This week (design §3.1): one row per active project the person is
 // assigned to — name, the §6.25 bar, and "8 days left" or "overdue by 2 days". The
@@ -19,12 +20,15 @@ export function MyProjectsPanel({ projects, unit, onUnitChange }) {
       className="flex flex-col border border-hair bg-card"
     >
       <header className="flex h-44 items-center justify-between gap-11 border-b border-hair px-20">
-        <h2
-          id="my-projects"
-          className="font-display text-panel font-bold text-ink"
-        >
-          My projects
-        </h2>
+        <div className="flex min-w-0 items-center gap-8">
+          <h2
+            id="my-projects"
+            className="font-display text-panel font-bold text-ink"
+          >
+            My projects
+          </h2>
+          <SampleDataPill />
+        </div>
         <SegmentedControl
           value={unit}
           onChange={onUnitChange}

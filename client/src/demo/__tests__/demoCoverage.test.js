@@ -168,8 +168,8 @@ const CASES = {
         expect(view.report.content.notes).toBe("Saved by the demo");
       },
     },
-    // Friday of the current week is never posted in the fixtures, so the submit rules
-    // refuse it with the server's code (the full submit: demoContent.test.js).
+    // Imali's tasks have no status yet (and on a weekday Friday is not posted), so the
+    // submit rules refuse it with the server's code (the full submit: demoContent.test.js).
     submitReport: {
       args: () => [ctx.imaliNow._id, { requestApproval: false }],
       ...rejects("VALIDATION_FAILED"),
@@ -185,11 +185,13 @@ const CASES = {
         },
       ],
       check: (data) => {
-        expect(data.items.map((e) => e.user._id)).toEqual([
-          PERSPECTIVES.member,
-          PERSPECTIVES.manager,
-          PERSPECTIVES.admin,
-        ]);
+        // The viewer first; the whole cast is on the team (the order: demoReview.test.js).
+        const ids = data.items.map((e) => e.user._id);
+        expect(ids[0]).toBe(PERSPECTIVES.member);
+        expect(ids).toEqual(
+          expect.arrayContaining([PERSPECTIVES.manager, PERSPECTIVES.admin]),
+        );
+        expect(ids).toHaveLength(8);
         hasKeys(["user", "state", "reportId", "day"])(data.items[0]);
         expect(data.items[0].state).toBe("posted");
       },
