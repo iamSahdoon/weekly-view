@@ -289,6 +289,8 @@ server/
 │       ├── testDb.test.js             # added after C6: the test connection stays ready while a suite freezes `Date` in the past
 │       └── weeks.test.js              # utils/weeks.js and utils/paginate.js
 ├── vitest.config.js                   # globalSetup → tests/helpers/globalSetup.js; setupFiles → tests/helpers/testDb.js
+├── api/index.js                       # owner decision: Vercel serverless entry (connects once, then the same app.js); see docs/DEPLOYMENT.md
+├── vercel.json                        # owner decision: rewrites every path to /api when the API is deployed on Vercel
 ├── eslint.config.js                   # added in S0: flat config, @eslint/js + globals.node + eslint-config-prettier (the lint script needs one)
 ├── .env.example
 └── package.json

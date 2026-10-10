@@ -4,7 +4,8 @@ Every team member posts a short daily update and files one weekly report built f
 days. Managers read the days as they come in, comment, and approve or send back the weekly
 report. A dashboard shows the team's week and its projects.
 
-MERN: React + Vite on Vercel, Express 5 + Mongoose 8 on Render, MongoDB Atlas M0.
+MERN: React + Vite on Vercel, Express 5 + Mongoose 8 on Render (or Vercel), MongoDB Atlas M0.
+To put it online, follow `docs/DEPLOYMENT.md`.
 The planning documents are in `docs/`; build progress is in `PROGRESS.md`.
 
 ## Layout
