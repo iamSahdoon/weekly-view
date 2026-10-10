@@ -224,7 +224,7 @@ function ReportWeek({ week, own }) {
 
           <aside
             aria-label="Status, versions and comments"
-            className="flex min-w-0 flex-col gap-24 max-lg:order-first lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px)] lg:self-start lg:overflow-y-auto print:hidden"
+            className="flex min-w-0 flex-col gap-24 max-lg:order-first lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px-var(--demo-h,0px))] lg:self-start lg:overflow-y-auto print:hidden"
           >
             <RailBlock label="Status">
               <div className="flex flex-wrap items-center gap-8">

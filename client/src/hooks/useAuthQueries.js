@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { qk } from "../lib/queryKeys.js";
 import * as authService from "../services/authService.js";
+import { useAuth } from "./useAuth.js";
 
 // Auth hooks (frontend_architecture.md §9.15). Passwords and link tokens are
 // mutation variables or query-function closures only — never a key, never cached
@@ -43,4 +44,21 @@ export function useSignUp() {
 
 export function useAcceptLink() {
   return useMutation({ mutationFn: authService.acceptLink, gcTime: 0 });
+}
+
+/**
+ * The demo chooser (frontend_architecture.md §9.18): `choose(role)` tells the adapter
+ * who is asking, then A4 reads that person's Me and the session starts without a token.
+ * `choose` comes from the page, which alone may import the demo.
+ */
+export function useDemoSignIn(choose) {
+  const { signIn } = useAuth();
+  return useMutation({
+    mutationFn: async (role) => {
+      choose(role);
+      return authService.getMe();
+    },
+    onSuccess: (me) => signIn(null, me),
+    gcTime: 0,
+  });
 }

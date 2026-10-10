@@ -40,7 +40,7 @@ const COLUMNS = (personId) => [
 
 export function LeaveHistory({ personId, history }) {
   return (
-    <Panel title="Leave" padding="none">
+    <Panel title="Leave" padding="none" sample>
       {history.length === 0 ? (
         <p className="px-20 py-14 text-dense text-mut">No leave on record.</p>
       ) : (

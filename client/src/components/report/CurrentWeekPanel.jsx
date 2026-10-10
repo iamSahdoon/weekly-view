@@ -7,6 +7,7 @@ import {
 import { derivePanelAction } from "../../lib/weekActions.js";
 import { Button } from "../ui/Button.jsx";
 import { StatusChip } from "../ui/StatusChip.jsx";
+import { SampleDataPill } from "../ui/SampleDataPill.jsx";
 
 // "This week's report" on This week (design §3.1): the week, its range and status,
 // a two-column definition grid, the newest overall comment, and the panel's button,
@@ -64,6 +65,7 @@ export function CurrentWeekPanel({ week }) {
           <span className="font-mono text-micro text-mut">
             {formatWeekRange(week.weekKey)}
           </span>
+          <SampleDataPill className="self-center" />
         </div>
         <div className="flex items-center gap-11">
           {report?.approvalRequested && (

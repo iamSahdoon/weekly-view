@@ -20,9 +20,22 @@ export const PERSPECTIVES = Object.freeze({
 
 const [IMALI, NADIA, SANDUNI] = Object.values(PERSPECTIVES);
 
+// The rest of the cast (brand §10), all members: they fill the team table and the
+// review desk. Their ids follow the perspectives'.
+const RUWAN = "000000000000000000000a04";
+const THARINDU = "000000000000000000000a05";
+const AYESHA = "000000000000000000000a06";
+const DINESH = "000000000000000000000a07";
+const MALITH = "000000000000000000000a08";
+
 // Ids are 24 hex digits like the API's: two for the kind, the rest a counter.
 const id = (kind, n) => `${kind}${String(n).padStart(22, "0")}`;
-const PROJECT = { clientA: id("0b", 1), rnd: id("0b", 2) };
+const PROJECT = {
+  clientA: id("0b", 1),
+  rnd: id("0b", 2),
+  internal: id("0b", 3),
+  marketing: id("0b", 4),
+};
 const TASK = {
   checkout: id("0c", 1),
   payments: id("0c", 2),
@@ -31,6 +44,16 @@ const TASK = {
   research: id("0c", 5),
   planning: id("0c", 6),
   teamPlanning: id("0c", 7),
+  migration: id("0c", 8),
+  adminReports: id("0c", 9),
+  mobile: id("0c", 10),
+  launchCopy: id("0c", 11),
+  newsletter: id("0c", 12),
+  pipeline: id("0c", 13),
+  benchmarks: id("0c", 14),
+  roadmap: id("0c", 15),
+  reviews: id("0c", 16),
+  designReview: id("0c", 17),
 };
 
 let counter = 0;
@@ -96,7 +119,7 @@ const snapshot = (report) => ({
   days: structuredClone(report.days).map((day) => ({ ...day, comments: [] })),
 });
 
-export function buildFixtures(now = new Date()) {
+export function buildFixtures(now = new Date(), { team = true } = {}) {
   counter = 0;
   const joined = subWeeks(now, 26).toISOString();
   const thisWeek = currentWeekKey(now);
@@ -417,6 +440,358 @@ export function buildFixtures(now = new Date()) {
     ...snapshot(nadiaLast),
   });
 
+  // ---- The rest of the team (brand §10). A teammate's week is built from the same
+  // two or three lines each day; what differs is which days were posted, the status,
+  // and who looked at it.
+  //   tasks  [taskId, taskType, text, hours] — one entry per line of a day
+  const teammate = ({
+    n,
+    author,
+    weekKey,
+    status = "draft",
+    ask = false,
+    postedDays,
+    lines,
+    blockers = {},
+    submittedAt = null,
+    reviewer = null,
+    reviewedAt = null,
+    feedback = null,
+    achievement = null,
+    nextWeek = [],
+    open = [],
+  }) => {
+    const weekDates = dates(weekKey);
+    const days = postedDays.map((i) =>
+      dayOf(WEEKDAYS[i], weekDates[i], {
+        lines,
+        blockers: blockers[i] ?? [],
+        open: open.includes(i),
+      }),
+    );
+    const filed = status !== "draft";
+    const taskIds = [...new Set(lines.map(([taskId]) => taskId))];
+    const report = {
+      _id: id("b1", n),
+      author,
+      weekKey,
+      status,
+      approvalRequested: ask,
+      revisionNumber: filed ? 1 : 0,
+      submittedAt: filed ? submittedAt.toISOString() : null,
+      lastActivityAt: filed ? (reviewedAt ?? submittedAt).toISOString() : null,
+      days,
+      content: {
+        tasks: taskIds.map((taskId) => ({
+          taskId,
+          status: filed ? "in_progress" : null,
+          note: filed ? "On track" : "",
+        })),
+        nextWeek: filed ? nextWeek : [],
+        achievements:
+          filed && achievement
+            ? [{ _id: next("a1"), text: achievement, isKey: false }]
+            : [],
+        notes: "",
+        links: [],
+      },
+      weekComments: [],
+      blockerResolutions: [],
+      latestComment: null,
+      revisions: [],
+    };
+    if (filed) {
+      report.revisions.push({
+        revisionNumber: 1,
+        approvalRequested: ask,
+        submittedAt: report.submittedAt,
+        submittedBy: author,
+        action: status === "approved" ? "approved" : null,
+        comment: feedback,
+        reviewedBy: reviewer,
+        reviewedAt: reviewedAt ? reviewedAt.toISOString() : null,
+        ...snapshot(report),
+      });
+    }
+    if (status === "approved") {
+      const approval = thread(reviewer, feedback, reviewedAt, {
+        revisionNumber: 1,
+        kind: "approval",
+      });
+      report.weekComments.push(approval);
+      report.latestComment = {
+        text: approval.text,
+        author: reviewer,
+        revisionNumber: 1,
+        createdAt: approval.createdAt,
+      };
+    }
+    return report;
+  };
+
+  const everyDay = [0, 1, 2, 3, 4];
+  const pastIndexes = Array.from({ length: pastDays }, (_, i) => i);
+  const friday = (hour) => at(fri1, 0, hour);
+
+  const ruwanLast = teammate({
+    n: 5,
+    author: RUWAN,
+    weekKey: lastWeek,
+    status: "submitted",
+    ask: true,
+    postedDays: everyDay,
+    lines: [
+      [TASK.migration, "development", "Staging migration scripts", 5],
+      [TASK.adminReports, "testing", "Checked the admin report exports", 3],
+    ],
+    blockers: { 1: [["Staging migration needs IT approval", true]] },
+    submittedAt: friday(16),
+    nextWeek: ["Run the migration on staging"],
+    achievement: "Migration scripts pass on a copy of production",
+  });
+  const tharinduLast = teammate({
+    n: 6,
+    author: THARINDU,
+    weekKey: lastWeek,
+    status: "approved",
+    ask: true,
+    postedDays: everyDay,
+    lines: [
+      [TASK.mobile, "development", "Mobile layout for the basket", 5],
+      [TASK.reviews, "review", "Pull request reviews", 2.5],
+    ],
+    submittedAt: friday(15),
+    reviewer: NADIA,
+    reviewedAt: friday(19),
+    feedback: "Clear week. Approved.",
+    nextWeek: ["Tablet layout"],
+    achievement: "Basket works on small screens",
+  });
+  const ayeshaLast = teammate({
+    n: 7,
+    author: AYESHA,
+    weekKey: lastWeek,
+    status: "submitted",
+    ask: true,
+    postedDays: everyDay,
+    lines: [
+      [TASK.launchCopy, "documentation", "Launch page copy", 4],
+      [TASK.newsletter, "meetings", "Newsletter planning with design", 3],
+    ],
+    submittedAt: friday(17),
+    nextWeek: ["Sign-off on the launch copy"],
+    achievement: "First draft of the launch page",
+  });
+  const malithLast = teammate({
+    n: 8,
+    author: MALITH,
+    weekKey: lastWeek,
+    status: "approved",
+    ask: true,
+    postedDays: everyDay,
+    lines: [
+      [
+        TASK.benchmarks,
+        "research_study",
+        "Benchmarked three storage options",
+        4,
+      ],
+      [TASK.benchmarks, "documentation", "Wrote up the results", 3.5],
+    ],
+    submittedAt: friday(14),
+    reviewer: SANDUNI,
+    reviewedAt: friday(18),
+    feedback: "Useful numbers. Approved.",
+    nextWeek: ["Pick one option"],
+    achievement: "Benchmarks are in one table",
+  });
+
+  // This week: Drafts. Ayesha missed the first day behind us, Dinesh has posted
+  // nothing yet, and Malith is on leave from Monday (no report: not expected).
+  const draftWeek = (n, author, lines, extra = {}) =>
+    teammate({
+      n,
+      author,
+      weekKey: thisWeek,
+      postedDays: pastIndexes,
+      lines,
+      ...extra,
+    });
+  const ruwanNow = draftWeek(
+    9,
+    RUWAN,
+    [
+      [TASK.migration, "development", "Staging migration run", 5],
+      [TASK.adminReports, "development", "Export filters", 2.5],
+    ],
+    { blockers: { 0: [["Waiting on the staging database", false]] } },
+  );
+  const tharinduNow = draftWeek(10, THARINDU, [
+    [TASK.mobile, "development", "Tablet layout", 5.5],
+    [TASK.reviews, "testing", "Retested the basket on a phone", 2],
+  ]);
+  const ayeshaNow = draftWeek(
+    11,
+    AYESHA,
+    [
+      [TASK.launchCopy, "documentation", "Launch copy edits", 4],
+      [TASK.newsletter, "other", "Newsletter list clean-up", 3],
+    ],
+    {
+      // Missing the first day behind us, once there is more than one.
+      postedDays: pastIndexes.slice(pastDays > 1 ? 1 : 0),
+      blockers: {
+        [pastDays > 1 ? 1 : 0]: [["Launch copy waiting on sign-off", false]],
+      },
+    },
+  );
+  const nadiaNow = draftWeek(12, NADIA, [
+    [TASK.scheduler, "development", "Scheduler prototype", 4],
+    [TASK.designReview, "meetings", "Design review prep", 2.5],
+  ]);
+  const sanduniNow = draftWeek(13, SANDUNI, [
+    [TASK.roadmap, "meetings", "Roadmap review", 3],
+    [TASK.roadmap, "documentation", "Hiring plan", 3.5],
+  ]);
+
+  // What `team: false` leaves out: everyone but the three perspectives, with their
+  // projects, tasks, reports and the holiday. The unit tests of the rules use it, so
+  // they run on the smallest data that shows each rule.
+  const teamUsers = [
+    {
+      _id: RUWAN,
+      name: "Ruwan P.",
+      email: "ruwan@example.com",
+      role: "member",
+      status: "active",
+      isOwner: false,
+      onLeave: false,
+      leaveFrom: null,
+      leaveHistory: [],
+      removedAt: null,
+      joinedAt: joined,
+      projectIds: [PROJECT.internal],
+    },
+    {
+      _id: THARINDU,
+      name: "Tharindu S.",
+      email: "tharindu@example.com",
+      role: "member",
+      status: "active",
+      isOwner: false,
+      onLeave: false,
+      leaveFrom: null,
+      leaveHistory: [],
+      removedAt: null,
+      joinedAt: joined,
+      projectIds: [PROJECT.clientA],
+    },
+    {
+      _id: AYESHA,
+      name: "Ayesha C.",
+      email: "ayesha@example.com",
+      role: "member",
+      status: "active",
+      isOwner: false,
+      onLeave: false,
+      leaveFrom: null,
+      leaveHistory: [],
+      removedAt: null,
+      joinedAt: joined,
+      projectIds: [PROJECT.marketing],
+    },
+    {
+      _id: DINESH,
+      name: "Dinesh K.",
+      email: "dinesh@example.com",
+      role: "member",
+      status: "active",
+      isOwner: false,
+      onLeave: false,
+      leaveFrom: null,
+      leaveHistory: [],
+      removedAt: null,
+      joinedAt: joined,
+      projectIds: [PROJECT.internal],
+    },
+    {
+      _id: MALITH,
+      name: "Malith W.",
+      email: "malith@example.com",
+      role: "member",
+      status: "active",
+      isOwner: false,
+      // On leave since Monday: the whole week is "On leave", not "Not started".
+      onLeave: true,
+      leaveFrom: toCalendarDate(nowDates[0]),
+      leaveHistory: [
+        { from: nowDates[0].toISOString(), to: null, setBy: NADIA },
+      ],
+      removedAt: null,
+      joinedAt: joined,
+      projectIds: [PROJECT.rnd],
+    },
+  ];
+  const teamProjects = [
+    {
+      _id: PROJECT.internal,
+      name: "Internal tools",
+      description: "Staging, pipelines and the admin site",
+      status: "active",
+      plan: {
+        startDate: toCalendarDate(weekDays(addWeeks(thisWeek, -3))[0].date),
+        plannedDays: 40,
+        plannedHours: 240,
+      },
+      planHistory: [],
+    },
+    {
+      _id: PROJECT.marketing,
+      name: "Marketing",
+      description: "Launch page and newsletter",
+      status: "active",
+      plan: null,
+      planHistory: [],
+    },
+  ];
+  const teamTasks = [
+    task(TASK.migration, "Staging migration", PROJECT.internal, RUWAN),
+    task(TASK.adminReports, "Admin reports", PROJECT.internal, RUWAN),
+    task(TASK.mobile, "Mobile layout", PROJECT.clientA, THARINDU),
+    task(TASK.reviews, "Pull request reviews", PROJECT.clientA, THARINDU),
+    task(TASK.launchCopy, "Launch copy", PROJECT.marketing, AYESHA),
+    task(TASK.newsletter, "Newsletter", PROJECT.marketing, AYESHA),
+    task(TASK.pipeline, "Build pipeline", PROJECT.internal, DINESH),
+    task(TASK.benchmarks, "Storage benchmarks", PROJECT.rnd, MALITH),
+    task(TASK.roadmap, "Roadmap and hiring", PROJECT.internal, SANDUNI),
+    task(TASK.designReview, "Design review", PROJECT.rnd, NADIA),
+  ];
+  const teamReports = [
+    nadiaNow,
+    ruwanLast,
+    ruwanNow,
+    tharinduLast,
+    tharinduNow,
+    ayeshaLast,
+    ayeshaNow,
+    malithLast,
+    sanduniNow,
+  ];
+  // One day off in the current week, so the table shows the holiday square: the next
+  // working day, or Monday of next week when the week has none left.
+  const teamHolidays = [
+    {
+      _id: id("a2", 1),
+      date: toCalendarDate(
+        todayIndex < 4
+          ? nowDates[todayIndex + 1]
+          : weekDays(addWeeks(thisWeek, 1))[0].date,
+      ),
+      name: "Company day off",
+      createdBy: SANDUNI,
+    },
+  ];
+
   return {
     users: [
       {
@@ -459,8 +834,9 @@ export function buildFixtures(now = new Date()) {
         leaveHistory: [],
         removedAt: null,
         joinedAt: joined,
-        projectIds: [],
+        projectIds: team ? [PROJECT.internal] : [],
       },
+      ...(team ? teamUsers : []),
     ],
     // Client A has hours planned and time to spare; R&D's plan ran out last week.
     projects: [
@@ -488,6 +864,7 @@ export function buildFixtures(now = new Date()) {
         },
         planHistory: [],
       },
+      ...(team ? teamProjects : []),
     ],
     // Tasks are personal: each has an owner. Done tasks drop out of the picker.
     tasks: [
@@ -510,14 +887,21 @@ export function buildFixtures(now = new Date()) {
         NADIA,
         nadiaSubmitted,
       ),
+      ...(team ? teamTasks : []),
     ],
-    reports: [imaliNow, imaliLast, imaliOlder, nadiaLast],
+    reports: [
+      imaliNow,
+      imaliLast,
+      imaliOlder,
+      nadiaLast,
+      ...(team ? teamReports : []),
+    ],
     // When each person last opened each report: `${reportId}:${userId}` → ISO date.
     seen: {
       [`${imaliOlder._id}:${IMALI}`]: subMinutes(now, 5).toISOString(),
     },
     // { _id, date: "YYYY-MM-DD", name, createdBy }. Read by dayStates and HD1;
     // written by the holidays page's handlers (C8).
-    holidays: [],
+    holidays: team ? teamHolidays : [],
   };
 }

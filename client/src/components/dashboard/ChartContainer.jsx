@@ -2,6 +2,7 @@ import { cn } from "../../lib/cn.js";
 import { InlineError } from "../ui/InlineError.jsx";
 import { QueryView } from "../ui/QueryView.jsx";
 import { Skeleton } from "../ui/Skeleton.jsx";
+import { SampleDataPill } from "../ui/SampleDataPill.jsx";
 
 // A chart's panel (design §7.2, frontend_architecture.md §10): a 44px-or-taller header with a
 // 1px --hair bottom — the title (Chivo 700, 15px) on the left, with an optional one-line
@@ -34,9 +35,12 @@ export function ChartContainer({
     >
       <header className="flex min-h-[44px] flex-wrap items-center justify-between gap-x-14 gap-y-6 border-b border-hair px-24 py-6">
         <div className="min-w-0">
-          <h2 className="font-display text-panel-sm font-bold text-ink">
-            {title}
-          </h2>
+          <div className="flex min-w-0 items-center gap-8">
+            <h2 className="font-display text-panel-sm font-bold text-ink">
+              {title}
+            </h2>
+            <SampleDataPill />
+          </div>
           {subtitle && <p className="text-caption text-mut">{subtitle}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-x-14 gap-y-6">

@@ -3,6 +3,10 @@ import { lazyPage } from "./lazyPage.jsx";
 // Every routed page, each its own chunk (see lazyPage). The route table renders them and
 // prefetch.js preloads them, so both name each page once.
 
+export const LandingPage = lazyPage(() => import("../pages/LandingPage.jsx"));
+export const DemoEntryPage = lazyPage(
+  () => import("../pages/DemoEntryPage.jsx"),
+);
 export const SignInPage = lazyPage(() => import("../pages/SignInPage.jsx"));
 export const SignUpPage = lazyPage(() => import("../pages/SignUpPage.jsx"));
 export const AcceptInvitePage = lazyPage(

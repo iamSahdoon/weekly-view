@@ -46,7 +46,7 @@ afterAll(() => vi.useRealTimers());
 
 // A store of its own per test: the review actions and the history cases change it.
 beforeEach(() => {
-  store = createDemoStore();
+  store = createDemoStore(undefined, { team: false });
   apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
 });
 

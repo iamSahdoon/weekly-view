@@ -6,6 +6,7 @@ import { InlineError } from "../ui/InlineError.jsx";
 import { QueryView } from "../ui/QueryView.jsx";
 import { Skeleton } from "../ui/Skeleton.jsx";
 import { StatusChip } from "../ui/StatusChip.jsx";
+import { SampleDataPill } from "../ui/SampleDataPill.jsx";
 
 // Recent activity (design §7.4): not a chart. Eight 44px rows — a mono timestamp in --mut,
 // who, what they did, to which week, and that report's status now. Verbs are `submitted`,
@@ -44,9 +45,12 @@ export function ActivityFeed({ query, meId, className }) {
       className={`flex min-w-0 flex-col border border-hair bg-card ${className ?? ""}`}
     >
       <header className="flex min-h-[44px] items-center border-b border-hair px-24">
-        <h2 className="font-display text-panel-sm font-bold text-ink">
-          Recent activity
-        </h2>
+        <div className="flex min-w-0 items-center gap-8">
+          <h2 className="font-display text-panel-sm font-bold text-ink">
+            Recent activity
+          </h2>
+          <SampleDataPill />
+        </div>
       </header>
       <div className="min-h-[352px]">
         <QueryView

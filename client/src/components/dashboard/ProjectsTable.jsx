@@ -12,6 +12,7 @@ import { InlineError } from "../ui/InlineError.jsx";
 import { QueryView } from "../ui/QueryView.jsx";
 import { SegmentedControl } from "../ui/SegmentedControl.jsx";
 import { Skeleton } from "../ui/Skeleton.jsx";
+import { SampleDataPill } from "../ui/SampleDataPill.jsx";
 
 // The projects table (design §3.7): one row per active project with a plan — name, start
 // date, the §6.25 progress bar, the days or hours figure (a `Days | Hours` control in the
@@ -150,9 +151,12 @@ export function ProjectsTable({ query, unit, onUnitChange, onExtend }) {
   return (
     <section aria-label="Projects" className="border border-hair bg-card">
       <header className="flex min-h-[44px] flex-wrap items-center justify-between gap-11 border-b border-hair px-20 py-6">
-        <h2 className="font-display text-panel-sm font-bold text-ink">
-          Projects
-        </h2>
+        <div className="flex min-w-0 items-center gap-8">
+          <h2 className="font-display text-panel-sm font-bold text-ink">
+            Projects
+          </h2>
+          <SampleDataPill />
+        </div>
         <SegmentedControl
           ariaLabel="Show progress in"
           value={unit}

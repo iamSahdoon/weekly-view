@@ -185,11 +185,13 @@ const CASES = {
         },
       ],
       check: (data) => {
-        expect(data.items.map((e) => e.user._id)).toEqual([
-          PERSPECTIVES.member,
-          PERSPECTIVES.manager,
-          PERSPECTIVES.admin,
-        ]);
+        // The viewer first; the whole cast is on the team (the order: demoReview.test.js).
+        const ids = data.items.map((e) => e.user._id);
+        expect(ids[0]).toBe(PERSPECTIVES.member);
+        expect(ids).toEqual(
+          expect.arrayContaining([PERSPECTIVES.manager, PERSPECTIVES.admin]),
+        );
+        expect(ids).toHaveLength(8);
         hasKeys(["user", "state", "reportId", "day"])(data.items[0]);
         expect(data.items[0].state).toBe("posted");
       },

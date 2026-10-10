@@ -15,9 +15,15 @@ export function AuthScreen({ heading, line, footer, children }) {
   );
 }
 
-export function AuthPanel({ children }) {
+export function AuthPanel({ padding = "default", children }) {
   return (
-    <div className="border border-hair bg-card p-32 max-xs:p-20">
+    <div
+      className={
+        padding === "none"
+          ? "border border-hair bg-card"
+          : "border border-hair bg-card p-32 max-xs:p-20"
+      }
+    >
       {children}
     </div>
   );

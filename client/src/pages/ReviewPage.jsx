@@ -158,7 +158,7 @@ function ReviewedWeek({ week, back, deskSearch }) {
               page grid, stuck to the bottom of the screen. */}
           <aside
             aria-label="Person, status, versions, comments and review"
-            className="flex min-w-0 flex-col max-lg:contents lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px)] lg:self-start print:hidden"
+            className="flex min-w-0 flex-col max-lg:contents lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px-var(--demo-h,0px))] lg:self-start print:hidden"
           >
             <div className="flex min-h-0 min-w-0 flex-col gap-24 max-lg:order-first lg:flex-1 lg:overflow-y-auto lg:pb-24">
               <RailBlock label="Person">

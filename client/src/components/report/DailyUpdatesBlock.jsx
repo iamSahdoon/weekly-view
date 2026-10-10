@@ -23,6 +23,7 @@ import { NewMarker } from "../ui/NewMarker.jsx";
 import { StatusChip } from "../ui/StatusChip.jsx";
 import { Switch } from "../ui/Switch.jsx";
 import { BlockerRow } from "./BlockerRow.jsx";
+import { SampleDataPill } from "../ui/SampleDataPill.jsx";
 
 // The five days, Monday to Friday (design §3.4), each its own card on --card with 16px
 // between them. A posted day is a header (weekday and date, hours, comment count, the
@@ -361,12 +362,15 @@ export function DailyUpdatesBlock({ week }) {
 
   return (
     <section aria-labelledby="daily-updates" className="flex flex-col gap-16">
-      <h2
-        id="daily-updates"
-        className="font-display text-panel font-bold text-ink"
-      >
-        Daily updates
-      </h2>
+      <div className="flex items-center gap-8">
+        <h2
+          id="daily-updates"
+          className="font-display text-panel font-bold text-ink"
+        >
+          Daily updates
+        </h2>
+        <SampleDataPill />
+      </div>
       <ol className="flex flex-col gap-20">
         {WEEKDAYS.map((weekday, index) => {
           const day = report.days.find((d) => d.weekday === weekday);

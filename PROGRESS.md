@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C10**
+**Next stage: C11**
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -22,7 +22,7 @@
 | C7 | Dashboard and charts | done |
 | C8 | Projects, users, holidays, people, profile, account | done |
 | C9 | "New" markers, system states, print | done |
-| C10 | Demo chooser and bar, landing page | not started |
+| C10 | Demo chooser and bar, landing page | done |
 | C11 | Verification, deployment, README | not started |
 
 ### S0 checks (2026-10-03)
@@ -1225,6 +1225,142 @@ throw-away Atlas database, never one you want to keep; password for every accoun
    and the panel offers **Try again**. Remove the line and click **Try again**. (Revert the edit afterwards.)
 9. Do steps 2, 4 and 7 in the **dark** theme too, and step 2 in a 360 px-wide window.
 
+### C10 checks (2026-10-10)
+Local only. No database was used at all: the demo and the landing page need no API, and the one server started
+was Vite. Atlas, `MONGODB_URI`, `server/.env` and `npm run seed` were never touched; the server's tests ran on
+their in-memory MongoDB as always. Vite was stopped and the throw-away `client/.env` (a copy of `.env.example`,
+git-ignored) deleted at the end.
+- `npm run lint`: clean. `npm test`: green — server 385 (unchanged), client **511** (was 473; new:
+  `demo/__tests__/demoCast.test.js` 10, `demo/__tests__/demoEntry.test.jsx` 9,
+  `components/marketing/__tests__/LandingPage.test.jsx` 10, `styles/__tests__/landingIsolation.test.js` 9, and one
+  changed assertion in `demoCoverage.test.js`). `vite build` OK: the landing page is its own chunk with its own
+  stylesheet, `DemoEntryPage` and the demo are chunks the main bundle does not contain, and the main stylesheet
+  holds no `--l-*` token, no `.landing` rule and no `Bricolage`.
+- **The done-when grep:** `grep -ril "Bricolage\|#123F35\|#F2B880" client/src` matches `styles/landing.css`,
+  `pages/LandingPage.jsx` and the tests that name them, nothing else (`landingIsolation.test.js` asserts it).
+- **What was built**
+  - *Demo.* `DemoEntryPage` (the chooser), `DemoBar` (36 px, in `AppShell`, which now sets `--demo-h` to 36 px under
+    `/demo` and 0 elsewhere), `SampleDataPill` + `useIsDemo` + `Panel`'s `sample` prop (the pill is in the header of
+    the dashboard's four charts, team table, projects table and activity feed, This week's week and projects panels,
+    its recent weeks, the daily updates block, and the leave history), `useDemoSignIn`, `IndexRoute` (landing /
+    chooser / This week). The fixtures hold the **cast of brand §10** — Imali J., Nadia F., Sanduni B. and now Ruwan P.,
+    Tharindu S., Ayesha C., Dinesh K., Malith W. — with two more projects (Internal tools, Marketing), their tasks, and
+    weeks on dates relative to the day the demo starts.
+  - *Landing page.* `LandingPage`, `layouts/MarketingLayout.jsx`, eight section components, `CtaPill`, `Words`,
+    `hooks/useLandingMotion.js`, `styles/landing.css`. The markup, CSS and both scripts of
+    `landing-reference/index.html` were converted by a throw-away script and then read, not retyped.
+- **Fidelity to the reference, measured.** With the reference opened from disk and the port served by Vite, same
+  Chromium, fonts blocked in both: full-page screenshots at **1440, 1024 and 360 px with reduced motion are
+  pixel-identical** (0 differing pixels in 9444, 12159 and 13885 px of page). With motion on, viewport screenshots at
+  every 90 % of a screen of scroll — 15 stops at 1440 × 900 (the typed blocker, the pinned week, the folding problem,
+  the opening monitor, the ledger) — are **identical**; at 360 × 780, 19 of 20 are identical and the 20th differs by 0.24 %
+  of its pixels, the server-check dot caught at a different moment of its timed run. No page errors.
+- **The call to action, in a browser.** API unreachable (aborted): the demo is primary, no `/signup` link anywhere on the
+  page. Bootstrap answered `available: true` (mocked): the nav, the hero and the final band lead with **Create your
+  account**, with **See the live demo** beside the hero's and the final band's; the FAQ's last answer no longer says
+  signup is closed. A sleeping API shows the demo primary until the answer arrives.
+- **Isolation, in a browser.** On the landing page the theme toggle's value is `dark` and the page stays green;
+  `<html>` carries `landing-active` while it is mounted. Following **Sign in** (a full page load) the new page has no
+  Bricolage link, no `.landing` rule in any stylesheet, no `html` class, Chivo in its `<h1>`.
+- **The demo, checked at 1440 × 900 and 360 × 780, light and dark** (headless Chromium; each page opened as the
+  perspective that has it): the chooser; member — This week, My reports; manager — This week, Team dashboard, Review desk,
+  Team updates, Projects; admin — Users, Holidays, People. **No horizontal overflow, no page errors, `--demo-h` 36 px, the
+  bar 36 px high, no request to any API** (the demo ran with nothing listening). Screenshots were looked at for the
+  chooser (1440 light, 360 dark), the dashboard (1440 light scrolled and not, 360 light), This week (1440 and 360 dark),
+  the Review desk (360 dark), the review page (1440 light), Team updates (1440 light), Users (1440 dark), Holidays (360
+  dark), Projects (1440 dark), the 360 drawer with the bar above it, and the dashboard's loading state (the skeletons
+  show: each handler waits 150 ms). The rest of the 44 captures were checked by their measurements only.
+- **The flow, in a browser:** manager → Review desk shows 2 rows and a `2` in the sidebar → open Ruwan P.'s week →
+  Approve → the desk lists one row and the sidebar reads `1 waiting` → **Switch** → chooser → Team member (the bar now reads
+  Imali J., Member) → **refresh** → the chooser, no bar → manager again → the desk is back at 2 → **Start over** → the chooser at
+  `/demo`.
+- **Not verified:** the real fonts (Google Fonts is blocked on this machine, so every screenshot is in the fallback faces —
+  Bricolage, Chivo, Instrument Sans and JetBrains Mono were not seen, and the landing page's line breaks will move a
+  little with them); Firefox and Safari; touch; the real API's bootstrap answer (the open state used a mocked response, the
+  closed state an unreachable API); screen-reader output of the chooser and the bar; hover and press states of the bar
+  and the chooser rows, and the focus ring on the bar's buttons, by eye; the page at widths between 360 and 1440
+  other than 1024; the landing page in Firefox's and Safari's reduced-motion modes.
+- **Weekends:** the fixtures treat Friday as the day not yet posted, as before (that is what lets the demo show
+  submitting). On a Saturday or Sunday everyone's Friday therefore reads **Missing** in the team table and "Not posted
+  yet" in Team updates. On a weekday the table also shows the holiday square; on a Friday or a weekend the holiday is
+  next Monday, so it shows on Holidays and not in this week's squares. I did not change that rule.
+
+### C10 decisions — to confirm or change
+1. **The fixtures have eight people; the unit tests keep three.** `buildFixtures(now, { team: false })` (through
+   `createDemoStore(undefined, { team: false })`) leaves only the three perspectives, and the existing demo and page tests
+   use it, so each rule is still read on the smallest data. `demoCast.test.js` reads the real fixtures on a frozen
+   Wednesday and on every day of a week. Your C6 note is done: **Ruwan P. and Ayesha C. are Submitted, asked for approval,
+   and are not the reviewing perspectives**, so the desk's default view has two rows for Nadia and for Sanduni, and the
+   sidebar's `2` and the new squares show.
+2. **The cast's shape.** All five new people are members. Last week: Ruwan Submitted (asked), Ayesha Submitted (asked),
+   Tharindu Approved by Nadia, Malith Approved by Sanduni, Dinesh no report. This week: Drafts for everyone with days behind
+   them; **Ayesha misses the first of them** (the Missing square), **Dinesh has posted nothing** (Not started, all
+   Missing), **Malith is on leave from Monday** (On leave, the hatched squares), and there is one **Company day off** (the
+   holiday square) on the next working day. Nadia and Sanduni also have a Draft this week, so the table has a square row
+   for everyone. Two projects added: Internal tools (a plan, 40 days) and Marketing (no plan, so "Set plan" shows).
+3. **The demo bar is `--d-panel`, not `--ink`.** Design §3.14 says `--ink` with `--d-text`; in the dark theme `--ink`
+   is near-white and the text would vanish. `--d-panel` is the dark band `tokens.css` reserves for the demo bar and is the same in
+   both themes; it has a hairline under it. Its two buttons are drawn from `--d-*` tokens, not the `inverted` `Button`
+   (which flips with the theme).
+4. **The bar's way out is always `Sign in`.** The demo answers A1 "bootstrap closed" (C1), so §3.14's "Create your account or
+   Sign in" resolves to `Sign in`, a plain link to `/signin`. Below 640 px the bar drops "Demo · you're" and the role (it
+   keeps the name); at 360 px all of SAMPLE DATA, the name, `Switch`, `Start over` and `Sign in` fit in the one 36 px row.
+5. **`Switch` signs out of the demo session and goes to the chooser; the store stays**, so what the visitor did is there
+   for the next person they pick. `Start over` is a full load of `/demo`; so is a refresh (FA1).
+6. **Where the SAMPLE DATA pill sits.** §3.14 says "every data panel"; the pages that are tables in the page itself (Reports,
+   Review desk, Users, Holidays, People, Projects) have no panel header, so they carry the pill through the demo bar only.
+   The chooser says "Back to the start page" (a plain link to `/`) — a line the design does not have.
+7. **Layout under the bar.** The shell's height is `100dvh - --demo-h`, the mobile drawer starts under the bar (the bar stays
+   visible and clickable above the backdrop), and the review and week pages' pinned rails subtract `--demo-h` from their
+   `max-h`. `--demo-h` is removed when the shell unmounts.
+8. **Landing: every link out is a plain `<a>`** — the demo (a different page load by design), and also `/signin` and
+   `/signup`. That keeps `landing.css` and the Bricolage link from ever being in a session that goes on to the app. The
+   page brings its own skip link; the app's (`wv-skip`) is hidden on it.
+9. **Landing: the reference's `html` classes (`js`, `motion`, `ready`) are on the `.landing` root**, the only place its
+   selectors read them. `.landing-active` on `<html>` is the one thing outside the root (the green behind and beyond the
+   page, the smooth scroll and its scroll padding). The reference's `window.WV` global is gone, its two scripts are one
+   effect (`useLandingMotion`) that undoes everything it adds, and the two split headings are `Words` in the markup, not a
+   script that rewrites React's text.
+10. **Landing: the open state's extras.** Brand §6.3 wants "Create your account" primary and the demo secondary. The hero gets
+    an outlined `See the live demo` pill and the line "Set up your first week in minutes. No sign-up to explore the demo."
+    (the brand's microcopy); the final band gets the same pair; the nav pill is the signup. The FAQ's last answer reads
+    "This copy has no account yet, so you can create the first." instead of "…signup here is closed" — otherwise the page
+    would say closed under a button that says create. The closed state is the reference as built.
+11. **`landing.css` is in `client/.prettierignore`** so it stays as the reference formats it (one line per rule) and can be
+    diffed against it. The scoping is `.landing` + one class (so +1 specificity everywhere, order unchanged) with five small
+    additions at the foot (Bricolage on h1–h4 against the app's global heading rule, underlined links against the app's reset,
+    the ghost pill, the hidden skip link, `html.landing-active` background).
+12. **The tab title** of the chooser is "Demo · WeeklyView"; the landing page's is the reference's "WeeklyView: one update,
+    both sides of the desk", with its description, and both are restored on leave.
+
+**Owner: how to test C10 by hand** (the demo and the landing page need no database; steps 1–9 need only the client)
+1. In a terminal: copy `client/.env.example` to `client/.env` if you have not, then `npm --prefix client run dev`, and open
+   http://localhost:5173/ **with the API not running**. You should see the green landing page, and the one big button reads
+   **See the live demo**. Look for any "Create your account" button anywhere: there should be none.
+2. Scroll from top to bottom, first at a wide window, then at 360 px wide (browser dev tools → device toolbar). Check: the hero's
+   typed blocker plays once and **Play it again** replays it; on a wide window the week section pins and walks Monday to Friday;
+   the manager table's **Needs correction / Not started / Has blocker** buttons filter it; the FAQ questions open; no sideways
+   scrolling at 360 px. Then switch your system to "reduce motion" and reload: everything is there, nothing moves or hides.
+3. **The signed-up state** (optional, needs the API): start `npm --prefix server run dev` against a **local, empty,
+   throw-away** MongoDB (not Atlas, not a database you keep), reload the landing page: the nav, the hero and the last band now
+   read **Create your account**, with **See the live demo** beside the first and last. Stop the API and reload: back to demo-only.
+4. Click **See the live demo**. The address is `/demo` and you see "Try WeeklyView" with three choices. Click **Manager**.
+5. In the sidebar, **Review desk** shows `2`. Open it: two reports (Ruwan P. and Ayesha C.). Open Ruwan's, type nothing, click
+   **Approve**. Go back to **Review desk**: one is left, and the sidebar says `1`. Open **Team dashboard**: a row of squares per
+   person — blue posted, red × missing, hatched on leave (Malith W.), and a dotted square for the day off on a weekday.
+6. Click **Switch** (top bar, next to your name) → the chooser → **Team member**. **My reports** has a small blue square (last
+   week was sent back); **This week** shows day cards. Post or edit a day, open a comment, and notice nothing is "saved":
+   press F5 and you are back at the chooser.
+7. Choose **Admin**: open **Users** and **Holidays**, add a holiday, change a person's role in the Role column, and open a
+   person's `⋯` menu. Click
+   **Start over** in the bar: you are at the chooser and everything you did is gone.
+8. **Dark theme:** inside the demo, bottom of the sidebar → your name → **Appearance → Dark**. The demo bar stays the same dark
+   band, the pages are dark, the dashed **SAMPLE DATA** tags show on the panels. Open http://localhost:5173/ in the same
+   browser: the landing page is still green (it ignores the theme).
+9. **Narrow:** at 360 px wide the bar is one row (SAMPLE DATA, your name, Switch, Start over, Sign in); open the menu
+   (☰): the drawer slides in under the bar.
+10. **Nothing leaks:** from the landing page click **Sign in**: the ordinary sign-in screen (cobalt, Chivo headings, no green). In dev tools → Network, filter "Bricolage": it appears on `/` only, not on `/signin` and not on `/demo`.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -1859,6 +1995,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- **C10, to confirm or change:** the twelve decisions under *C10 decisions*, especially 3 (the demo bar's surface is `--d-panel`, not `--ink`), 4 (its way out is always `Sign in`), 6 (the pill on panels only) and 10 (the open-sign-up wording of the landing page's FAQ). The landing page and the demo were checked in a browser with fallback fonts only; see *C10 checks*.
 - ~~C8, to confirm or change~~ **Resolved (owner, 2026-10-09):** all twelve C8 decisions accepted as built — see *C8 decisions*. (Was: the twelve decisions, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).)
 - **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.
@@ -1884,6 +2021,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- C10 added `components/ui/SampleDataPill.jsx`, `hooks/useIsDemo.js`, eight section components, `CtaPill.jsx` and `Words.jsx` in `components/marketing/`, `client/.prettierignore` and four test files (`demo/__tests__/{demoCast.test.js,demoEntry.test.jsx}`, `components/marketing/__tests__/LandingPage.test.jsx`, `styles/__tests__/landingIsolation.test.js`); `AuthPanel` takes `padding="none"`; `project_structure.md` §3.1 and §6 are updated. `DemoEntryPage`, `DemoBar`, `MarketingLayout`, `LandingPage`, `useLandingMotion` and `landing.css` were in the tree. `pages.js` names `LandingPage` and `DemoEntryPage`.
 - C9 added `components/shell/{ErrorBoundary,ErrorStates}.jsx`, `components/report/PrintFooter.jsx`, `hooks/{useNewMarks,useRouteFocus,usePrintTheme}.js`, `lib/clearMarkers.js`, `services/markerService.js` (in the tree), `styles/print.css` and four test files (`demo/__tests__/demoMarkers.test.js`, `lib/__tests__/clearMarkers.test.js`, `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`); `project_structure.md` §3.1 and §6 are updated. The page-level error boundary is in `AppShell` as well as `RootLayout` (see C9 decisions).
 - C8 added `pages/{ProjectsPage,HolidaysPage,UsersPage,PeoplePage,PersonProfilePage,AccountPage}.jsx` (all in the tree), `components/project/{ProjectModal,ProjectsListTable}.jsx`, `components/holiday/HolidayModal.jsx`, ten files in `components/user/` (see the tree), `ui/{DropdownMenu,DatePicker,Meter}.jsx` (in the tree), `schemas/{projectSchema,userSchema}.js`, `lib/{peopleParams,passwordStrength}.js` and five test files; it deleted `pages/PendingPage.jsx`. `project_structure.md` §3.1 and §6 are updated.
 - C7 added `lib/dashboardParams.js`, `lib/dashboardData.js`, `demo/demoDashboardRoutes.js`, `components/ui/AvatarStack.jsx` (in the tree of §3.1 as `AvatarStack` of the `ui/` list, now a file) and five test files (`pages/__tests__/TeamDashboardPage.test.jsx`, `demo/__tests__/demoDashboard.test.js`, `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`); `project_structure.md` §3.1 and §6 are updated. `MetricCell` is built (`PersonalStrip` still draws its own three cells). `typeColor` in `chartTheme.js` is `TASK_TYPE_COLORS` itself, not a second copy.

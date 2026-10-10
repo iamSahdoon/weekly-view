@@ -3,11 +3,13 @@ import { AnimatePresence, motion as Motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { ErrorBoundary } from "../components/shell/ErrorBoundary.jsx";
+import { DEMO_BAR_HEIGHT, DemoBar } from "../components/shell/DemoBar.jsx";
 import { PageError } from "../components/shell/ErrorStates.jsx";
 import { OfflineStrip } from "../components/shell/OfflineStrip.jsx";
 import { Sidebar } from "../components/shell/Sidebar.jsx";
 import { TopBar } from "../components/shell/TopBar.jsx";
 import { PageChromeProvider } from "../context/PageChromeContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 import { useNavMarks } from "../hooks/useNewMarks.js";
 import { usePrintTheme } from "../hooks/usePrintTheme.js";
 import { useRouteFocus } from "../hooks/useRouteFocus.js";
@@ -22,8 +24,8 @@ import { useShellMode } from "../hooks/useShellMode.js";
 // "new" markers (N1, V4), and the page-level error boundary — keyed by the route, so a
 // crashed page leaves the shell usable and leaving it clears the error.
 //
-// --demo-h is the demo bar's height (36px in the demo, once C10 builds the bar);
-// every sticky `top` is calc(<value> + var(--demo-h, 0px)).
+// --demo-h is the demo bar's height (36px under /demo, 0 otherwise); every sticky `top`
+// is calc(<value> + var(--demo-h, 0px)). The bar is above the top bar (design §3.14).
 
 const EASE = [0.2, 0, 0, 1];
 
@@ -37,9 +39,12 @@ export default function AppShell() {
   useRouteFocus();
   usePrintTheme();
 
+  const { isDemo } = useAuth();
   useEffect(() => {
-    document.documentElement.style.setProperty("--demo-h", "0px");
-  }, []);
+    const root = document.documentElement;
+    root.style.setProperty("--demo-h", isDemo ? `${DEMO_BAR_HEIGHT}px` : "0px");
+    return () => root.style.removeProperty("--demo-h");
+  }, [isDemo]);
 
   // A drawer left open at a width where it is no longer a drawer, or across a
   // navigation, closes.
@@ -57,7 +62,8 @@ export default function AppShell() {
   return (
     <PageChromeProvider>
       <Dialog.Root open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <div className="flex min-h-[100dvh] bg-paper print:block print:min-h-0 print:bg-transparent">
+        {isDemo && <DemoBar />}
+        <div className="flex min-h-[calc(100dvh-var(--demo-h,0px))] bg-paper print:block print:min-h-0 print:bg-transparent">
           {!isDrawer && (
             <Sidebar
               mode={mode}
@@ -119,7 +125,7 @@ export default function AppShell() {
               >
                 <Motion.div
                   ref={drawerRef}
-                  className="fixed inset-y-0 left-0 z-50"
+                  className="fixed top-[var(--demo-h,0px)] bottom-0 left-0 z-50"
                   initial={{ x: "-100%" }}
                   animate={{ x: 0, transition: { duration: 0.2, ease: EASE } }}
                   exit={{

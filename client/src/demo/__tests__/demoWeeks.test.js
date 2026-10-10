@@ -30,7 +30,7 @@ const THIS = currentWeekKey();
 const LAST = addWeeks(THIS, -1);
 
 beforeEach(() => {
-  store = createDemoStore();
+  store = createDemoStore(undefined, { team: false });
   apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
   as("member");
 });

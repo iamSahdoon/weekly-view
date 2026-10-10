@@ -18,7 +18,7 @@ import ReportDetailPage from "../ReportDetailPage.jsx";
 
 const THIS = currentWeekKey();
 const LAST = addWeeks(THIS, -1);
-const store = createDemoStore();
+const store = createDemoStore(undefined, { team: false });
 const userOf = (key) => store.users.find((u) => u._id === PERSPECTIVES[key]);
 
 function render(options) {
