@@ -125,9 +125,12 @@ export function buildFixtures(now = new Date(), { team = true } = {}) {
   const thisWeek = currentWeekKey(now);
   const lastWeek = addWeeks(thisWeek, -1);
   const olderWeek = addWeeks(thisWeek, -2);
-  // Days of the current week that are behind us (Monday on a Monday).
+  // Days of the current week that are behind us (Monday on a Monday). On a Saturday or
+  // Sunday the whole week is behind us, so Friday is posted like the rest; what stays
+  // missing is deliberate (Ayesha's first day, Dinesh's whole week, Malith on leave).
+  const weekend = now.getDay() === 0 || now.getDay() === 6;
   const todayIndex = Math.min(4, (now.getDay() + 6) % 7);
-  const pastDays = Math.max(1, todayIndex);
+  const pastDays = weekend ? 5 : Math.max(1, todayIndex);
 
   const dates = (weekKey) => weekDays(weekKey).map((d) => d.date);
 

@@ -168,8 +168,8 @@ const CASES = {
         expect(view.report.content.notes).toBe("Saved by the demo");
       },
     },
-    // Friday of the current week is never posted in the fixtures, so the submit rules
-    // refuse it with the server's code (the full submit: demoContent.test.js).
+    // Imali's tasks have no status yet (and on a weekday Friday is not posted), so the
+    // submit rules refuse it with the server's code (the full submit: demoContent.test.js).
     submitReport: {
       args: () => [ctx.imaliNow._id, { requestApproval: false }],
       ...rejects("VALIDATION_FAILED"),

@@ -1280,12 +1280,9 @@ git-ignored) deleted at the end.
   closed state an unreachable API); screen-reader output of the chooser and the bar; hover and press states of the bar
   and the chooser rows, and the focus ring on the bar's buttons, by eye; the page at widths between 360 and 1440
   other than 1024; the landing page in Firefox's and Safari's reduced-motion modes.
-- **Weekends:** the fixtures treat Friday as the day not yet posted, as before (that is what lets the demo show
-  submitting). On a Saturday or Sunday everyone's Friday therefore reads **Missing** in the team table and "Not posted
-  yet" in Team updates. On a weekday the table also shows the holiday square; on a Friday or a weekend the holiday is
-  next Monday, so it shows on Holidays and not in this week's squares. I did not change that rule.
+- **Weekends:** as first built, a Saturday or Sunday showed everyone's Friday as **Missing**; fixed on owner request — see *C10 owner answers*. On a Friday the holiday is still next Monday, so it shows on Holidays and not in that week's squares.
 
-### C10 decisions — to confirm or change
+### C10 decisions — all twelve accepted as built (owner, 2026-10-10)
 1. **The fixtures have eight people; the unit tests keep three.** `buildFixtures(now, { team: false })` (through
    `createDemoStore(undefined, { team: false })`) leaves only the three perspectives, and the existing demo and page tests
    use it, so each rule is still read on the smallest data. `demoCast.test.js` reads the real fixtures on a frozen
@@ -1332,6 +1329,24 @@ git-ignored) deleted at the end.
     the ghost pill, the hidden skip link, `html.landing-active` background).
 12. **The tab title** of the chooser is "Demo · WeeklyView"; the landing page's is the reference's "WeeklyView: one update,
     both sides of the desk", with its description, and both are restored on leave.
+
+### C10 owner answers (2026-10-10)
+- **Decisions:** all twelve accepted as built (above).
+- **Weekend-aware fixtures.** On a Saturday or Sunday the whole week is behind the visitor, so the team table showed
+  everyone's Friday as Missing, which read as broken. `buildFixtures` now treats the week as fully behind on Sat/Sun
+  (`pastDays` is 5): Friday is posted for everyone who posts the other days. What stays missing is deliberate and
+  unchanged — **Ayesha C.'s Monday**, **Dinesh K.'s whole week** (Not started), **Malith W.** (on leave). The holiday stays
+  next Monday on a weekend (a weekday this week otherwise). Weekdays are unchanged (Friday still the day not yet posted).
+- **The member can still show submitting.** Imali's this-week Draft now has five posted days but no task statuses, so the
+  submit rules still refuse it (`VALIDATION_FAILED`) until a status is set on each task; then R7 accepts the week.
+  `demoCoverage.test.js`'s `submitReport` case still refuses (its comment now names the statuses, not Friday).
+- **Test:** `demoCast.test.js` has a case for a frozen **Saturday** and **Sunday**: the five squares posted for everyone but
+  the three deliberate cases, Friday missing only for Dinesh, the holiday on the Monday after, and Imali refused, then
+  setting statuses and submitting. Lint clean; server 385, client **513** (was 511).
+- **To look at by hand on a weekend:** open the demo as Manager → **Team dashboard**: Friday's square is blue for everyone
+  except Dinesh K. (red ×); Ayesha C.'s first square is a red ×; Malith W. is hatched. As Team member → **This week**: five
+  day cards; open the week's report and set a status on each task to submit. (Not looked at in a browser this round: only the
+  fixtures and the adapter's answers were tested.)
 
 **Owner: how to test C10 by hand** (the demo and the landing page need no database; steps 1–9 need only the client)
 1. In a terminal: copy `client/.env.example` to `client/.env` if you have not, then `npm --prefix client run dev`, and open
@@ -1995,7 +2010,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
-- **C10, to confirm or change:** the twelve decisions under *C10 decisions*, especially 3 (the demo bar's surface is `--d-panel`, not `--ink`), 4 (its way out is always `Sign in`), 6 (the pill on panels only) and 10 (the open-sign-up wording of the landing page's FAQ). The landing page and the demo were checked in a browser with fallback fonts only; see *C10 checks*.
+- ~~C10, to confirm or change~~ **Resolved (owner, 2026-10-10):** all twelve C10 decisions accepted as built — see *C10 decisions*; the weekend look of the team table was fixed (see *C10 owner answers*). (Was: the twelve decisions, especially 3 (the demo bar's surface is `--d-panel`, not `--ink`), 4 (its way out is always `Sign in`), 6 (the pill on panels only) and 10 (the open-sign-up wording of the landing page's FAQ).) The landing page and the demo were checked in a browser with fallback fonts only; see *C10 checks*.
 - ~~C8, to confirm or change~~ **Resolved (owner, 2026-10-09):** all twelve C8 decisions accepted as built — see *C8 decisions*. (Was: the twelve decisions, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).)
 - **After C10:** one whole-app *visual polish* session (colour tokens, contrast, emphasis), reviewed with the owner — see *C7 owner feedback*, item 6.
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.

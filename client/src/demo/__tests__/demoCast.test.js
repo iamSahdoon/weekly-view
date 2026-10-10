@@ -9,6 +9,7 @@ import {
 } from "vitest";
 import * as dashboardService from "../../services/dashboardService.js";
 import * as markerService from "../../services/markerService.js";
+import * as reportService from "../../services/reportService.js";
 import * as reviewService from "../../services/reviewService.js";
 import * as userService from "../../services/userService.js";
 import { apiClient } from "../../services/apiClient.js";
@@ -194,4 +195,89 @@ describe("any day of the week", () => {
     }
     vi.setSystemTime(new Date(2026, 9, 7, 10, 0));
   });
+});
+
+describe("a weekend", () => {
+  // The whole week is behind us: Friday is posted for everyone except the deliberate cases,
+  // and the member can still submit once her tasks have a status.
+  it.each([
+    ["Saturday", 10],
+    ["Sunday", 11],
+  ])(
+    "posts Friday for everyone but the deliberate cases on a %s",
+    async (_name, day) => {
+      vi.setSystemTime(new Date(2026, 9, day, 10, 0)); // 2026-W41
+      store = createDemoStore();
+      apiClient.defaults.adapter = createDemoAdapter(store, { latency: 0 });
+      as("manager");
+      const { items } = await dashboardService.getTeam({
+        weekKey: THIS,
+        limit: 20,
+      });
+      const byName = Object.fromEntries(items.map((r) => [r.user.name, r]));
+
+      for (const name of [
+        "Imali J.",
+        "Nadia F.",
+        "Ruwan P.",
+        "Sanduni B.",
+        "Tharindu S.",
+      ]) {
+        expect(Object.values(byName[name].dayStates), name).toEqual([
+          "posted",
+          "posted",
+          "posted",
+          "posted",
+          "posted",
+        ]);
+      }
+      // Ayesha's one missing day, her Monday.
+      expect(byName["Ayesha C."].dayStates).toEqual({
+        mon: "missing",
+        tue: "posted",
+        wed: "posted",
+        thu: "posted",
+        fri: "posted",
+      });
+      // Dinesh has not started; Malith is on leave.
+      expect(byName["Dinesh K."].state).toBe("not_started");
+      expect(
+        Object.values(byName["Dinesh K."].dayStates).every(
+          (s) => s === "missing",
+        ),
+      ).toBe(true);
+      expect(byName["Malith W."].state).toBe("on_leave");
+      // Nobody but those three has a "missing" Friday.
+      const missingFriday = items
+        .filter((r) => r.dayStates.fri === "missing")
+        .map((r) => r.user.name);
+      expect(missingFriday).toEqual(["Dinesh K."]);
+
+      // The day off is next Monday, a working day of a later week.
+      const [holiday] = store.holidays;
+      expect(holiday.date).toBe("2026-10-12");
+
+      // The member can still submit: a status on each task, then R7 accepts the week.
+      as("member");
+      const report = store.reports.find(
+        (r) => r.author === PERSPECTIVES.member && r.weekKey === THIS,
+      );
+      expect(report.days).toHaveLength(5);
+      const refused = await failure(
+        reportService.submitReport(report._id, { requestApproval: false }),
+      );
+      expect(refused.code).toBe("VALIDATION_FAILED");
+      await reportService.saveContent(report._id, {
+        tasks: report.content.tasks.map((t) => ({
+          task: t.taskId,
+          status: "in_progress",
+          note: "On track",
+        })),
+      });
+      const view = await reportService.submitReport(report._id, {
+        requestApproval: false,
+      });
+      expect(view.report.status).toBe("submitted");
+    },
+  );
 });
