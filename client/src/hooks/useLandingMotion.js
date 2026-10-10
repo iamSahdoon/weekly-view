@@ -669,9 +669,17 @@ export function useLandingMotion(rootRef) {
     const markText = mark && mark.firstElementChild;
     const fitMark = () => {
       if (!mark) return;
-      mark.style.fontSize = "100px";
-      const k = mark.clientWidth / Math.max(1, markText.scrollWidth);
-      mark.style.fontSize = `${Math.floor(100 * k * 10) / 10}px`;
+      const room = (px) => {
+        mark.style.fontSize = `${px}px`;
+        const w = (el) => el.getBoundingClientRect().width;
+        return w(mark) / Math.max(1, w(markText));
+      };
+      // The landing face's optical size draws small sizes a little wider than a straight scale
+      // predicts: refit until it settles, then never leave it wider than the column.
+      let px = 100;
+      for (let i = 0; i < 4; i++) px *= room(px);
+      px = Math.floor(px * 10) / 10;
+      while (px > 1 && room(px) < 1) px = Math.floor(px * 9.95) / 10;
     };
     fitMark();
     listen(w, "resize", fitMark);

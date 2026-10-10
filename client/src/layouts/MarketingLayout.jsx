@@ -2,7 +2,9 @@ import { CtaPill } from "../components/marketing/CtaPill.jsx";
 
 // The landing page's frame (brand §6.0; project_structure.md): the `.landing` root that
 // scopes every landing rule, the skip link, the reading rail, the sticky nav and the
-// footer (a week of squares, the links, the wordmark). It sits outside the app's shell and ignores the theme toggle. `signupOpen`
+// footer (a week of squares, the links, the wordmark). The landing page's wordmark is text
+// only; the bracketed-bar glyph stays in the app (brand §6.0 rule 12). It sits outside the
+// app's shell and ignores the theme toggle. `signupOpen`
 // swaps the nav's action from the demo to "Create your account"
 // (frontend_architecture.md §9.16).
 
@@ -28,20 +30,6 @@ export default function MarketingLayout({ rootRef, signupOpen, children }) {
       <header className="top" data-header="">
         <div className="wrap">
           <a className="mark" href="#top" aria-label="WeeklyView home">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.9"
-              aria-hidden="true"
-            >
-              <path d="M7 4H4v16h3M17 4h3v16h-3" />
-              <path
-                d="M12 8v8"
-                style={{ stroke: "var(--l-acc)" }}
-                strokeWidth="2.6"
-              />
-            </svg>
             WeeklyView
           </a>
           <nav className="nl" aria-label="Sections">
@@ -137,22 +125,7 @@ export default function MarketingLayout({ rootRef, signupOpen, children }) {
             </nav>
           </div>
           <p className="ft-mark" data-wordmark="" aria-hidden="true">
-            <span>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.9"
-              >
-                <path d="M7 4H4v16h3M17 4h3v16h-3" />
-                <path
-                  d="M12 8v8"
-                  style={{ stroke: "var(--l-acc)" }}
-                  strokeWidth="2.6"
-                />
-              </svg>
-              WeeklyView
-            </span>
+            <span>WeeklyView</span>
           </p>
           <div className="ft-bot">
             <span>&copy; {YEAR} WeeklyView</span>

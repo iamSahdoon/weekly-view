@@ -63,6 +63,8 @@ The mark, conceptually:
 [  |  ]   — brackets in ink, center bar in cobalt accent
 ```
 
+The landing page shows the wordmark without the glyph (§6.0 rule 12); the glyph is the app's.
+
 **Hard rule:** the mark never pulses, blinks, animates, or uses a filled dot.
 A pulsing or blinking dot reads as a live-recording / "on-air" / alarm indicator,
 which is the exact surveillance connotation a reporting tool must avoid. This was
@@ -497,6 +499,18 @@ sees the real thing.
       width, which rises into place as the page ends; and a bottom row: © year · "No activity tracking. Ever." ·
       "Every name on this page belongs to a fictional sample team." The squares use landing tokens (sand for
       posted), not the product palette: they are the landing's own motif, not a mock-up.
+12. **Owner decision (landing wordmark, 2026-10-10): the landing page uses the text wordmark only.** The
+    bracketed-bar glyph (§1.3) is removed from the landing page's nav and footer; both read **WeeklyView** in the
+    page's Bricolage Grotesque, nothing else. The glyph stays in the app and the demo (`BrandMark`: the sidebar,
+    the sign-in screens, the boot splash, the error pages); §1.2's "the wordmark can also stand alone" covers it.
+    - **Nav.** The wordmark's left edge is the content column's edge (`.wrap`); it shares one baseline with the
+      section links, "Sign in" and the action pill, and the row is centred in the bar. `aria-label="WeeklyView
+      home"` and the `#top` link are kept.
+    - **Footer.** The wordmark is one line that spans the footer's content column, its left and right edges on
+      the column's edges. CSS sizes it to the column (`clamp()` on container width) and `useLandingMotion` then
+      fits it exactly in whatever face has loaded, so it never wraps or overflows from 360px up. Its gap to the
+      rule above the © line is set from the descender. It stays `aria-hidden` and keeps its rise into place
+      (rule 11).
 
 ### 6.1 Job of the page
 
