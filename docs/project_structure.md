@@ -254,7 +254,7 @@ server/
 │   │   ├── paginate.js                # page/limit parsing + the meta block for list endpoints
 │   │   └── weeks.js                   # ISO week keys ↔ dates over date-fns; no holidays, no people
 │   ├── seed/
-│   │   ├── index.js                   # npm run seed / seed:reset — development and tests only
+│   │   ├── index.js                   # npm run db:sample / db:empty — development and tests only (seed / seed:reset are aliases)
 │   │   └── seedData.js                # the fixed deterministic arrays (no faker), relative to the current week
 │   ├── app.js                         # builds and exports the Express app
 │   └── server.js                      # connects Mongo, then listens
@@ -1080,7 +1080,9 @@ Yes, but only as a script shim — no dependencies, **no npm workspaces**:
   "scripts": {
     "dev:client": "npm --prefix client run dev",
     "dev:server": "npm --prefix server run dev",
-    "seed": "npm --prefix server run seed",
+    "db:empty": "npm --prefix server run db:empty",
+    "db:sample": "npm --prefix server run db:sample",
+    "seed": "npm --prefix server run db:sample",
     "test": "npm --prefix server run test && npm --prefix client run test",
     "lint": "npm --prefix client run lint && npm --prefix server run lint"
   }

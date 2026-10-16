@@ -201,7 +201,7 @@
   Drafts not counted; D4's seven fixed types, D5's order; D6 capped at eight, newest first,
   ignoring `weekKey`; D7's numbers over a work period with a holiday week; D8's plan-only,
   active-only rows and this-week versus total hours. `seed.test.js` — see below.
-- **Seed** (`npm run seed`, also `seed:reset`): deterministic (the same week builds
+- **Seed** (`npm run db:sample`; `seed` and `seed:reset` are kept as aliases): deterministic (the same week builds
   byte-identical documents, ids and password hash included), relative to the week it runs in
   (re-run across the 2026 → 2027 boundary in a test), and idempotent. 11 users (the 8-name cast,
   an invited person with a live link, a removed person, a re-hired person with two periods and
@@ -215,9 +215,9 @@
   hours, R&D overdue, Marketing starting in the future, Internal Tooling extended (one
   `planHistory` entry), Legacy Portal inactive but named by older tasks.
   `seed.test.js` reads all of it back through D1, D2, D8, U7, R12 and N1 — no write.
-- **Manual backend checks on a real server** (`node src/server.js` and `npm run seed` against a
+- **Manual backend checks on a real server** (`node src/server.js` and `npm run db:sample` against a
   local `mongod` of the same version the tests download; real clock, Sunday 4 Oct 2026):
-  `seed` and `seed:reset` both wipe and refill; `NODE_ENV=production npm run seed` refuses.
+  `seed` and `seed:reset` (now aliases of `db:sample`) both wipe and refill; `NODE_ENV=production npm run db:sample` refuses.
   Logging in as the seeded manager, admin and a member: every dashboard endpoint → 200 / 200 /
   403, signed out → 401, a missing or invalid `weekKey`, `sort=bad` → 422, D7 for an unknown id →
   404. D1 for W40: filed 5 of 8, 1 on leave, 1 needing correction, 3 open blockers raised by 3
@@ -350,7 +350,7 @@
   (every function in `reportService`, `reviewService` and `userService`, 17 in all, is answered by
   the demo). `vite build` OK.
 - **The table of `frontend_architecture.md` §9.4, against the real API** (Playwright's Chromium,
-  headless; the API on a local in-memory replica set seeded with `npm run seed`; Vite dev server).
+  headless; the API on a local in-memory replica set seeded with `npm run db:sample`; Vite dev server).
   Every line below was asserted by the script, which exited 0 on a freshly reseeded database:
   - *Teammate* (a member on a Needs-correction week): the five days, the `--tint` note "Weekly
     reports are shared with managers only.", none of sections 01–06, no *Overall comments* or
@@ -420,7 +420,7 @@
   future states, the page, and the first-week panel), and 8 new cases in `demoCoverage.test.js`
   (every new service function is answered by the demo). `vite build` OK.
 - **The done list, in a real browser against the real API** (Playwright's Chromium, headless; the
-  API on a local in-memory replica set, `npm run seed`, Vite dev server; today was a Sunday, so the
+  API on a local in-memory replica set, `npm run db:sample`, Vite dev server; today was a Sunday, so the
   current week's Wednesday holiday and four past days were in play). Every line below was asserted
   by the script, which exited 0 on a freshly reseeded database:
   - *Post a day with lines on two projects and a new task* (Malith, Not started, every day missing):
@@ -460,7 +460,7 @@
   unverified. Hover / focus states, screen readers, the combobox with a screen reader, real
   fonts, Safari and Firefox are unverified.
 - **Environment note:** this container has a `MONGODB_URI` environment variable set to an Atlas
-  cluster, and it takes precedence over `server/.env`. The first `npm run seed` tried it and
+  cluster, and it takes precedence over `server/.env`. The first `npm run db:sample` tried it and
   could not connect (nothing was written). Every later run set `MONGODB_URI` to the local
   in-memory server explicitly.
 
@@ -532,7 +532,7 @@
   approval hint, screen readers, real fonts, Safari and Firefox are unverified.
 
 ### Owner: test by hand (C5)
-Run `npm run seed` locally first; every seed account's password is `weekly-view-dev`.
+Run `npm run db:sample` locally first; every seed account's password is `weekly-view-dev`.
 **First submit** — Malith W. has a past week with no report (three weeks back), so he can fill
 it and submit:
 1. Sign in as `malith@example.com`.
@@ -664,7 +664,7 @@ it and submit:
   fonts, Safari and Firefox are unverified. (The action panel's position was settled in the owner answers: pinned.)
 
 ### Owner: test by hand (C6)
-Run `npm run seed` locally first; every seed account's password is `weekly-view-dev`. The seed's
+Run `npm run db:sample` locally first; every seed account's password is `weekly-view-dev`. The seed's
 current week holds: Nadia F. Submitted and **asked**, Ruwan P. Submitted (not asked), Tharindu S.
 Needs correction, Imali J. and Sanduni B. Approved, Ayesha C. Draft; earlier weeks hold some
 Submitted-and-unreviewed reports. Use two browsers (or one normal and one private window) for the
@@ -822,7 +822,7 @@ The fix, with no test skipped or weakened:
     the feed shows later dates. Real data never has a future time.
 
 ### Owner: test by hand (C7)
-Run `npm run seed` locally first (**local database only**); every seed account's password is
+Run `npm run db:sample` locally first (**local database only**); every seed account's password is
 `weekly-view-dev`. Seed week: Nadia F. Submitted and asked, Ruwan P. Submitted, Tharindu S. Needs
 correction, Imali J. and Sanduni B. Approved, Ayesha C. Draft; one person on leave, one not started.
 **The page** (as Nadia, a manager):
@@ -994,7 +994,7 @@ version).
 
 **Owner: how to test C8 by hand** (local; the seed **wipes** the database it points at — use a local
 Mongo or a throw-away Atlas database, never one you want to keep)
-1. `npm run seed`, then `npm --prefix server run dev` and `npm --prefix client run dev`.
+1. `npm run db:sample`, then `npm --prefix server run dev` and `npm --prefix client run dev`.
 2. Sign in at http://localhost:5173/signin as `sanduni@example.com` (admin, the owner), password
    `weekly-view-dev`.
 3. **Projects:** open **Projects**. On **Client A** click **Extend plan**, change **Working days** to
@@ -1098,7 +1098,7 @@ dashboard's charts, for a manager); (2) a fallback's title for a parameter route
 **Checks:** `npm run lint` clean; `npm test` green (server 385, client 444).
 
 **Owner: how to check these three by hand**
-1. `npm run seed`, then `npm --prefix server run dev` and `npm --prefix client run dev`; sign in at
+1. `npm run db:sample`, then `npm --prefix server run dev` and `npm --prefix client run dev`; sign in at
    http://localhost:5173/signin as `sanduni@example.com` (password `weekly-view-dev`).
 2. *Loading states.* In the browser's developer tools open **Network**, tick **Disable cache** and set
    throttling to **Slow 4G**. Immediately after the page that follows sign-in appears, click each sidebar
@@ -1119,7 +1119,7 @@ dashboard's charts, for a manager); (2) a fallback's title for a parameter route
 
 ### C9 checks (2026-10-10)
 Local, on a throw-away **in-memory** MongoDB (a `MongoMemoryReplSet` on 127.0.0.1, seeded with the repo's
-seed; `MONGODB_URI` overridden for those processes only). Atlas, `server/.env` and `npm run seed` against it
+seed; `MONGODB_URI` overridden for those processes only). Atlas, `server/.env` and `npm run db:sample` against it
 were never used. Every server started was stopped (the API, Vite and the in-memory Mongo).
 - `npm run lint`: clean. `npm test`: green — server 385 (unchanged), client **473** (was 444; new:
   `demo/__tests__/demoMarkers.test.js` 7, `lib/__tests__/clearMarkers.test.js` 8,
@@ -1198,7 +1198,7 @@ were never used. Every server started was stopped (the API, Vite and the in-memo
 
 **Owner: how to test C9 by hand** (local; the seed **wipes** the database it points at — use a local Mongo or a
 throw-away Atlas database, never one you want to keep; password for every account `weekly-view-dev`)
-1. `npm run seed`, then `npm --prefix server run dev` and `npm --prefix client run dev`; open http://localhost:5173/signin.
+1. `npm run db:sample`, then `npm --prefix server run dev` and `npm --prefix client run dev`; open http://localhost:5173/signin.
 2. **Dots:** sign in as `tharindu@example.com`. The sidebar shows a small blue square at the right edge of the item
    whose page holds something new (their last week was sent back, so **My reports** and/or **This week**). Open
    that week from **My reports**: the sent-back thread is marked. Click **Team updates**, then **My reports**,
@@ -1227,7 +1227,7 @@ throw-away Atlas database, never one you want to keep; password for every accoun
 
 ### C10 checks (2026-10-10)
 Local only. No database was used at all: the demo and the landing page need no API, and the one server started
-was Vite. Atlas, `MONGODB_URI`, `server/.env` and `npm run seed` were never touched; the server's tests ran on
+was Vite. Atlas, `MONGODB_URI`, `server/.env` and `npm run db:sample` were never touched; the server's tests ran on
 their in-memory MongoDB as always. Vite was stopped and the throw-away `client/.env` (a copy of `.env.example`,
 git-ignored) deleted at the end.
 - `npm run lint`: clean. `npm test`: green — server 385 (unchanged), client **511** (was 473; new:
@@ -1743,7 +1743,7 @@ the week panel. `USER_MANUAL.md` §14 and §37 mention the squares in the strip 
   Firefox; real touch devices; a screen reader; print (unchanged code, not re-checked).
 
 **Owner: how to check the polish by hand** (local, on your machine)
-1. Use a local or throw-away database — `npm run seed` **wipes** the one in `server/.env`. Then `npm run seed`,
+1. Use a local or throw-away database — `npm run db:sample` **wipes** the one in `server/.env`. Then `npm run db:sample`,
    and in two terminals `npm --prefix server run dev` and `npm --prefix client run dev`.
 2. Open http://localhost:5173/signin. The sign-in card sits in the upper middle of the window, not at the top.
    Sign in as `imali@example.com`, password `weekly-view-dev`.
@@ -1823,6 +1823,30 @@ colour, font, token or other motion changed.
    width). Turn animation effects back on.
 10. **The app keeps its glyph:** open http://localhost:5173/signin — the cobalt sign-in screen still shows the
     bracket icon next to WeeklyView. Open http://localhost:5173/demo, pick a role: the sidebar shows it too.
+
+### Owner decision: database commands `db:empty` and `db:sample` (2026-10-16)
+Not a stage; a small change the owner asked for.
+- Two documented commands, in `server/package.json` and forwarded from the root:
+  `npm run db:empty` (`node src/seed/index.js --empty`) wipes the seven collections, syncs
+  their indexes and inserts nothing, then prints "Database emptied. The first person to sign
+  up becomes the owner."; `npm run db:sample` (`node src/seed/index.js`) is the existing
+  sample seed, unchanged.
+- Both refuse when `NODE_ENV` is `production`, before connecting to anything.
+- `seed` and `seed:reset` stay in both `package.json` files as undocumented aliases of
+  `db:sample`, so old instructions still work. Every other mention of `npm run seed` /
+  `seed:reset` in the docs now says `db:sample` (`db:empty` where relevant);
+  `docs/reconciliation_changelog.md` is history and was not edited.
+- The README, `docs/DEPLOYMENT.md` and the owner's section of `docs/USER_MANUAL.md` document
+  both commands and warn that they wipe whatever database `server/.env` points at, that a
+  browser still signed in afterwards should sign out (or use a private window), and that the
+  sample accounts share the public password `weekly-view-dev`.
+- Tests (`server/tests/seed/seed.test.js`, in-memory database only): `--empty` leaves all
+  seven collections empty with the indexes intact, the bootstrap check reports sign-up open
+  and the first sign-up becomes the owner; both commands exit 1 under `NODE_ENV=production`
+  and touch nothing; the 21 existing sample-seed tests are unchanged and green. No Atlas or
+  `MONGODB_URI` database was connected to or written.
+- Earlier entries in this file that say `npm run seed` were renamed to `npm run db:sample`
+  in place; what they record was run under the old name.
 
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
@@ -2438,7 +2462,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
    `client/.env` and `server/.env.example` to `server/.env` (your Atlas `MONGODB_URI` is fine for
    `server/.env`, but seeding **wipes** that database; use a local Mongo or a throw-away Atlas
    database for this check).
-2. `npm run seed`, then in two terminals `npm --prefix server run dev` and `npm --prefix client run dev`.
+2. `npm run db:sample`, then in two terminals `npm --prefix server run dev` and `npm --prefix client run dev`.
 3. Open http://localhost:5173/signin and sign in as `imali@example.com`, password `weekly-view-dev`.
 4. Open **My reports**, then **Week 41**. Check: five separate cards; Tuesday's thread reads as a
    conversation with Imali's reply indented under a line; Wednesday is a short grey Holiday card;

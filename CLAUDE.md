@@ -110,7 +110,8 @@ Do not create empty files to satisfy the tree.
 ```bash
 npm --prefix server run dev        # API on :5000
 npm --prefix client run dev        # Vite on :5173
-npm run seed                       # development dataset (server)
+npm run db:sample                  # wipe the database, load the development dataset (server)
+npm run db:empty                   # wipe the database, load nothing (first sign-up becomes owner)
 npm test                           # server RBAC/policy tests + client parity/demo tests
 npm run lint
 ```

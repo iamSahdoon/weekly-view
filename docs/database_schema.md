@@ -911,7 +911,7 @@ exception the database *does* enforce, through the unique partial index on `isOw
 
 ## 8. Seed data shape
 
-`npm run seed` wipes and inserts. Deterministic, hand-authored, no `faker`
+`npm run db:sample` wipes and inserts (`npm run db:empty` wipes and inserts nothing). Deterministic, hand-authored, no `faker`
 (`tech_stack.md` §6.8). **The seed is for development and testing only.** The public demo
 does not use the database at all — it runs on hard-coded sample data in the browser
 (`requirments_doc.md` §14, `tech_stack.md` §6.9) — so no seeded account is special, and

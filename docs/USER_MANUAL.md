@@ -941,8 +941,25 @@ Use `cd` then `npm install`, **not** `npm --prefix client install` (on this PC t
 **Run it** (two windows): `npm --prefix server run dev` (API on :5000) and
 `npm --prefix client run dev` (app on http://localhost:5173).
 
-**Sample data:** in `server`, `npm run seed` **wipes and refills** the database it points at,
-relative to the current week. Every account's password is `weekly-view-dev`:
+**Database commands** (from the project folder, PowerShell):
+
+| Command | What it does |
+| --- | --- |
+| `npm run db:empty` | Wipes the database and inserts nothing. The first person to sign up becomes the owner. |
+| `npm run db:sample` | Wipes the database, then loads the sample team and six weeks of reports, relative to the current week. |
+
+- **Both wipe whatever database `server\.env` points at.** Check `MONGODB_URI` before you run
+  either. Neither runs when `NODE_ENV` is `production`.
+- **After either command, sign out** in any browser that was signed in (or use a private
+  window). Its old sign-in belongs to a person who no longer exists.
+- **The sample accounts share the public password `weekly-view-dev`.** Don't use them on a
+  database real people will use.
+- To check the result, open a **private window**: after `db:empty` the landing page offers
+  *Create your account*; after `db:sample` sign-up is closed and you can sign in as any account below.
+
+(`seed` and `seed:reset` still work as older names for `db:sample`.)
+
+Sample accounts, all with the password `weekly-view-dev`:
 
 | Account | Role |
 | --- | --- |
