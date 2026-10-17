@@ -170,7 +170,7 @@ button:not(:disabled),
 
 /* The signed-out auth screens only (owner decisions, auth pages 2026-10-17; design §8.5
    entries 32–34). Arrival: the brand panel fades in and the two blocks rise 8px, the
-   brand side first. The panel's grid drifts one cell every 48 s, on one layer, paused
+   brand side first. The panel's grid drifts one cell every 14 s, on one layer, paused
    with the panel (data-paused). Under reduced motion none of it runs. */
 @keyframes wv-auth-rise {
   from {
@@ -193,16 +193,99 @@ button:not(:disabled),
   }
 }
 .wv-grid-drift {
-  animation: wv-grid-drift 48s linear infinite;
+  animation: wv-grid-drift 14s linear infinite;
 }
-[data-paused] .wv-grid-drift {
+/* Round five: a few cells of the drifting grid light to --acc in four turns, on the
+   layer's own 14 s clock, each dark at the loop's seam (0% / 100%), so none ever jumps.
+   The peak is 12% in light; the dark theme's --acc on its dark --tint needs 28% to be
+   seen at all. Cells never sit behind text (AuthBrandPanel places them). */
+.wv-grid-cell {
+  --cell-peak: 0.12;
+  position: absolute;
+  width: 31px;
+  height: 31px;
+  background: var(--acc);
+  opacity: 0;
+  animation: 14s linear infinite both;
+}
+[data-theme="dark"] .wv-grid-cell {
+  --cell-peak: 0.28;
+}
+.wv-grid-cell[data-turn="0"] {
+  animation-name: wv-cell-0;
+}
+.wv-grid-cell[data-turn="1"] {
+  animation-name: wv-cell-1;
+}
+.wv-grid-cell[data-turn="2"] {
+  animation-name: wv-cell-2;
+}
+.wv-grid-cell[data-turn="3"] {
+  animation-name: wv-cell-3;
+}
+@keyframes wv-cell-0 {
+  0%,
+  4% {
+    opacity: 0;
+  }
+  14% {
+    opacity: var(--cell-peak);
+  }
+  24%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes wv-cell-1 {
+  0%,
+  27% {
+    opacity: 0;
+  }
+  37% {
+    opacity: var(--cell-peak);
+  }
+  47%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes wv-cell-2 {
+  0%,
+  50% {
+    opacity: 0;
+  }
+  60% {
+    opacity: var(--cell-peak);
+  }
+  70%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes wv-cell-3 {
+  0%,
+  73% {
+    opacity: 0;
+  }
+  83% {
+    opacity: var(--cell-peak);
+  }
+  93%,
+  100% {
+    opacity: 0;
+  }
+}
+[data-paused] .wv-grid-drift,
+[data-paused] .wv-grid-cell {
   animation-play-state: paused;
 }
 @media (prefers-reduced-motion: reduce) {
   .wv-auth-enter,
   .wv-auth-enter-late,
   .wv-auth-fade,
-  .wv-grid-drift {
+  .wv-grid-drift,
+  .wv-grid-cell,
+  .wv-grid-cell[data-turn] {
     animation: none;
   }
 }

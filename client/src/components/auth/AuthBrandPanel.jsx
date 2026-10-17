@@ -122,6 +122,66 @@ function usePanelActive(ref) {
   return inView && visible;
 }
 
+// Highlighted grid cells (round five): eight cells of the drifting layer, each lighting
+// to 12% --acc once per 14 s drift in one of four turns (wv-cell-0…3, base.css), so two are
+// lit at a time. They share the layer's clock — mounted with it, paused with it, dark
+// whenever it loops — so they move with the lines and never jump. Where they sit is
+// measured once and on resize (no per-frame work): cells whose whole drift stays inside
+// the panel and clear of the brand block, so none ever sits behind text or a card.
+const CELL = 32;
+const CELL_COUNT = 8;
+
+function useFreeCells(panelRef, blockRef) {
+  const [cells, setCells] = useState([]);
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const panel = panelRef.current;
+    const block = blockRef.current;
+    const place = () => {
+      const p = panel.getBoundingClientRect();
+      const b = block.getBoundingClientRect();
+      if (!p.width) return setCells([]);
+      const avoid = {
+        left: b.left - p.left - CELL,
+        right: b.right - p.left + CELL,
+        top: b.top - p.top - CELL,
+        bottom: b.bottom - p.top + CELL,
+      };
+      const free = [];
+      // Cell (c, r) of the layer spans [32c − 32, 32c + 32] in the panel over one drift;
+      // keep a cell's width in from every panel edge, so none is cut off by it.
+      for (let c = 2; CELL * (c + 2) <= p.width; c += 1) {
+        for (let r = 2; CELL * (r + 2) <= p.height; r += 1) {
+          const [x0, x1, y0, y1] = [
+            CELL * (c - 1),
+            CELL * (c + 1),
+            CELL * (r - 1),
+            CELL * (r + 1),
+          ];
+          const clear =
+            x1 <= avoid.left ||
+            x0 >= avoid.right ||
+            y1 <= avoid.top ||
+            y0 >= avoid.bottom;
+          if (clear) free.push([c, r]);
+        }
+      }
+      // A fixed, even scatter (golden-ratio steps): stable, and no two turns side by side.
+      const chosen = new Map();
+      for (let i = 0; chosen.size < Math.min(CELL_COUNT, free.length); i += 1) {
+        const at = free[Math.floor(((i * 0.618034) % 1) * free.length)];
+        chosen.set(at.join(","), at);
+      }
+      setCells([...chosen.values()]);
+    };
+    const observer = new ResizeObserver(place);
+    observer.observe(panel);
+    observer.observe(block);
+    return () => observer.disconnect();
+  }, [panelRef, blockRef]);
+  return cells;
+}
+
 /** The step to show: one timer, set only while the panel is active and motion is allowed. */
 function usePreviewStep(active, still) {
   const [step, setStep] = useState(0);
@@ -284,12 +344,19 @@ function WeekPreview({ step }) {
   );
 }
 
-/** The screen's own line under the wordmark: a title and a sentence, or three steps. */
+/**
+ * The screen's own line under the wordmark — a title and a sentence, or three steps — on a
+ * card drawn like the sample card (round five), so it reads cleanly over the grid.
+ */
 function Intro({ intro }) {
   const copy = PANEL_INTROS[intro];
   if (!copy) return null;
   return (
-    <div key={intro} data-panel-intro={intro} className="wv-fade-in">
+    <div
+      key={intro}
+      data-panel-intro={intro}
+      className="wv-fade-in border border-hair bg-card px-20 py-16"
+    >
       <p className="font-display text-panel font-bold text-ink">{copy.title}</p>
       {copy.line && <p className="mt-8 text-base text-body">{copy.line}</p>}
       {copy.steps && (
@@ -315,9 +382,11 @@ function Intro({ intro }) {
 
 export function AuthBrandPanel({ intro, className }) {
   const ref = useRef(null);
+  const blockRef = useRef(null);
   const still = useReducedMotion();
   const active = usePanelActive(ref);
   const step = usePreviewStep(active, still);
+  const cells = useFreeCells(ref, blockRef);
   return (
     <aside
       ref={ref}
@@ -332,8 +401,27 @@ export function AuthBrandPanel({ intro, className }) {
         aria-hidden="true"
         className="wv-grid-drift pointer-events-none absolute -top-[32px] right-0 bottom-0 -left-[32px]"
         style={GRID}
-      />
+      >
+        {/* Always eight, mounted with the layer, so their clock is the layer's; a cell
+            with no free place waits hidden. */}
+        {Array.from({ length: CELL_COUNT }, (_, i) => {
+          const at = cells[i];
+          return (
+            <span
+              key={i}
+              data-turn={i % 4}
+              className="wv-grid-cell"
+              style={
+                at
+                  ? { left: CELL * at[0] + 1, top: CELL * at[1] + 1 }
+                  : { visibility: "hidden" }
+              }
+            />
+          );
+        })}
+      </div>
       <div
+        ref={blockRef}
         data-auth-block="brand"
         className="wv-auth-enter relative row-span-4 row-start-2 grid w-full max-w-[420px] grid-rows-subgrid justify-self-center"
       >
@@ -345,9 +433,9 @@ export function AuthBrandPanel({ intro, className }) {
             at its own height, its bottom level with the form panel's (the column is a
             flex column whose last item ends at the row's end). */}
         <div className="row-span-2 row-start-2 flex flex-col">
-          {/* Any room the form leaves is shared above and below the line, so it never
-              collects into one gap. */}
-          <div className="my-auto pb-24">
+          {/* The two cards keep one 24px gap on every screen; any room the form leaves
+              goes above them, beside the form's heading. */}
+          <div className="mt-auto pb-24">
             <Intro intro={intro} />
           </div>
           <div aria-hidden="true">

@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { AuthContext } from "../../../context/AuthContext.jsx";
+import { AuthBrandPanel } from "../AuthBrandPanel.jsx";
 import AuthLayout from "../../../layouts/AuthLayout.jsx";
 import { qk } from "../../../lib/queryKeys.js";
 import SignInPage from "../../../pages/SignInPage.jsx";
@@ -272,12 +273,18 @@ describe("the brand panel, round four", () => {
   it("draws the grid on one drifting layer, still under reduced motion and paused with the panel", () => {
     expect(panel.match(/wv-grid-drift/g)).toHaveLength(1);
     expect(css).toMatch(
-      /\[data-paused\] \.wv-grid-drift \{\s*animation-play-state: paused;/,
+      /\[data-paused\] \.wv-grid-drift,\s*\[data-paused\] \.wv-grid-cell \{\s*animation-play-state: paused;/,
     );
     const reduced = css.slice(
       css.lastIndexOf("@media (prefers-reduced-motion"),
     );
-    for (const name of [".wv-grid-drift", ".wv-auth-enter", ".wv-auth-fade"])
+    for (const name of [
+      ".wv-grid-drift",
+      ".wv-grid-cell",
+      ".wv-grid-cell[data-turn]",
+      ".wv-auth-enter",
+      ".wv-auth-fade",
+    ])
       expect(reduced).toContain(name);
     expect(reduced).toContain("animation: none");
   });
@@ -324,6 +331,64 @@ describe("the brand panel, round four", () => {
       /<main[^]*<div class="lg:row-span-2"><div class="pb-32"><h1/,
     );
     expect(html).toMatch(/<div class="contents"><div class="pb-32"><h1/);
+  });
+});
+
+// Owner feedback, round five: the intro on a card; a livelier grid.
+describe("the brand panel, round five", () => {
+  const css = readFileSync(
+    new URL("../../../styles/base.css", import.meta.url),
+    "utf8",
+  );
+  const panelFor = (intro) =>
+    renderToStaticMarkup(<AuthBrandPanel intro={intro} />);
+
+  it("puts every screen's line on a card drawn like the sample card, 24px above it", () => {
+    for (const intro of Object.keys(PANEL_INTROS)) {
+      const html = panelFor(intro);
+      expect(html, intro).toContain(
+        `<div class="mt-auto pb-24"><div data-panel-intro="${intro}" class="wv-fade-in border border-hair bg-card px-20 py-16">`,
+      );
+      expect(html, intro).toContain(
+        '<div aria-hidden="true"><div class="border border-hair bg-card">',
+      );
+    }
+  });
+
+  it("drifts one square every 14 s, and lights eight cells in four turns on the same clock", () => {
+    expect(css).toMatch(
+      /\.wv-grid-drift \{\s*animation: wv-grid-drift 14s linear infinite;/,
+    );
+    expect(css).toMatch(
+      /\.wv-grid-cell \{[^}]*animation: 14s linear infinite both;/,
+    );
+    const html = panelFor("signin");
+    const layer = html.slice(
+      html.indexOf("wv-grid-drift"),
+      html.indexOf('data-auth-block="brand"'),
+    );
+    const turns = [
+      ...layer.matchAll(/data-turn="(\d)" class="wv-grid-cell"/g),
+    ].map((m) => m[1]);
+    expect(turns).toEqual(["0", "1", "2", "3", "0", "1", "2", "3"]);
+    // Until the panel is measured, every cell waits hidden: none is ever placed blind.
+    expect(layer.match(/visibility:hidden/g)).toHaveLength(8);
+  });
+
+  it("keeps each cell dark at the drift's seam, low in contrast, and from the theme's own --acc", () => {
+    for (const turn of [0, 1, 2, 3]) {
+      const start = css.indexOf(`@keyframes wv-cell-${turn} {`);
+      const frames = css.slice(start, css.indexOf("\n}", start));
+      expect(frames, `turn ${turn}`).toMatch(/0%[^{]*\{\s*opacity: 0;/);
+      expect(frames, `turn ${turn}`).toMatch(/100% \{\s*opacity: 0;/);
+      expect(frames).toContain("opacity: var(--cell-peak)");
+    }
+    expect(css).toMatch(/\.wv-grid-cell \{[^}]*background: var\(--acc\);/);
+    const peaks = [...css.matchAll(/--cell-peak: ([\d.]+);/g)].map(
+      (m) => +m[1],
+    );
+    expect(peaks).toEqual([0.12, 0.28]);
+    expect(css).toContain('[data-theme="dark"] .wv-grid-cell {');
   });
 });
 

@@ -2147,6 +2147,55 @@ exceptions) and §8.5 entries 32–34, `frontend_architecture.md` §9.15, `proje
 12. Dark mode: sign in → your name → **Appearance** → Dark → sign out; check `/signin` again.
 13. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
 
+### Auth pages, round five: intro card, livelier grid (owner feedback on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. Recorded in `product_design_system.md` §3.12 (round-five block), §8.4 and §8.5
+entry 34, and `docs/USER_MANUAL.md` §4.
+1. **The panel's line on a card**, like the sample card: `--card`, hairline border, square corners, no shadow, the same
+   width, 20 / 16 px padding. **Chosen for every screen**, the one-line intros too. In the screenshots, the one-liners on
+   a card read as one set with the sign-up steps; bare text on the now-moving grid looked less finished. The two cards
+   keep one 24 px gap on every screen (measured: 24 px at every size and screen checked). Any room a taller form leaves
+   goes above the pair, beside the form's heading. Top and bottom edges still match the form's.
+2. **A livelier grid.** The drift is now one square every 14 s (was 48 s); measured about 2.3 px/s. Eight cells of the
+   drifting layer light to cobalt (`--acc`) in four turns, two at a time, each fading in and out over about 1.4 s. The
+   peak is 12% in light and 28% in dark: at 12%, the dark theme's cobalt on its dark tint was almost invisible in the
+   screenshots. The cells run on the layer's own CSS clock, so they move with the lines and are dark whenever the loop
+   resets (they never jump). They are placed, once and on resize, only in cells whose whole drift stays clear of the
+   brand block and away from the panel's edges, so none ever sits behind text or a card. Measured over 30 s in each
+   theme: at most 2 lit at once; 0 lit at the loop's seam; 0 overlapping the brand block. CSS only, no per-frame
+   JavaScript: one `ResizeObserver` places them. They pause with the panel (`[data-paused]`, checked: play-state paused
+   when the tab is hidden). The panel isn't displayed on phones. Under reduced motion there is no animation and the cells
+   stay at opacity 0. That needed one fix: the per-turn `animation-name` rules out-ranked the reduced-motion reset. The
+   optional glow following the chosen day was left out to keep the grid calm.
+   - At 1024 px the panel's side margins are narrower than two cells, so few or no cells qualify there; the drift
+     still shows.
+- **Checks.** `npm run lint` clean. `npm test`: server 389, client 624 (3 new: the intro card on every screen; the
+  14 s drift and the eight cells in four turns; dark at the seam, the two peaks, `--acc`). **Headless Chromium**
+  (in-memory MongoDB only):
+  - `/signin` and `/signup` with sign-up open, and `/signup` with sign-up closed and a real invite link, at 1440×900,
+    1366×768, 1024×768 and 360×780, light and dark.
+  - An expired reset link, and the recovery screen: sign-up and invite flows re-run, both still work.
+  - Every desktop view: edges match, cards 24 px apart, no sideways scroll. Text sits only on cards or on the plain
+    tint, never over a lit cell, so its contrast is the same as before.
+- **Not verified:** Firefox and Safari; real laptop CPU; screen readers.
+
+**Owner: how to check round five by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, `git pull`; `npm --prefix server install`,
+   `npm --prefix client install`.
+2. `npm run db:empty`; start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+3. Open http://localhost:5173/signup full screen: "Three steps to your team's first week" is on a white card the same
+   width as the "This week" card, with the same gap between the two cards as on `/signin` ("Welcome back." card).
+4. Watch the left side for 15 seconds: the grid moves gently down and to the right (a square every 14 s), and here and
+   there a square softly fills with light blue and fades — two at a time, never behind the text or the cards.
+5. Switch to dark (sign in → your name → **Appearance** → Dark → sign out) and look again: the blue squares are visible
+   but quiet; all text reads as clearly as before.
+6. Create the owner account, sign out, open `/signup` (closed), then an invite link from **Users**: each shows its line
+   on a card, 24 px above the sample card.
+7. F12 → Ctrl+Shift+M → Responsive: **1366 × 768**, **1024 × 768** (the grid moves; few or no squares light at this
+   width), **360 × 780** (no panel).
+8. Reduced motion (Windows Settings → Accessibility → Visual effects → Animation effects off): reload `/signin` — the
+   grid is still and no square lights. Turn it back on.
+9. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds

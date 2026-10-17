@@ -1095,6 +1095,17 @@ Product screens outside the shell: no sidebar, no top bar.
 > - **The day change is sequential** — §8.5 entry 32.
 > - **Arrival and the grid** — §8.5 entries 33 and 34.
 
+> **Owner decisions (auth pages, round five after the fourth test, 2026-10-17):**
+>
+> - **The panel's line sits on a card**, drawn like the sample card: `--card`, a 1px `--hair`
+>   border, square corners, no shadow, the same width, `20px` / `16px` inner padding. Every
+>   screen gets the card, the one-line intros included: side by side in the screenshots, the
+>   one-liners on a card read as one set with the three-step list, and bare text on the
+>   moving grid was the less finished of the two.
+> - **The two cards keep one 24px gap on every screen**; any room a taller form leaves goes
+>   above the pair, beside the form's heading. Top and bottom edges still match the form's.
+> - **A livelier grid** — §8.5 entry 34.
+
 **Shared layout** *(before the owner decision above)*. Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
 polish 2026-10-10: the column starts `18vh` down, never less than `52px` (`32px` below
 480px), so it sits in the upper middle of the screen rather than hugging the top; a fixed
@@ -2212,7 +2223,8 @@ signed-out auth screens only, never inside the app:* (1) the brand panel's sampl
 **continuous decorative loop** — it walks Monday to Thursday and posts Thursday, every 15 s
 (§8.5, entry 32; it replaces the one-time fill-in accepted earlier); (2) the screens **arrive**
 with a short fade and rise (entry 33); (3) the panel's hairline grid **drifts** one cell every
-48 s (entry 34). All three move only `opacity` and `transform`; the loop runs on one timer, the
+14 s and a few of its cells softly light in turn (entry 34; round five sped the drift up from
+48 s and added the cells). All three move only `opacity` and `transform`; the loop runs on one timer, the
 grid on one CSS layer; both wait while the tab is hidden or the panel is out of view (the
 phone layout hides it); under reduced motion none of them runs (the posted Thursday is shown).
 Nothing else in the product is excused from the list above.
@@ -2242,7 +2254,7 @@ Nothing else in the product is excused from the list above.
 | 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
 | 32  | Auth screens' brand panel: the sample week loops *(owner decision, auth pages 2026-10-17, rounds three and four)* | each change in three moves that never overlap: the old day fades out (`opacity`, 0–160ms, `--ease-in`); the chosen day's 2px `--ink` bar slides (`transform`, 140–340ms); the new day fades in (240–420ms) — on Thursday its square fills (`opacity`, `scale(.5→1)`) and the posted lines rise 4px. Mon → Tue → Wed → Thu, Thursday posted, back to Monday | steps 3 / 3 / 3 / 2.2 / 3.8 s — a 15 s cycle | `--ease-out` | CSS transitions, one `setTimeout` (`previewSteps.js`) | continuous while visible |
 | 33  | Auth screens: arrival *(owner decision, round four)* | the brand panel fades in; the brand block, then (80ms later) the form block, rise 8px with a fade | 280 / 320ms | `--ease-out` | CSS (`.wv-auth-fade`, `.wv-auth-enter`, `.wv-auth-enter-late`) | the auth frame mounts (arriving from the landing page or a link; not between auth screens) |
-| 34  | Auth screens' brand panel: the grid drifts *(owner decision, round four)* | one oversized layer of the 32px `--hair` grid moves one cell down and right (`transform`), seamlessly | 48s, `infinite` | linear | CSS (`.wv-grid-drift`), paused by `[data-paused]` | continuous while visible |
+| 34  | Auth screens' brand panel: the grid drifts and a few cells light *(owner decisions, rounds four and five)* | one oversized layer of the 32px `--hair` grid moves one cell down and right (`transform`), seamlessly; eight of its cells light to `--acc` at 12% (light) / 28% (dark) and back (`opacity`), in four turns, two at a time — placed only where they never sit behind text or a card | 14s, `infinite` (each cell: ~1.4s in, ~1.4s out, dark at the loop's seam) | linear | CSS (`.wv-grid-drift`, `.wv-grid-cell`), paused by `[data-paused]`; positions measured once and on resize (`ResizeObserver`) | continuous while visible |
 
 - **Entries 32–34 are the exceptions to §8.4** — owner decisions (PR #27, rounds three and
   four, 2026-10-17); 32 replaces the one-time fill-in. Signed-out auth screens only, never in
