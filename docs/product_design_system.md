@@ -470,7 +470,7 @@ a first impression, and a returning user should never be shown it again.
 
 | State                       | Treatment                                                                                                                                                                     |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Empty** (nothing ever)    | Week strip renders. A single panel: Chivo 17px "Your first week starts here.", body "Post what you did today. Your weekly report builds itself from your daily updates.", primary `Post today's update`. Other panels not rendered — no zero-filled cells. |
+| **Empty** (nothing ever)    | Week strip renders. A single panel: Chivo 17px "Your first week starts here.", body "Post what you did today. Your weekly report builds itself from your daily updates.", primary `Post today's update`. Other panels not rendered — no zero-filled cells. *(Owner decision, auth pages 2026-10-17 — **joined after the week**: when none of the shown week's days can be posted because the person joined after its Friday (e.g. the owner signs up on a Saturday, so every day reads "Not on the team", or a holiday), the panel says instead: Chivo 17px "Your first week starts Mon 19 Oct.", body "You joined on Sat 17 Oct, after this week's working days. Your daily updates start that Monday, and your weekly report builds itself from them.", and a secondary `Go to that week` once that week has begun (before then it can't be opened). No `Post today's update`. The server rule is unchanged: updates are expected from the join date.)* |
 | **Loading**                 | Skeletons: H1 `220×28`, week strip live, day panel at real height, the 8/4 pairs at real heights.                                                                             |
 | **Error**                   | Inline error panel replaces the affected panel; H1 and week strip still render.                                                                                               |
 
@@ -988,7 +988,35 @@ separated by `32px`.
 
 Product screens outside the shell: no sidebar, no top bar.
 
-**Shared layout.** Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
+> **Owner decision (auth pages, 2026-10-17): a calm split layout.** It replaces the centred
+> column described in the next paragraph for the five auth screens (sign in, create account
+> open and closed, accept invite, reset password; "Forgot your password?" stays a panel on
+> sign in, not a page). The look is the app's: cobalt on cool neutrals, Chivo / Instrument
+> Sans, square corners, hairlines, no shadow, tokens only.
+>
+> - **From 1024px: two equal halves.** The **form side** (`--paper`) holds a 420px column:
+>   at the top a `--mut` 13px "← Back to home" link to `/`; then, `max(52px, 14vh)` down, the
+>   heading in Chivo 700 **40px** (`--text-title`: line-height 1.08, tracking −0.04em; 28px
+>   `text-page` below 640px), the optional `--mut` line at 16px, the form panel as before, and
+>   the secondary links stacked under it. The **brand panel** (`--card`, a 1px `--hair` line
+>   between, sticky at full height) holds the glyph and wordmark (Chivo 800, 22px) on the same
+>   line as "Back to home", and, centred in the panel, a quiet week: five 22px Updates squares
+>   Mon–Fri in a hairline strip that fill in once (§8.5, entry 32), then "One short update a
+>   day." (Chivo 700 20px) and "Each person posts what they did, and Friday's weekly report
+>   builds itself from the five days." Nothing else — no illustration, no marketing copy.
+> - **Below 1024px:** the brand panel collapses to a 52px `--card` header with a hairline
+>   under it: the wordmark (17px) on the left, "← Back to home" on the right. The form comes
+>   straight after it, `32px` down (`max(52px, 10vh)` from 640px).
+> - **Headings and links.** Sign in: "Sign in to WeeklyView" (the tab still says "Sign in");
+>   under the panel "Forgot your password?" and, **only when the bootstrap check says sign-up
+>   is open**, "No team here yet? Create the owner account". Create account (open): "Create
+>   the owner account" / "You're the first person here, so this account will be the admin and
+>   the owner. Everyone else joins with an invite link from you." The other headings, every
+>   field, error, route and request are unchanged.
+> - The demo's chooser keeps the earlier centred column; the auth routes are not in the demo,
+>   so "Back to home" never appears inside `/demo`.
+
+**Shared layout** *(before the owner decision above)*. Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
 polish 2026-10-10: the column starts `18vh` down, never less than `52px` (`32px` below
 480px), so it sits in the upper middle of the screen rather than hugging the top; a fixed
 offset, not flex centring, so nothing jumps when a skeleton gives way to a taller form. The
@@ -1001,8 +1029,8 @@ copy, no illustration.
 
 | Screen             | Route            | Heading                 | Fields                                  | Primary          | Secondary link                     |
 | ------------------ | ---------------- | ----------------------- | --------------------------------------- | ---------------- | ---------------------------------- |
-| **Sign in**        | `/signin`        | "Sign in"               | email, password                         | `Sign in`        | "Forgot your password?" (see below) |
-| **Create account** | `/signup`        | "Create your account"   | name, email, password                   | `Create account` | "Already have an account? Sign in" |
+| **Sign in**        | `/signin`        | "Sign in to WeeklyView" | email, password                         | `Sign in`        | "Forgot your password?" (see below) |
+| **Create account** | `/signup`        | "Create the owner account" | name, email, password                   | `Create account` | "Already have an account? Sign in" |
 | **Accept invite**  | `/invite/:token` | "Join the team"         | name, password (email and role shown read-only) | `Join the team` | —                          |
 | **Reset password** | `/reset/:token`  | "Choose a new password" | new password, confirm (email shown read-only) | `Save password` | —                             |
 
@@ -2123,7 +2151,11 @@ than merely shortened.
 | 29  | Autosave state change               | the words fade in; the 6px square fills | 120 / 160ms | `--ease-out` / linear | CSS                  | save              |
 | 30  | Light ↔ dark switch                 | background, border and text colours cross-fade | 200ms | `ease`     | CSS (`.wv-theme-easing`, 260ms)  | Appearance switch |
 | 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
+| 32  | Auth screens' brand panel: the week fills in *(owner decision, auth pages 2026-10-17)* | five squares, opacity 0→1 and `scale(.8→1)`, one after another | 200ms each, 120ms apart, from 300ms | `--ease-out` | **Motion** | the screen opens (once) |
 
+- **Entry 32 is the one exception to §8.4's "no page-load entrance"**, asked for by the owner:
+  it is on the signed-out auth screens only, decorative, plays once and never loops. Under
+  reduced motion the squares are drawn filled, with no animation.
 - **Reduced motion:** 23–25 jump; 26 is a fade with no travel (`useReducedMotion`); 27–29 and
   31 are cut to 1ms by §8.3; 30 stays — it is colour only, and a gentle cross-fade is kinder
   than a full-screen brightness jump (Apple's guidance, the owner's reference).
@@ -2504,6 +2536,11 @@ td.num,
   --text-metric-sm: 26px;
   --text-metric-sm--line-height: 1;
   --text-metric-sm--letter-spacing: -0.025em;
+
+  /* Owner decision (auth pages, 2026-10-17): the auth screens' heading (§3.12). */
+  --text-title: 40px;
+  --text-title--line-height: 1.08;
+  --text-title--letter-spacing: -0.04em;
 
   --text-page: 28px;
   --text-page--line-height: 1.12;

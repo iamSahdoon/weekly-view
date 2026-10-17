@@ -511,6 +511,13 @@ sees the real thing.
       fits it exactly in whatever face has loaded, so it never wraps or overflows from 360px up. Its gap to the
       rule above the © line is set from the descender. It stays `aria-hidden` and keeps its rise into place
       (rule 11).
+13. **Owner decision (auth pages, 2026-10-17): a way in for people already on a team.** Rule 7's bootstrap swap
+    stays: sign-up open → "Create your account" is the primary action. When the check says sign-up is **closed**
+    (the team exists), the hero adds a line under its actions, "Already on a team? **Sign in**", in the page's
+    `--l-fg2` with an underlined `--l-fg` link to `/signin` (17px, Bricolage Grotesque, `.landing .hsign`). The
+    demo caption beside the pill is shortened from "No sign-up. Everything works, nothing is saved." to "No
+    account needed. Nothing is saved." While the check is pending or has failed, the hero is as before: the demo
+    pill only, no sign-up link and no sign-in line (FA14). Landing tokens only; nothing reaches the app.
 
 ### 6.1 Job of the page
 

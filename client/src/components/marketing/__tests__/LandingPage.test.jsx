@@ -70,6 +70,41 @@ describe("the call to action follows what the instance can do", () => {
   });
 });
 
+// Owner decision (auth pages, 2026-10-17; brand §6.0 rule 13): once the check says sign-up
+// is closed, the hero offers people already on a team a way to sign in. Pending or failed,
+// it stays as before: the demo only.
+describe("the hero's sign-in line", () => {
+  const hero = (props) => renderToStaticMarkup(<HeroSection {...props} />);
+
+  it("closed: 'Already on a team? Sign in', linking to /signin, under the demo", () => {
+    const html = hero({ signupOpen: false, signupClosed: true });
+    expect(text(html)).toContain("Already on a team? Sign in");
+    expect(html).toMatch(
+      /<p class="hsign">[^]*<a href="\/signin">Sign in<\/a>/,
+    );
+    expect(html.indexOf('href="/demo"')).toBeLessThan(html.indexOf("hsign"));
+    expect(hrefs(html)).not.toContain("/signup");
+  });
+
+  it("pending or failed: no sign-in line, no sign-up link", () => {
+    const html = hero({ signupOpen: false });
+    expect(html).not.toContain("hsign");
+    expect(hrefs(html)).toEqual(["/demo", "#week", "#desk"]);
+  });
+
+  it("open: Create your account first, and no sign-in line", () => {
+    const html = hero({ signupOpen: true, signupClosed: false });
+    expect(html).not.toContain("hsign");
+    expect(hrefs(html)[0]).toBe("/signup");
+  });
+
+  it("says the demo needs no account, in fewer words", () => {
+    const words = text(hero({ signupOpen: false, signupClosed: true }));
+    expect(words).toContain("No account needed. Nothing is saved.");
+    expect(words).not.toContain("Everything works, nothing is saved.");
+  });
+});
+
 describe("the copy keeps the honesty rules", () => {
   const body = text(page(false));
   const bodyOpen = text(page(true));

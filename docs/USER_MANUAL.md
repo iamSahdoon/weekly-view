@@ -230,9 +230,19 @@ A brand-new WeeklyView has no accounts. The **first person** to visit `/signup` 
 and an admin. After that, sign-up closes: everyone else joins **by invite** (§6). If two
 people try to sign up at exactly the same moment, only one succeeds.
 
+The page is titled **Create the owner account** and says that everyone else joins with an
+invite link from you. While sign-up is open, the sign-in page also offers ***No team here yet?
+Create the owner account***.
+
+All the sign-in screens (sign in, create account, invite, reset password) share one layout: the
+form on the left and, on a wide screen, a WeeklyView panel on the right (on a phone, a slim bar
+at the top). ***← Back to home*** at the top returns to the start page.
+
 ## 5. Signing in and out
 
-- Go to `/signin` (or click ***Sign in*** on the landing page), enter your email and password.
+- Go to `/signin` (or click ***Sign in*** on the landing page — in the top bar, or under the hero's
+  buttons: "Already on a team? ***Sign in***"), enter your email and password. The page is titled
+  **Sign in to WeeklyView**.
 - You land on **This week** (§13).
 - To sign out: click **your name** at the bottom of the sidebar → ***Sign out***.
 - Your session lasts several days. If it expires while you're working, see §12.
@@ -352,6 +362,13 @@ Your home page (`/`). From top to bottom:
 | Needs correction | ***Fix and resubmit*** |
 | Submitted / Approved | none |
 | On leave | none; an on-leave line shows instead |
+
+**Your very first visit.** With nothing written yet, one panel replaces the rest: "Your first
+week starts here." and ***Post today's update***. If you joined after the shown week's Friday
+(say, you created the owner account on a Saturday), every day reads *Not on the team*, so the
+panel says when your first week starts instead — e.g. "Your first week starts Mon 19 Oct. You
+joined on Sat 17 Oct…" — and, once that week has begun, offers ***Go to that week***. Daily
+updates are expected from the day you joined, never before.
 
 ## 14. The week strip (Mon–Fri) and day states
 
@@ -836,8 +853,11 @@ shapes), separate from the app's look. It tells the story in order:
    exactly who sees what*** opens the full rules table.
 6. **Try the demo, FAQ, final call to action and footer** (the Mon–Fri squares animate in).
 
-- The main button is ***See the live demo***. When the server says sign-up is still open (no
-  account exists yet), it's ***Create your account*** instead, with the demo beside it.
+- The main button is ***See the live demo*** ("No account needed. Nothing is saved."). When the
+  server says sign-up is still open (no account exists yet), it's ***Create your account***
+  instead, with the demo beside it. When the server says the team already exists, a line under
+  the buttons reads "Already on a team? ***Sign in***". If the server hasn't answered (it may be
+  waking up), only the demo button shows.
 - **Phones and "reduce motion":** nothing pins, types or draws. Captions become a numbered list
   above each picture, and every picture shows its final state.
 - If your browser remembers a sign-in, `/` takes you into the app instead. Use a private window

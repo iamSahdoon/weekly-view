@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { deriveWeekAction, derivePanelAction } from "../weekActions.js";
+import {
+  deriveWeekAction,
+  derivePanelAction,
+  joinedAfterWeek,
+} from "../weekActions.js";
 
 // The top-bar primary action on This week (frontend_architecture.md §9.1): derived from
 // the week, in a fixed priority order.
@@ -108,5 +112,59 @@ describe("derivePanelAction", () => {
       to: "/reports/2026-W41",
     });
     expect(derivePanelAction(weekOf(open, null))).toBeNull();
+  });
+});
+
+// Owner decision (auth pages, 2026-10-17): the first-week message for someone who joined
+// after the shown week's Friday.
+describe("joinedAfterWeek", () => {
+  const week = (dayStates) => ({ weekKey: "2026-W42", dayStates });
+  const SAT = new Date(2026, 9, 17, 9, 30).toISOString();
+
+  it("joined on the Saturday: the date, and the Monday after", () => {
+    const result = joinedAfterWeek(
+      week(states(...Array(5).fill("not_on_team"))),
+      SAT,
+    );
+    expect(result.firstWeek).toBe("2026-W43");
+    expect(result.firstMonday).toEqual(new Date(2026, 9, 19));
+    expect(result.joined).toEqual(new Date(SAT));
+  });
+
+  it("a holiday in that week doesn't change it", () => {
+    const result = joinedAfterWeek(
+      week(
+        states(
+          "holiday",
+          "not_on_team",
+          "not_on_team",
+          "not_on_team",
+          "not_on_team",
+        ),
+      ),
+      SAT,
+    );
+    expect(result?.firstWeek).toBe("2026-W43");
+  });
+
+  it("is null when any day can be posted, or the person joined by Friday", () => {
+    expect(
+      joinedAfterWeek(
+        week(states("not_on_team", "not_on_team", "today", "future", "future")),
+        new Date(2026, 9, 14, 9).toISOString(),
+      ),
+    ).toBeNull();
+    expect(
+      joinedAfterWeek(
+        week(states(...Array(5).fill("not_on_team"))),
+        new Date(2026, 9, 16, 9).toISOString(),
+      ),
+    ).toBeNull();
+    expect(
+      joinedAfterWeek(week(states(...Array(5).fill("holiday"))), SAT),
+    ).toBeNull();
+    expect(
+      joinedAfterWeek(week(states(...Array(5).fill("not_on_team"))), null),
+    ).toBeNull();
   });
 });

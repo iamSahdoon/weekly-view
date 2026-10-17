@@ -1,7 +1,10 @@
 import { CtaPill } from "./CtaPill.jsx";
 import { Words } from "./Words.jsx";
 
-export function HeroSection({ signupOpen }) {
+// The hero's actions follow the bootstrap check (brand §6.0 rules 7 and 13): open → "Create
+// your account" first; closed → the demo first and, under it, "Already on a team? Sign in";
+// pending or failed → the demo only, with no sign-up or sign-in line.
+export function HeroSection({ signupOpen, signupClosed = false }) {
   return (
     <section className="hero s-sp" id="top" aria-labelledby="h1">
       <div className="wrap hgrid">
@@ -35,11 +38,16 @@ export function HeroSection({ signupOpen }) {
               <>
                 <CtaPill href="/demo">See the live demo</CtaPill>
                 <span className="micro">
-                  No sign-up. Everything works, nothing is saved.
+                  No account needed. Nothing is saved.
                 </span>
               </>
             )}
           </div>
+          {signupClosed && (
+            <p className="hsign">
+              Already on a team? <a href="/signin">Sign in</a>
+            </p>
+          )}
         </div>
         <div className="hvis">
           <div

@@ -71,13 +71,15 @@ export default function LandingPage() {
   // closed door (frontend_architecture.md §9.16, FA14).
   const bootstrap = useBootstrapStatus();
   const signupOpen = bootstrap.data?.available === true;
+  // Known closed (not pending, not failed): the hero adds "Already on a team? Sign in".
+  const signupClosed = bootstrap.data?.available === false;
   const rootRef = useRef(null);
   useLandingChrome();
   useLandingMotion(rootRef);
 
   return (
     <MarketingLayout rootRef={rootRef} signupOpen={signupOpen}>
-      <HeroSection signupOpen={signupOpen} />
+      <HeroSection signupOpen={signupOpen} signupClosed={signupClosed} />
       <ProblemSection />
       <WeekSection />
       <DeskSection />

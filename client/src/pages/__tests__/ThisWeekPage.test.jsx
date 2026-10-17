@@ -183,3 +183,62 @@ describe("This week — design §3.1", () => {
     expect(html).not.toContain("Recent weeks");
   });
 });
+
+// Owner decision (auth pages, 2026-10-17): someone who joins after the shown week's Friday
+// (the owner signing up on a Saturday) has no day to post in it. The panel says when their
+// first week starts instead of inviting them to post today.
+describe("This week — joined after the week's Friday", () => {
+  const SAT = new Date(2026, 9, 17, 12, 0); // Saturday 17 Oct, week 42
+  const W42 = "2026-W42";
+  const words = (html) => html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
+
+  function joinedLaterPage(now, path) {
+    vi.setSystemTime(now);
+    const user = userOf("admin"); // no reports
+    const before = user.joinedAt;
+    user.joinedAt = new Date(2026, 9, 17, 9, 30).toISOString();
+    try {
+      const client = newClient();
+      const view = weekViewOf(store, user, user, W42, undefined);
+      client.setQueryData(qk.week(user._id, W42), view);
+      client.setQueryData(
+        qk.reports({ limit: 20, sort: "weekKey", dir: "desc" }),
+        {
+          items: [],
+          meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+        },
+      );
+      client.setQueryData(qk.holidays(2026), { items: [] });
+      client.setQueryData(qk.projects({ mine: true }), { items: [] });
+      client.setQueryData(qk.onLeave(), { items: [] });
+      return {
+        view,
+        html: wrap(client, user, <ThisWeekPage />, path),
+      };
+    } finally {
+      user.joinedAt = before;
+      vi.setSystemTime(new Date(2026, 9, 7, 10, 0));
+    }
+  }
+
+  it("on the Saturday they joined: when the first week starts, and no invitation to post", () => {
+    const { view, html } = joinedLaterPage(SAT, "/");
+    expect(Object.values(view.dayStates)).toEqual(Array(5).fill("not_on_team"));
+    expect(words(html)).toContain("Your first week starts Mon 19 Oct.");
+    expect(words(html)).toContain("You joined on Sat 17 Oct, after");
+    expect(html).not.toContain("Your first week starts here.");
+    expect(html).not.toContain("Post what you did today");
+    expect(html).not.toContain("Post today’s update");
+    // Next week hasn't begun, so there is nothing to link to yet.
+    expect(html).not.toContain("Go to that week");
+  });
+
+  it("looking back at that week once the next has begun: a link to it", () => {
+    const { html } = joinedLaterPage(
+      new Date(2026, 9, 20, 10, 0), // Tuesday of week 43
+      `/?week=${W42}`,
+    );
+    expect(words(html)).toContain("Your first week starts Mon 19 Oct.");
+    expect(html).toMatch(/<a [^>]*href="\/"[^>]*>Go to that week<\/a>/);
+  });
+});

@@ -1848,6 +1848,85 @@ Not a stage; a small change the owner asked for.
 - Earlier entries in this file that say `npm run seed` were renamed to `npm run db:sample`
   in place; what they record was run under the old name.
 
+### Owner decision: redesigned sign-in pages, landing sign-in link, first-week message (2026-10-17)
+Not a stage; **C11 is still next.** Branch `claude/auth-pages` from `main`. Recorded as owner decisions in
+`product_design_system.md` §3.1 (empty state), §3.12, §8.5 (entry 32) and §9.4 (`--text-title`),
+`brand_design_strategy.md` §6.0 rule 13, `frontend_architecture.md` §9.15–§9.16, `project_structure.md` and
+`docs/USER_MANUAL.md` §4, §5, §13 and §48. No server code, rule, route, API call shape or error message changed.
+1. **First-week message.** Someone who joined after the shown week's Friday (the owner signing up on a Saturday)
+   had five "Not on the team" days under "Your first week starts here. Post what you did today." Now, when every
+   day of the week is `not_on_team` (or a holiday) and the join date is after that Friday, the panel says "Your
+   first week starts Mon 19 Oct." / "You joined on Sat 17 Oct, after this week's working days. Your daily updates
+   start that Monday, and your weekly report builds itself from them." and offers `Go to that week` once that
+   week has begun (before then the week picker can't open it, so no link is shown). The usual case is unchanged.
+   The rule lives in `lib/weekActions.js` (`joinedAfterWeek`), read from the server's `dayStates`. No demo
+   handler was needed: no new request, and `demoCoverage.test.js` is green.
+2. **Landing hero.** Sign-up open → `Create your account` first (unchanged). Sign-up known closed → under the demo
+   pill, "Already on a team? **Sign in**" (underlined link to `/signin`, `.landing .hsign`, landing tokens and
+   font only). The demo caption is now "No account needed. Nothing is saved." in every non-open state (so the
+   pending → closed swap only adds the line). Pending or failed → the demo pill only, as before (FA14).
+3. **A way back.** "← Back to home" (to `/`) at the top of every auth screen: on the form side from 1024px, in the
+   slim header below. The auth routes are real-only, so it never appears inside `/demo`; the demo's chooser keeps
+   its own frame. "Forgot your password?" is a panel on sign in, not a page, and stays so.
+4. **Split auth layout** (sign in, create account open and closed, accept invite, reset password, and the
+   expired-link state). From 1024px: form side on `--paper` (back link, 40px Chivo heading, form, links) and a
+   sticky `--card` brand panel (wordmark; a Mon–Fri strip of 22px Updates squares that fill in once — 200ms each,
+   120ms apart, drawn filled under reduced motion; "One short update a day." and one plain line). Below 1024px a
+   52px header (wordmark, back link) and the form first. Headings: "Sign in to WeeklyView" (tab: "Sign in"),
+   "Create the owner account" + "…Everyone else joins with an invite link from you."; the others unchanged. Sign
+   in shows "No team here yet? Create the owner account" only when A1 says `available: true` — **this adds the
+   cached A1 request to `/signin`**; pending or failed, nothing is offered. The layout's `<main>` now carries
+   `id="main"`, so the skip link works on these screens (it pointed nowhere before).
+   Restraint and motion followed Emil Kowalski's `apple-design` skill: one quiet entrance, opacity and a small
+   scale only, no overshoot, nothing looping, the final state at once under reduced motion.
+- **Files.** New: `components/auth/AuthBrandPanel.jsx`, `components/auth/__tests__/AuthScreens.test.jsx`. Changed:
+  `layouts/AuthLayout.jsx`, `components/auth/AuthScreen.jsx` (larger heading, `title` prop), `SignInPage`,
+  `SignUpPage`, `ThisWeekPage`, `lib/weekActions.js`, `HeroSection`, `LandingPage`, `landing.css`, `index.css`
+  (`--text-title`), `lib/cn.js`. No new dependency.
+- **Checks.** `npm run lint` clean. `npm test`: server 389, client 597 (17 new: 8 auth screens, 4 hero, 3
+  `joinedAfterWeek`, 2 This week). `vite build` OK. The new This week test fails against the old code (it showed
+  "Your first week starts here.").
+- **Looked at in headless Chromium** (real fonts, local API on an in-memory MongoDB — no Atlas or `MONGODB_URI`
+  database was touched; the container's clock was Saturday 17 Oct 2026): `/signin`, `/signup`, a real
+  `/invite/…` link and an expired `/reset/…` link at 1440, 1024 and 360, light and dark, with sign-up open and
+  closed; the landing hero at 1440, 1024 and 360 open and closed; This week for an owner created that Saturday at
+  1440 and 360, light and dark; the brand panel mid-animation (Mon–Tue, then Mon–Thu filled) and under reduced
+  motion (all filled at once). No sideways scroll anywhere. Driven in the browser: the hero's "Sign in" → `/signin`;
+  "Back to home" → `/`; wrong password → "That email and password don't match."; right password → This week with
+  the new message.
+- **Not verified:** the `Go to that week` link in a browser (it needs a later date; covered by a static-render test
+  on a frozen Tuesday); Firefox and Safari; Windows font rendering; widths other than those listed; screen readers.
+
+**Owner: how to check by hand** (Windows; a local database only)
+1. In a terminal at the repo root: `git fetch origin` then `git checkout claude/auth-pages`.
+2. Run `npm --prefix server install` and `npm --prefix client install` (once for this branch).
+3. Make sure `server/.env` points at a database you are happy to wipe. Run `npm run db:empty`.
+4. Start the API: `npm --prefix server run dev`. In a second terminal start the app: `npm --prefix client run dev`.
+5. In a private Chrome window open http://localhost:5173/. The hero's main button is **Create your account**, with
+   the demo beside it; there is no "Already on a team?" line.
+6. Click **Create your account**. Wide window (1440px or more): the form on the left under "← Back to home", a
+   large "Create the owner account" heading and the line ending "Everyone else joins with an invite link from
+   you."; on the right the WeeklyView panel, whose five squares fill in Mon → Fri once.
+7. Click **← Back to home**: you are on the landing page. Go to http://localhost:5173/signin: under the form,
+   "Forgot your password?" and "No team here yet? Create the owner account".
+8. Press F12 → device toolbar (Ctrl+Shift+M) → Responsive → type **1024**, then **360**, reloading each time: at
+   1024 the two halves remain; at 360 a slim bar (WeeklyView left, "← Back to home" right) sits above the form,
+   nothing scrolls sideways.
+9. Create the owner account. **If today is a Saturday or Sunday**, This week shows five "Not on the team" days
+    and "Your first week starts Mon … You joined on Sat …". On a weekday it shows the usual "Your first week
+    starts here." with **Post today's update**.
+10. Dark mode (the app keeps its own setting, not Windows'): click your name at the bottom of the sidebar →
+    **Appearance** → Dark. Then sign out (same menu → **Sign out**): the sign-in screen is dark on both halves,
+    the squares cobalt. Switch back to Light the same way after signing in again if you prefer.
+11. Still signed out, open http://localhost:5173/ (a new private window works too): under **See the live demo** (and "No account needed. Nothing is saved.") the line "Already on a
+    team? **Sign in**" is underlined; click it and you reach the sign-in screen. `/signin` no longer offers
+    "Create the owner account"; `/signup` says "This team is invite-only."
+12. Stop the API (Ctrl+C), run `npm run db:sample`, start it again. Sign in at `/signin` as a sample person (the
+    README lists them; password `weekly-view-dev`) and check This week looks as before.
+13. Reduced motion: Windows Settings → Accessibility → Visual effects → **Animation effects off**; reload
+    `/signin` at full width: the five squares are already filled. Turn animation effects back on.
+14. Open http://localhost:5173/demo and pick a role: the demo's chooser and the app have no "Back to home".
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -2482,6 +2561,11 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- **Auth pages, to confirm or change** (see *Owner decision: redesigned sign-in pages…*): (1) the brand panel's
+  fill-in is the one page-load entrance in the product (design §8.5 entry 32, an exception to §8.4 recorded as
+  your request); (2) `/signin` now asks the bootstrap check (A1) so it can offer "Create the owner account" while
+  sign-up is open; (3) "Forgot your password?" stays a panel on sign in rather than its own page; (4) `Go to that
+  week` appears only once the first week has begun. Each is small and reversible.
 - **Landing polish, to confirm or change:** the stories' panels are pinned with CSS `position: sticky` (ScrollTrigger
   does the scrub and snap) instead of ScrollTrigger's own `pin`, because the GSAP pin scored a layout shift of 7.78
   in Chrome against 0.0008 for sticky (see *Landing polish*). Say if you want the GSAP pin anyway; it is a small,

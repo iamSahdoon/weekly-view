@@ -1256,7 +1256,7 @@ Under `AuthLayout`, no shell.
 
 | Screen | Data |
 | --- | --- |
-| `/signin` | `useLogin` → `signIn`, then `navigate(location.state?.from ?? "/")`. "Forgot your password?" opens a static panel |
+| `/signin` | `useLogin` → `signIn`, then `navigate(location.state?.from ?? "/")`. "Forgot your password?" opens a static panel. `useBootstrapStatus()` (cached A1): only when `available: true` does "No team here yet? Create the owner account" link to `/signup` *(owner decision, auth pages 2026-10-17)* |
 | `/signup` | `useBootstrapStatus()`: `available` → the form (`useSignUp`); otherwise the closed state with `Open the demo` — a plain `<a href="/demo">` |
 | `/invite/:token` | `useLinkPreview(token)` on mount → role and email read-only, name + password form → `useAcceptLink`; `LINK_INVALID` → the single expired-link block |
 | `/reset/:token` | the same, without the name field |
@@ -1274,7 +1274,9 @@ query cache first.
 **While it is pending, and if it errors, the page shows the demo as primary and renders no
 signup link** — the common deployed case — and swaps to "Create your account" only if
 `available: true` arrives. A visitor never waits on a sleeping API to see a button, and
-never sees a button that leads to a closed door. *(Call, FA14.)* "See the live demo" is
+never sees a button that leads to a closed door. *(Call, FA14.)* Only when `available: false`
+arrives does the hero add "Already on a team? Sign in" (`brand_design_strategy.md` §6.0 rule 13;
+owner decision, auth pages 2026-10-17). "See the live demo" is
 `<a href="/demo">`. All marketing content is static.
 
 **The landing page is a different look from the app** (`brand_design_strategy.md` §6.0), and

@@ -15,13 +15,17 @@ import { errorCopy } from "../lib/errorCopy.js";
 import { reportServerError } from "../lib/formErrors.js";
 import { signUpSchema } from "../schemas/authSchema.js";
 
-// /signup: first-run bootstrap; the closed state is the usual one (design §3.12).
+// /signup: first-run bootstrap; the closed state is the usual one (design §3.12). The open
+// state says plainly that this is the team's owner account and that everyone else joins
+// by invite (owner decision, auth pages 2026-10-17).
+
+const OPEN_HEADING = "Create the owner account";
 export default function SignUpPage() {
   const bootstrap = useBootstrapStatus();
 
   if (bootstrap.isPending) {
     return (
-      <AuthScreen heading="Create your account">
+      <AuthScreen heading={OPEN_HEADING}>
         <AuthPanel>
           <div className="flex flex-col gap-20">
             <Skeleton className="h-[67px]" />
@@ -35,7 +39,7 @@ export default function SignUpPage() {
   }
   if (bootstrap.isError) {
     return (
-      <AuthScreen heading="Create your account">
+      <AuthScreen heading={OPEN_HEADING}>
         <InlineError
           title={errorCopy(bootstrap.error)}
           onRetry={() => bootstrap.refetch()}
@@ -90,8 +94,8 @@ function SignUpForm() {
 
   return (
     <AuthScreen
-      heading="Create your account"
-      line="You're the first person here, so this account will be the admin and the owner."
+      heading={OPEN_HEADING}
+      line="You're the first person here, so this account will be the admin and the owner. Everyone else joins with an invite link from you."
       footer={
         <AuthLink to="/signin">Already have an account? Sign in</AuthLink>
       }
