@@ -8,6 +8,7 @@ import AuthLayout from "../../../layouts/AuthLayout.jsx";
 import { qk } from "../../../lib/queryKeys.js";
 import SignInPage from "../../../pages/SignInPage.jsx";
 import SignUpPage from "../../../pages/SignUpPage.jsx";
+import { ResponseLost } from "../ResponseLost.jsx";
 
 // The auth screens as one set (owner decision, auth pages 2026-10-17; design §3.12): the
 // split frame, the way back to the start page, the brand panel's week of squares, and the
@@ -64,11 +65,20 @@ describe("the frame", () => {
     );
   });
 
-  it("draws the brand panel's week as five Updates squares, hidden from screen readers", () => {
+  it("draws the brand panel's sample week in the product's real Updates states, hidden from screen readers", () => {
     const panel = html.slice(html.indexOf('aria-label="About WeeklyView"'));
-    expect(panel.match(/data-state="posted"/g)).toHaveLength(5);
-    expect(panel).toMatch(/<div aria-hidden="true" class="grid grid-cols-5/);
+    const states = [...panel.matchAll(/data-state="([a-z_]+)"/g)]
+      .map((m) => m[1])
+      .filter((s) => s !== "future"); // the outline each square fills from
+    expect(states).toEqual(["posted", "posted", "posted", "today", "holiday"]);
+    expect(panel).toContain("SAMPLE DATA");
+    expect(panel).toMatch(/<div aria-hidden="true" class="mt-32">/);
     expect(text(panel)).toContain("One short update a day.");
+  });
+
+  it("puts the form on the left and the panel on the right, 55 / 45", () => {
+    expect(html).toContain("lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]");
+    expect(html.indexOf("<main")).toBeLessThan(html.indexOf("<aside"));
   });
 });
 
@@ -107,11 +117,43 @@ describe("create account", () => {
   });
 });
 
+// Owner report (2026-10-17): a sign-up whose answer was lost. The choice of screen is
+// lib/authRecovery (tested there); this is what the screen says and where it leads.
+describe("an answer that never arrived", () => {
+  const block = (props) =>
+    renderToStaticMarkup(
+      <MemoryRouter>
+        <ResponseLost email="owner@example.com" {...props} />
+      </MemoryRouter>,
+    );
+
+  it("says the account may exist, and offers Sign in", () => {
+    const html = block();
+    expect(text(html)).toContain(
+      "Your account may already have been created. Sign in with the email you just used.",
+    );
+    expect(html).toMatch(/<a [^>]*href="\/signin"[^>]*>Sign in<\/a>/);
+    expect(text(html)).not.toContain("invite-only");
+  });
+
+  it("a reset link says the password may be saved", () => {
+    expect(
+      text(
+        block({
+          title: "Your new password may already have been saved.",
+          line: "Sign in with your new password.",
+        }),
+      ),
+    ).toContain("Your new password may already have been saved.");
+  });
+});
+
 describe("the auth screens stay in the app's look", () => {
   const files = [
     "../../../layouts/AuthLayout.jsx",
     "../AuthBrandPanel.jsx",
     "../AuthScreen.jsx",
+    "../ResponseLost.jsx",
   ].map((f) => readFileSync(new URL(f, import.meta.url), "utf8"));
 
   it("uses no hex value, no landing token, no landing font and no rounded corner", () => {

@@ -92,10 +92,12 @@ describe("the hero's sign-in line", () => {
     expect(hrefs(html)).toEqual(["/demo", "#week", "#desk"]);
   });
 
-  it("open: Create your account first, and no sign-in line", () => {
+  it("open: Create your account first, the demo beside it, and nothing else under them", () => {
     const html = hero({ signupOpen: true, signupClosed: false });
     expect(html).not.toContain("hsign");
-    expect(hrefs(html)[0]).toBe("/signup");
+    expect(html).not.toContain('class="micro"');
+    expect(text(html)).not.toContain("Set up your first week in minutes");
+    expect(hrefs(html).slice(0, 2)).toEqual(["/signup", "/demo"]);
   });
 
   it("says the demo needs no account, in fewer words", () => {

@@ -53,7 +53,12 @@ export default function SignInPage() {
       }
     >
       <AuthPanel>
-        <SignInForm login={login} onSignedIn={onSignedIn} />
+        <SignInForm
+          login={login}
+          onSignedIn={onSignedIn}
+          // From a sign-up or invite whose answer was lost (ResponseLost).
+          defaultEmail={location.state?.email ?? ""}
+        />
       </AuthPanel>
     </AuthScreen>
   );

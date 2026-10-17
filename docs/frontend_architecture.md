@@ -1258,8 +1258,15 @@ Under `AuthLayout`, no shell.
 | --- | --- |
 | `/signin` | `useLogin` → `signIn`, then `navigate(location.state?.from ?? "/")`. "Forgot your password?" opens a static panel. `useBootstrapStatus()` (cached A1): only when `available: true` does "No team here yet? Create the owner account" link to `/signup`; pending or failed, nothing is offered. It is the same bootstrap check the landing page uses (§9.16), asked here only for that link *(owner decision, auth pages 2026-10-17; accepted in the PR #27 review)* |
 | `/signup` | `useBootstrapStatus()`: `available` → the form (`useSignUp`); otherwise the closed state with `Open the demo` — a plain `<a href="/demo">` |
-| `/invite/:token` | `useLinkPreview(token)` on mount → role and email read-only, name + password form → `useAcceptLink`; `LINK_INVALID` → the single expired-link block |
-| `/reset/:token` | the same, without the name field |
+| `/invite/:token` | `useLinkPreview(token)` on mount → role and email read-only, name + password form → `useAcceptLink`; `LINK_INVALID` → the single expired-link block — unless an earlier try in this visit got no response (`error.isNetwork`), then the "may already have been created" block (`ResponseLost`; `lib/authRecovery.js`) *(owner report, 2026-10-17)* |
+| `/reset/:token` | the same, without the name field ("Your new password may already have been saved.") |
+
+**A lost answer (owner report, 2026-10-17).** `/signup`: when `useSignUp` fails with no
+response, the page keeps the email, re-fetches A1, and if sign-up is now closed — by that
+re-check, or by `SIGNUP_CLOSED` on the next press — shows `ResponseLost` instead of the
+invite-only state; a failed re-check keeps the form. `ResponseLost`'s `Sign in` passes the
+email in router state; `/signin` uses it as the email field's default. The choice of screen
+is `lib/authRecovery.js`, pure and tested.
 
 **Link tokens (rule 7).** The token is read from `useParams`, sent in a body (A7, then A8),
 and kept in component state — not in a query key's returned data, a form default, or any

@@ -235,8 +235,15 @@ invite link from you. While sign-up is open, the sign-in page also offers ***No 
 Create the owner account***.
 
 All the sign-in screens (sign in, create account, invite, reset password) share one layout: the
-form on the left and, on a wide screen, a WeeklyView panel on the right (on a phone, a slim bar
-at the top). ***← Back to home*** at the top returns to the start page.
+form on the left and, on a wide screen, a WeeklyView panel on the right with a small sample week
+(on a phone, a slim bar at the top). ***← Back to home*** above the heading returns to the start
+page.
+
+**"Couldn't reach the server" when creating an account.** If the connection drops after the
+server saved your account but before its answer reached you, the page says "Your account may
+already have been created. Sign in with the email you just used." Click ***Sign in*** — your
+email is filled in. The same happens on an invite link; on a reset link it says your new
+password may already have been saved.
 
 ## 5. Signing in and out
 
@@ -855,7 +862,7 @@ shapes), separate from the app's look. It tells the story in order:
 
 - The main button is ***See the live demo*** ("No account needed. Nothing is saved."). When the
   server says sign-up is still open (no account exists yet), it's ***Create your account***
-  instead, with the demo beside it. When the server says the team already exists, a line under
+  instead, with ***See the live demo*** beside it and no line under them. When the server says the team already exists, a line under
   the buttons reads "Already on a team? ***Sign in***". If the server hasn't answered (it may be
   waking up), only the demo button shows.
 - **Phones and "reduce motion":** nothing pins, types or draws. Captions become a numbered list

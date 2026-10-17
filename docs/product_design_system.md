@@ -1018,6 +1018,35 @@ Product screens outside the shell: no sidebar, no top bar.
 > - The demo's chooser keeps the earlier centred column; the auth routes are not in the demo,
 >   so "Back to home" never appears inside `/demo`.
 
+> **Owner decisions (auth pages, round two after testing, 2026-10-17)** — these replace the
+> composition above where they differ; the headings, copy and links above stand.
+>
+> - **The form is always on the left**, on every auth screen (sign in, create account open
+>   and closed, accept invite, reset password, the expired-link and response-lost states).
+> - **Split 55 / 45** (`11fr / 9fr`) from 1024px; checked at 1440, 1280 and 1024.
+> - **Form side:** one 420px column, centred in its half both ways, with "← Back to home",
+>   the heading, the panel and the links on one left edge (Back to home 24px above the
+>   heading). No fixed top offset: the column is centred, so there is no dead band above it.
+> - **Brand panel:** `--tint` with a faint `--hair` grid (32px); one block, max 400px, centred
+>   both ways — the wordmark (22px), then a small **sample week** in the app's own style, then
+>   "One short update a day." and its line. The sample week is a `--card` panel: a "This week"
+>   header with the dashed `SAMPLE DATA` marker, the week strip with the real Updates states
+>   (Mon–Wed posted, Thu today with its `--acc` underline, Fri a holiday on `--tint`; Wed
+>   chosen, with the 2px `--ink` bar), and the posted Wednesday as a day card — "Posted
+>   17:42", 7 h, two work lines with their type marks (`--c1` Development, `--c2` Testing) and
+>   hours in mono. It is `aria-hidden`; the sentence under it says the same. Its squares are
+>   the §8.5 entry 32 motion.
+> - **Below 1024px:** unchanged — the slim header, the form first from the top.
+> - **When an answer never arrives** (owner report, 2026-10-17): if Create account, Join the
+>   team or Save password fails with no response, and the server then shows it already
+>   happened (sign-up closed; the link used up), the screen does not say "This team is
+>   invite-only." or "This link has expired". It shows a `--tint` block, drawn like the
+>   expired-link one: "Your account may already have been created." / "Sign in with the email
+>   you just used." (reset: "Your new password may already have been saved." / "Sign in with
+>   your new password.") and a primary `Sign in`, which opens `/signin` with that email filled
+>   in. Sign-up re-checks by itself right after the failure; the link screens show it when
+>   the next try finds the link used.
+
 **Shared layout** *(before the owner decision above)*. Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
 polish 2026-10-10: the column starts `18vh` down, never less than `52px` (`32px` below
 480px), so it sits in the upper middle of the screen rather than hugging the top; a fixed
@@ -2158,7 +2187,7 @@ the product is excused from the list above.
 | 29  | Autosave state change               | the words fade in; the 6px square fills | 120 / 160ms | `--ease-out` / linear | CSS                  | save              |
 | 30  | Light ↔ dark switch                 | background, border and text colours cross-fade | 200ms | `ease`     | CSS (`.wv-theme-easing`, 260ms)  | Appearance switch |
 | 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
-| 32  | Auth screens' brand panel: the week fills in *(owner decision, auth pages 2026-10-17)* | five squares, opacity 0→1 and `scale(.8→1)`, one after another | 200ms each, 120ms apart, from 300ms | `--ease-out` | **Motion** | the screen opens (once) |
+| 32  | Auth screens' brand panel: the week fills in *(owner decision, auth pages 2026-10-17)* | the sample week's five Updates squares (posted ×3, today, holiday), each from a hollow outline: opacity 0→1 and `scale(.6→1)`, one after another | 200ms each, 120ms apart, from 300ms | `--ease-out` | **Motion** | the screen opens (once) |
 
 - **Entry 32 is the one exception to §8.4's "no page-load entrance"** — an owner decision,
   accepted in the PR #27 review (2026-10-17): it is on the signed-out auth screens only, decorative, plays once and never loops. Under

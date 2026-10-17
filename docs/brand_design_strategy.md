@@ -518,6 +518,9 @@ sees the real thing.
     demo caption beside the pill is shortened from "No sign-up. Everything works, nothing is saved." to "No
     account needed. Nothing is saved." While the check is pending or has failed, the hero is as before: the demo
     pill only, no sign-up link and no sign-in line (FA14). Landing tokens only; nothing reaches the app.
+    *Round two (owner, after testing, 2026-10-17):* with sign-up open, the hero is its two buttons alone — the
+    line "Set up your first week in minutes. No sign-up to explore the demo." is removed. "No account needed.
+    Nothing is saved." stays beside the demo pill in the other states, where it reads as the demo's caption.
 
 ### 6.1 Job of the page
 

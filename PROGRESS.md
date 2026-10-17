@@ -1935,6 +1935,84 @@ Not a stage; **C11 is still next.** Branch `claude/auth-pages` from `main`. Reco
     `/signin` at full width: the five squares are already filled. Turn animation effects back on.
 14. Open http://localhost:5173/demo and pick a role: the demo's chooser and the app have no "Back to home".
 
+### Auth pages, round two: balanced layout, hero copy, sign-up recovery (owner feedback on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. Recorded in `product_design_system.md` §3.12 (round-two block) and §8.5 entry 32,
+`brand_design_strategy.md` §6.0 rule 13, `frontend_architecture.md` §9.15, `tech_stack.md` (dev reload),
+`project_structure.md` and `docs/USER_MANUAL.md` §4 and §48.
+1. **Hero copy.** Sign-up open: the two buttons only — "Set up your first week in minutes. No sign-up to explore the
+   demo." is gone. Closed (and pending/failed): "No account needed. Nothing is saved." stays beside the demo pill;
+   it reads as that pill's caption, and the "Already on a team? Sign in" line sits under it when closed.
+2. **Form on the left everywhere.** Every auth route already shared one frame with the form on the left; it is now
+   asserted by a test (form before panel, 55 / 45). The new response-lost state uses the same frame.
+3. **Layout.** 55 / 45 split from 1024px. The form column (420px) is centred in its half both ways, with Back to
+   home, heading, panel and links on one left edge — the fixed top offset and its dead band are gone. The brand
+   panel is `--tint` with a faint `--hair` grid and one centred block: wordmark, a sample week in the app's style
+   (a "This week" card with `SAMPLE DATA`, the strip in real Updates states — posted ×3, today, holiday — and the
+   posted Wednesday as a day card with two typed work lines and hours), then the line. The squares still come in
+   once (entry 32), each from a hollow outline. Phone layout unchanged.
+4. **Sign-up "Couldn't reach the server", then "invite-only".**
+   - **Root cause.** It isn't in our sign-up code. The API only listens after MongoDB connects (`server.js` awaits
+     `connectDb()`), and the client sets no request timeout. What produces exactly this — the account saved, the
+     answer lost, the server fine a moment later — is the API process being **restarted mid-request**. Reproduced here
+     with `npm run dev` (`node --watch`) on an in-memory database: touching any loaded file during a sign-up gave
+     "Connection reset by peer" / "Empty reply from server", and the next request was served by the new process.
+     `node --watch` watched every loaded file, **including everything under `node_modules`**, and on Windows Node
+     ends the old process outright. Locally the write is too quick to fall between the insert and the reply. On
+     Atlas, the insert and the read that builds the reply are each a network round trip (~100–300 ms), so a restart in
+     that window saves the account and loses the answer. That is the owner's sequence: "Couldn't reach the server",
+     then `SIGNUP_CLOSED` → "invite-only", then sign-in works. What touched a file on the owner's machine can't be
+     known from here: an `npm install` or editor still writing, or an antivirus scan, are the usual ones. It didn't
+     recur after a clean restart. The first Atlas connection and index sync aren't the cause: listening waits for
+     the connection, and index builds don't block requests.
+   - **Fix in our code.** `npm run dev` is now `node --watch-path=src src/server.js`. Changes under `node_modules` no
+     longer restart the API (checked: touching `node_modules/express/index.js` → no restart; `src/app.js` → restart).
+     And `server.js` now closes gracefully on SIGTERM/SIGINT: it stops taking connections and lets requests in flight
+     finish (10 s at most). Checked with the same timing test: an in-flight sign-up now completes (201) through a
+     restart, and a request arriving during the gap is refused before anything is written. This also covers Render
+     deploys. On Windows a `--watch` restart still ends the process abruptly, which is why the recovery below
+     matters there.
+   - **Recovery.** If Create account fails with no response, `/signup` keeps the email and re-checks A1. If sign-up
+     is now closed — by that re-check, or by `SIGNUP_CLOSED` on a second press — it shows "Your account may
+     already have been created. / Sign in with the email you just used." with `Sign in`, which opens `/signin`
+     with the email filled in. Accept invite: a lost answer followed by `LINK_INVALID` shows the same block instead
+     of "expired". Reset password says "Your new password may already have been saved." The choice of screen is
+     `lib/authRecovery.js`, a pure function with tests; there is no DOM test environment and no new dependency.
+- **Files.** New: `components/auth/ResponseLost.jsx`, `lib/authRecovery.js`, `lib/__tests__/authRecovery.test.js`.
+  Changed: `AuthLayout`, `AuthBrandPanel`, `SignUpPage`, `SignInPage` (email default from router state),
+  `AcceptInvitePage`, `ResetPasswordPage`, `HeroSection`, `server/src/server.js`, `server/package.json` (`dev`), the tests.
+- **Checks.** `npm run lint` clean; `npm test`: server 389, client 610. **Looked at in headless Chromium**
+  (in-memory MongoDB only, never Atlas): `/signin`, `/signup` open and closed, a real invite link and an expired
+  reset link at **1440, 1280, 1024 and 360**, light and dark; the landing hero open and closed at the same widths.
+  **The owner's failure, reproduced in the browser:** the sign-up request was let through to the API (the account
+  was created) and its response dropped → "Your account may already have been created." → Sign in → the email
+  was filled in → signed in to This week. The same on an invite link at 360px: first press "Couldn't reach the
+  server.", second press → the same block.
+- **Not verified:** a real Windows `node --watch` restart (it can't be run here); Atlas latency (simulated by
+  dropping the response in the browser); Firefox and Safari; screen readers.
+
+**Owner: how to check round two by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, then `git pull`.
+2. `npm --prefix server install` and `npm --prefix client install`.
+3. `npm run db:empty`. Start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+4. Open http://localhost:5173/ in a private Chrome window: **Create your account** and **See the live demo** side by
+   side, and nothing written under them.
+5. Click **Create your account** at full width (1440px or more): the form is in the middle of the left part, with
+   "← Back to home", the heading, the box and the link lined up on one left edge. On the right, on a faint grid:
+   WeeklyView, a small "This week" card marked SAMPLE DATA (Mon–Wed blue, Thu outlined, Fri dotted grey) with
+   Wednesday's two lines, then "One short update a day." The squares come in once, Monday to Friday.
+6. F12 → Ctrl+Shift+M → Responsive: try **1280**, **1024** and **360** (reload each time). The left part stays a
+   little wider than the right down to 1024; at 360 the slim bar is on top and the form follows.
+7. **The lost answer, by hand:** in DevTools open the **Network** tab. Fill in the sign-up form, then, the moment
+   you click **Create account**, choose **Offline** in the throttling menu (next to "Disable cache"). If the click
+   was quick enough the account is still created on the server. Switch back to **No throttling**. If the page
+   shows "Your account may already have been created." click **Sign in**: your email is already filled in. (If it
+   shows "Couldn't reach the server." with the form still there, nothing was saved — press Create account again.)
+8. Sign in (or create the account normally). Sign out from the menu under your name.
+9. Open http://localhost:5173/ again: under **See the live demo** ("No account needed. Nothing is saved.") is
+   "Already on a team? **Sign in**". `/signup` says "This team is invite-only." with the same split layout.
+10. Dark mode: your name → **Appearance** → Dark, then sign out: both halves dark, the grid faint.
+11. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds

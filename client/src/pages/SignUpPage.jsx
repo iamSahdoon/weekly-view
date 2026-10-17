@@ -1,9 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { AuthLink } from "../components/auth/AuthLink.jsx";
 import { AuthPanel, AuthScreen } from "../components/auth/AuthScreen.jsx";
 import { FormStrip } from "../components/auth/FormStrip.jsx";
+import { ResponseLost } from "../components/auth/ResponseLost.jsx";
 import { Button } from "../components/ui/Button.jsx";
 import { Field } from "../components/ui/Field.jsx";
 import { InlineError } from "../components/ui/InlineError.jsx";
@@ -11,6 +13,7 @@ import { Input } from "../components/ui/Input.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { useBootstrapStatus, useSignUp } from "../hooks/useAuthQueries.js";
+import { signUpScreen } from "../lib/authRecovery.js";
 import { errorCopy } from "../lib/errorCopy.js";
 import { reportServerError } from "../lib/formErrors.js";
 import { signUpSchema } from "../schemas/authSchema.js";
@@ -22,8 +25,22 @@ import { signUpSchema } from "../schemas/authSchema.js";
 const OPEN_HEADING = "Create the owner account";
 export default function SignUpPage() {
   const bootstrap = useBootstrapStatus();
+  // The email of a sign-up whose response never arrived (a restart mid-request, a dropped
+  // connection). If the check then says sign-up is closed, that sign-up most likely
+  // created the account: say so, instead of "invite-only" (owner report, 2026-10-17).
+  const [lostEmail, setLostEmail] = useState(null);
 
-  if (bootstrap.isPending) {
+  const screen = signUpScreen(bootstrap, lostEmail);
+
+  if (screen === "lost") {
+    return (
+      <AuthScreen heading={OPEN_HEADING}>
+        <ResponseLost email={lostEmail} />
+      </AuthScreen>
+    );
+  }
+
+  if (screen === "pending") {
     return (
       <AuthScreen heading={OPEN_HEADING}>
         <AuthPanel>
@@ -37,7 +54,8 @@ export default function SignUpPage() {
       </AuthScreen>
     );
   }
-  if (bootstrap.isError) {
+  // A failed re-check keeps the form (and what was typed) when the first check had answered.
+  if (screen === "error") {
     return (
       <AuthScreen heading={OPEN_HEADING}>
         <InlineError
@@ -49,7 +67,16 @@ export default function SignUpPage() {
       </AuthScreen>
     );
   }
-  return bootstrap.data.available ? <SignUpForm /> : <SignUpClosed />;
+  return screen === "open" ? (
+    <SignUpForm
+      onResponseLost={(email) => {
+        setLostEmail(email);
+        bootstrap.refetch();
+      }}
+    />
+  ) : (
+    <SignUpClosed />
+  );
 }
 
 function SignUpClosed() {
@@ -69,7 +96,7 @@ function SignUpClosed() {
   );
 }
 
-function SignUpForm() {
+function SignUpForm({ onResponseLost }) {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const signUp = useSignUp();
@@ -87,7 +114,10 @@ function SignUpForm() {
         signIn(token, user);
         navigate("/", { replace: true });
       },
-      onError: (error) => reportServerError(form, error, errorCopy),
+      onError: (error) => {
+        reportServerError(form, error, errorCopy);
+        if (error.isNetwork) onResponseLost(values.email);
+      },
     });
 
   const formLevelError = errors.root?.server?.message;

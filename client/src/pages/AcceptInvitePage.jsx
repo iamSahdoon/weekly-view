@@ -1,16 +1,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthPanel, AuthScreen } from "../components/auth/AuthScreen.jsx";
 import { FormStrip } from "../components/auth/FormStrip.jsx";
 import { LinkExpired } from "../components/auth/LinkExpired.jsx";
 import { LinkPreviewGate } from "../components/auth/LinkPreviewGate.jsx";
+import { ResponseLost } from "../components/auth/ResponseLost.jsx";
 import { Button } from "../components/ui/Button.jsx";
 import { Field } from "../components/ui/Field.jsx";
 import { Input } from "../components/ui/Input.jsx";
 import { useAuth } from "../hooks/useAuth.js";
 import { useAcceptLink } from "../hooks/useAuthQueries.js";
 import { ROLE_LABELS } from "../lib/constants.js";
+import { linkFailureScreen } from "../lib/authRecovery.js";
 import { errorCopy } from "../lib/errorCopy.js";
 import { reportServerError } from "../lib/formErrors.js";
 import { acceptInviteSchema } from "../schemas/authSchema.js";
@@ -38,8 +41,17 @@ function AcceptInviteForm({ token, preview }) {
     defaultValues: { name: "", password: "" },
   });
   const { errors } = form.formState;
+  // An earlier try got no response. If the link is now used up, that try most likely
+  // went through (owner report, 2026-10-17): say so instead of "expired".
+  const [responseLost, setResponseLost] = useState(false);
 
-  if (accept.error?.code === "LINK_INVALID") return <LinkExpired />;
+  const failure = linkFailureScreen(accept.error, responseLost);
+  if (failure)
+    return failure === "lost" ? (
+      <ResponseLost email={preview.email} />
+    ) : (
+      <LinkExpired />
+    );
 
   const onSubmit = ({ name, password }) =>
     accept.mutate(
@@ -49,7 +61,10 @@ function AcceptInviteForm({ token, preview }) {
           signIn(session, user);
           navigate("/", { replace: true });
         },
-        onError: (error) => reportServerError(form, error, errorCopy),
+        onError: (error) => {
+          reportServerError(form, error, errorCopy);
+          if (error.isNetwork) setResponseLost(true);
+        },
       },
     );
 
