@@ -1,3 +1,5 @@
+import { AppLink } from "../components/marketing/AppLink.jsx";
+import { useArrivedInTransition } from "../hooks/useArrivedInTransition.js";
 import { CtaPill } from "../components/marketing/CtaPill.jsx";
 
 // The landing page's frame (brand §6.0; project_structure.md): the `.landing` root that
@@ -20,8 +22,13 @@ const WEEK = [
 const YEAR = new Date().getFullYear();
 
 export default function MarketingLayout({ rootRef, signupOpen, children }) {
+  // Back from the sign-in screens inside a view transition: the cross-fade is the fade.
+  const arrivedInTransition = useArrivedInTransition();
   return (
-    <div className="landing" ref={rootRef}>
+    <div
+      className={arrivedInTransition ? "landing l-in-vt" : "landing"}
+      ref={rootRef}
+    >
       <a className="skip" href="#main">
         Skip to content
       </a>
@@ -40,9 +47,9 @@ export default function MarketingLayout({ rootRef, signupOpen, children }) {
             <a href="#faq">FAQ</a>
           </nav>
           <div className="acct">
-            <a className="si" href="/signin">
+            <AppLink className="si" href="/signin">
               Sign in
-            </a>
+            </AppLink>
             {signupOpen ? (
               <CtaPill size="sm" href="/signup">
                 Create your account
@@ -118,7 +125,7 @@ export default function MarketingLayout({ rootRef, signupOpen, children }) {
                     <a href="/demo">Live demo</a>
                   </li>
                   <li>
-                    <a href="/signin">Sign in</a>
+                    <AppLink href="/signin">Sign in</AppLink>
                   </li>
                 </ul>
               </div>

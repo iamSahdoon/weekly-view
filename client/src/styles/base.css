@@ -167,3 +167,168 @@ button:not(:disabled),
     transform: translate(-50%, -50%);
   }
 }
+
+/* The signed-out auth screens only (owner decisions, auth pages 2026-10-17; design §8.5
+   entries 32–35). Arrival: the brand panel fades in and the parts rise in turn (below). The panel's grid drifts one cell every 14 s, on one layer, paused
+   with the panel (data-paused). Under reduced motion none of it runs. */
+/* Round six (owner decision): each part of an auth screen comes in on its own, a little
+   after the one before — brand side: wordmark, intro card, sample card, caption; form
+   side, 40ms behind: back link, heading, line, panel, links. Rise 10px with a fade, 380ms,
+   50ms apart (the last done at about 600ms). Opacity and transform only: nothing waits
+   on it, so the form can be focused and typed in at once. */
+@keyframes wv-auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.wv-stagger {
+  animation: wv-auth-rise 380ms var(--ease-out) both;
+  animation-delay: calc(var(--stagger, 0) * 50ms + var(--stagger-base, 0ms));
+}
+/* Arrived inside the view transition (useArrivedInTransition): the cross-fade already
+   fades the page in, so the parts only rise — the content is never twice faded. */
+@keyframes wv-auth-rise-only {
+  from {
+    transform: translateY(10px);
+  }
+}
+.wv-in-transition .wv-stagger {
+  animation-name: wv-auth-rise-only;
+}
+.wv-auth-fade {
+  animation: wv-fade-in 280ms var(--ease-out) both;
+}
+@keyframes wv-grid-drift {
+  to {
+    transform: translate(32px, 32px);
+  }
+}
+.wv-grid-drift {
+  animation: wv-grid-drift 14s linear infinite;
+}
+/* Round five: a few cells of the drifting grid light to --acc in four turns, on the
+   layer's own 14 s clock, each dark at the loop's seam (0% / 100%), so none ever jumps.
+   The peak is 12% in light; the dark theme's --acc on its dark --tint needs 28% to be
+   seen at all. Cells never sit behind text (AuthBrandPanel places them). */
+.wv-grid-cell {
+  --cell-peak: 0.12;
+  position: absolute;
+  width: 31px;
+  height: 31px;
+  background: var(--acc);
+  opacity: 0;
+  animation: 14s linear infinite both;
+}
+[data-theme="dark"] .wv-grid-cell {
+  --cell-peak: 0.28;
+}
+.wv-grid-cell[data-turn="0"] {
+  animation-name: wv-cell-0;
+}
+.wv-grid-cell[data-turn="1"] {
+  animation-name: wv-cell-1;
+}
+.wv-grid-cell[data-turn="2"] {
+  animation-name: wv-cell-2;
+}
+.wv-grid-cell[data-turn="3"] {
+  animation-name: wv-cell-3;
+}
+@keyframes wv-cell-0 {
+  0%,
+  4% {
+    opacity: 0;
+  }
+  14% {
+    opacity: var(--cell-peak);
+  }
+  24%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes wv-cell-1 {
+  0%,
+  27% {
+    opacity: 0;
+  }
+  37% {
+    opacity: var(--cell-peak);
+  }
+  47%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes wv-cell-2 {
+  0%,
+  50% {
+    opacity: 0;
+  }
+  60% {
+    opacity: var(--cell-peak);
+  }
+  70%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes wv-cell-3 {
+  0%,
+  73% {
+    opacity: 0;
+  }
+  83% {
+    opacity: var(--cell-peak);
+  }
+  93%,
+  100% {
+    opacity: 0;
+  }
+}
+[data-paused] .wv-grid-drift,
+[data-paused] .wv-grid-cell {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wv-stagger,
+  .wv-in-transition .wv-stagger,
+  .wv-auth-fade,
+  .wv-grid-drift,
+  .wv-grid-cell,
+  .wv-grid-cell[data-turn] {
+    animation: none;
+  }
+}
+
+/* Between the landing page and the auth screens (owner decision, auth pages round six;
+   design §8.5 entry 33): React Router's view transition, styled as one calm cross-fade —
+   the old page fades out as the new one fades in and rises 6px. Both directions, and
+   browser Back and Forward, look the same. Under reduced motion the switch is instant. */
+@keyframes wv-vt-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes wv-vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+/* The same length and curve both ways, so with the browser's plus-lighter blend the two
+   pages always add up to one: a dissolve, never a washed-out middle. */
+::view-transition-old(root) {
+  animation: wv-vt-out 300ms var(--ease-soft) both;
+}
+::view-transition-new(root) {
+  animation: wv-vt-in 300ms var(--ease-soft) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

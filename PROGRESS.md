@@ -1848,6 +1848,428 @@ Not a stage; a small change the owner asked for.
 - Earlier entries in this file that say `npm run seed` were renamed to `npm run db:sample`
   in place; what they record was run under the old name.
 
+### Owner decision: redesigned sign-in pages, landing sign-in link, first-week message (2026-10-17)
+Not a stage; **C11 is still next.** Branch `claude/auth-pages` from `main`. Recorded as owner decisions in
+`product_design_system.md` §3.1 (empty state), §3.12, §8.5 (entry 32) and §9.4 (`--text-title`),
+`brand_design_strategy.md` §6.0 rule 13, `frontend_architecture.md` §9.15–§9.16, `project_structure.md` and
+`docs/USER_MANUAL.md` §4, §5, §13 and §48. No server code, rule, route, API call shape or error message changed.
+1. **First-week message.** Someone who joined after the shown week's Friday (the owner signing up on a Saturday)
+   had five "Not on the team" days under "Your first week starts here. Post what you did today." Now, when every
+   day of the week is `not_on_team` (or a holiday) and the join date is after that Friday, the panel says "Your
+   first week starts Mon 19 Oct." / "You joined on Sat 17 Oct, after this week's working days. Your daily updates
+   start that Monday, and your weekly report builds itself from them." and offers `Go to that week` once that
+   week has begun (before then the week picker can't open it, so no link is shown). The usual case is unchanged.
+   The rule lives in `lib/weekActions.js` (`joinedAfterWeek`), read from the server's `dayStates`. No demo
+   handler was needed: no new request, and `demoCoverage.test.js` is green.
+2. **Landing hero.** Sign-up open → `Create your account` first (unchanged). Sign-up known closed → under the demo
+   pill, "Already on a team? **Sign in**" (underlined link to `/signin`, `.landing .hsign`, landing tokens and
+   font only). The demo caption is now "No account needed. Nothing is saved." in every non-open state (so the
+   pending → closed swap only adds the line). Pending or failed → the demo pill only, as before (FA14).
+3. **A way back.** "← Back to home" (to `/`) at the top of every auth screen: on the form side from 1024px, in the
+   slim header below. The auth routes are real-only, so it never appears inside `/demo`; the demo's chooser keeps
+   its own frame. "Forgot your password?" is a panel on sign in, not a page, and stays so.
+4. **Split auth layout** (sign in, create account open and closed, accept invite, reset password, and the
+   expired-link state). From 1024px: form side on `--paper` (back link, 40px Chivo heading, form, links) and a
+   sticky `--card` brand panel (wordmark; a Mon–Fri strip of 22px Updates squares that fill in once — 200ms each,
+   120ms apart, drawn filled under reduced motion; "One short update a day." and one plain line). Below 1024px a
+   52px header (wordmark, back link) and the form first. Headings: "Sign in to WeeklyView" (tab: "Sign in"),
+   "Create the owner account" + "…Everyone else joins with an invite link from you."; the others unchanged. Sign
+   in shows "No team here yet? Create the owner account" only when A1 says `available: true` — **this adds the
+   cached A1 request to `/signin`**; pending or failed, nothing is offered. The layout's `<main>` now carries
+   `id="main"`, so the skip link works on these screens (it pointed nowhere before).
+   Restraint and motion followed Emil Kowalski's `apple-design` skill: one quiet entrance, opacity and a small
+   scale only, no overshoot, nothing looping, the final state at once under reduced motion.
+- **Files.** New: `components/auth/AuthBrandPanel.jsx`, `components/auth/__tests__/AuthScreens.test.jsx`. Changed:
+  `layouts/AuthLayout.jsx`, `components/auth/AuthScreen.jsx` (larger heading, `title` prop), `SignInPage`,
+  `SignUpPage`, `ThisWeekPage`, `lib/weekActions.js`, `HeroSection`, `LandingPage`, `landing.css`, `index.css`
+  (`--text-title`), `lib/cn.js`. No new dependency.
+- **Checks.** `npm run lint` clean. `npm test`: server 389, client 597 (17 new: 8 auth screens, 4 hero, 3
+  `joinedAfterWeek`, 2 This week). `vite build` OK. The new This week test fails against the old code (it showed
+  "Your first week starts here.").
+- **Looked at in headless Chromium** (real fonts, local API on an in-memory MongoDB — no Atlas or `MONGODB_URI`
+  database was touched; the container's clock was Saturday 17 Oct 2026): `/signin`, `/signup`, a real
+  `/invite/…` link and an expired `/reset/…` link at 1440, 1024 and 360, light and dark, with sign-up open and
+  closed; the landing hero at 1440, 1024 and 360 open and closed; This week for an owner created that Saturday at
+  1440 and 360, light and dark; the brand panel mid-animation (Mon–Tue, then Mon–Thu filled) and under reduced
+  motion (all filled at once). No sideways scroll anywhere. Driven in the browser: the hero's "Sign in" → `/signin`;
+  "Back to home" → `/`; wrong password → "That email and password don't match."; right password → This week with
+  the new message.
+- **Not verified:** the `Go to that week` link in a browser (it needs a later date; covered by a static-render test
+  on a frozen Tuesday); Firefox and Safari; Windows font rendering; widths other than those listed; screen readers.
+
+**Auth pages: owner decisions accepted (PR #27 review, 2026-10-17).** All three accepted as built; no code changed.
+1. ~~**The brand panel's squares fill in on open**~~ *(replaced in round three by a light looping preview — see
+   below)* — an owner-approved exception to design §8.4 (no page-load
+   entrance): it plays once, it is subtle, and it is skipped under reduced motion. Recorded in design §8.4 and
+   §8.5 (entry 32).
+2. **`/signin` asks the bootstrap check (A1)** — the same check the landing page uses, only to show or hide "No
+   team here yet? Create the owner account". Recorded in `frontend_architecture.md` §9.15.
+3. **"Forgot your password?" stays a panel on the sign-in page** — no new route. Recorded in design §3.12.
+
+**Owner: how to check by hand** (Windows; a local database only)
+1. In a terminal at the repo root: `git fetch origin` then `git checkout claude/auth-pages`.
+2. Run `npm --prefix server install` and `npm --prefix client install` (once for this branch).
+3. Make sure `server/.env` points at a database you are happy to wipe. Run `npm run db:empty`.
+4. Start the API: `npm --prefix server run dev`. In a second terminal start the app: `npm --prefix client run dev`.
+5. In a private Chrome window open http://localhost:5173/. The hero's main button is **Create your account**, with
+   the demo beside it; there is no "Already on a team?" line.
+6. Click **Create your account**. Wide window (1440px or more): the form on the left under "← Back to home", a
+   large "Create the owner account" heading and the line ending "Everyone else joins with an invite link from
+   you."; on the right the WeeklyView panel, whose five squares fill in Mon → Fri once.
+7. Click **← Back to home**: you are on the landing page. Go to http://localhost:5173/signin: under the form,
+   "Forgot your password?" and "No team here yet? Create the owner account".
+8. Press F12 → device toolbar (Ctrl+Shift+M) → Responsive → type **1024**, then **360**, reloading each time: at
+   1024 the two halves remain; at 360 a slim bar (WeeklyView left, "← Back to home" right) sits above the form,
+   nothing scrolls sideways.
+9. Create the owner account. **If today is a Saturday or Sunday**, This week shows five "Not on the team" days
+    and "Your first week starts Mon … You joined on Sat …". On a weekday it shows the usual "Your first week
+    starts here." with **Post today's update**.
+10. Dark mode (the app keeps its own setting, not Windows'): click your name at the bottom of the sidebar →
+    **Appearance** → Dark. Then sign out (same menu → **Sign out**): the sign-in screen is dark on both halves,
+    the squares cobalt. Switch back to Light the same way after signing in again if you prefer.
+11. Still signed out, open http://localhost:5173/ (a new private window works too): under **See the live demo** (and "No account needed. Nothing is saved.") the line "Already on a
+    team? **Sign in**" is underlined; click it and you reach the sign-in screen. `/signin` no longer offers
+    "Create the owner account"; `/signup` says "This team is invite-only."
+12. Stop the API (Ctrl+C), run `npm run db:sample`, start it again. Sign in at `/signin` as a sample person (the
+    README lists them; password `weekly-view-dev`) and check This week looks as before.
+13. Reduced motion: Windows Settings → Accessibility → Visual effects → **Animation effects off**; reload
+    `/signin` at full width: the five squares are already filled. Turn animation effects back on.
+14. Open http://localhost:5173/demo and pick a role: the demo's chooser and the app have no "Back to home".
+
+### Auth pages, round two: balanced layout, hero copy, sign-up recovery (owner feedback on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. Recorded in `product_design_system.md` §3.12 (round-two block) and §8.5 entry 32,
+`brand_design_strategy.md` §6.0 rule 13, `frontend_architecture.md` §9.15, `tech_stack.md` (dev reload),
+`project_structure.md` and `docs/USER_MANUAL.md` §4 and §48.
+1. **Hero copy.** Sign-up open: the two buttons only — "Set up your first week in minutes. No sign-up to explore the
+   demo." is gone. Closed (and pending/failed): "No account needed. Nothing is saved." stays beside the demo pill;
+   it reads as that pill's caption, and the "Already on a team? Sign in" line sits under it when closed.
+2. **Form on the left everywhere.** Every auth route already shared one frame with the form on the left; it is now
+   asserted by a test (form before panel, 55 / 45). The new response-lost state uses the same frame.
+3. **Layout.** 55 / 45 split from 1024px. The form column (420px) is centred in its half both ways, with Back to
+   home, heading, panel and links on one left edge — the fixed top offset and its dead band are gone. The brand
+   panel is `--tint` with a faint `--hair` grid and one centred block: wordmark, a sample week in the app's style
+   (a "This week" card with `SAMPLE DATA`, the strip in real Updates states — posted ×3, today, holiday — and the
+   posted Wednesday as a day card with two typed work lines and hours), then the line. The squares still come in
+   once (entry 32), each from a hollow outline. Phone layout unchanged.
+4. **Sign-up "Couldn't reach the server", then "invite-only".**
+   - **Root cause.** It isn't in our sign-up code. The API only listens after MongoDB connects (`server.js` awaits
+     `connectDb()`), and the client sets no request timeout. What produces exactly this — the account saved, the
+     answer lost, the server fine a moment later — is the API process being **restarted mid-request**. Reproduced here
+     with `npm run dev` (`node --watch`) on an in-memory database: touching any loaded file during a sign-up gave
+     "Connection reset by peer" / "Empty reply from server", and the next request was served by the new process.
+     `node --watch` watched every loaded file, **including everything under `node_modules`**, and on Windows Node
+     ends the old process outright. Locally the write is too quick to fall between the insert and the reply. On
+     Atlas, the insert and the read that builds the reply are each a network round trip (~100–300 ms), so a restart in
+     that window saves the account and loses the answer. That is the owner's sequence: "Couldn't reach the server",
+     then `SIGNUP_CLOSED` → "invite-only", then sign-in works. What touched a file on the owner's machine can't be
+     known from here: an `npm install` or editor still writing, or an antivirus scan, are the usual ones. It didn't
+     recur after a clean restart. The first Atlas connection and index sync aren't the cause: listening waits for
+     the connection, and index builds don't block requests.
+   - **Fix in our code.** `npm run dev` is now `node --watch-path=src src/server.js`. Changes under `node_modules` no
+     longer restart the API (checked: touching `node_modules/express/index.js` → no restart; `src/app.js` → restart).
+     And `server.js` now closes gracefully on SIGTERM/SIGINT: it stops taking connections and lets requests in flight
+     finish (10 s at most). Checked with the same timing test: an in-flight sign-up now completes (201) through a
+     restart, and a request arriving during the gap is refused before anything is written. This also covers Render
+     deploys. On Windows a `--watch` restart still ends the process abruptly, which is why the recovery below
+     matters there.
+   - **Recovery.** If Create account fails with no response, `/signup` keeps the email and re-checks A1. If sign-up
+     is now closed — by that re-check, or by `SIGNUP_CLOSED` on a second press — it shows "Your account may
+     already have been created. / Sign in with the email you just used." with `Sign in`, which opens `/signin`
+     with the email filled in. Accept invite: a lost answer followed by `LINK_INVALID` shows the same block instead
+     of "expired". Reset password says "Your new password may already have been saved." The choice of screen is
+     `lib/authRecovery.js`, a pure function with tests; there is no DOM test environment and no new dependency.
+- **Files.** New: `components/auth/ResponseLost.jsx`, `lib/authRecovery.js`, `lib/__tests__/authRecovery.test.js`.
+  Changed: `AuthLayout`, `AuthBrandPanel`, `SignUpPage`, `SignInPage` (email default from router state),
+  `AcceptInvitePage`, `ResetPasswordPage`, `HeroSection`, `server/src/server.js`, `server/package.json` (`dev`), the tests.
+- **Checks.** `npm run lint` clean; `npm test`: server 389, client 610. **Looked at in headless Chromium**
+  (in-memory MongoDB only, never Atlas): `/signin`, `/signup` open and closed, a real invite link and an expired
+  reset link at **1440, 1280, 1024 and 360**, light and dark; the landing hero open and closed at the same widths.
+  **The owner's failure, reproduced in the browser:** the sign-up request was let through to the API (the account
+  was created) and its response dropped → "Your account may already have been created." → Sign in → the email
+  was filled in → signed in to This week. The same on an invite link at 360px: first press "Couldn't reach the
+  server.", second press → the same block.
+- **Not verified:** a real Windows `node --watch` restart (it can't be run here); Atlas latency (simulated by
+  dropping the response in the browser); Firefox and Safari; screen readers.
+
+**Owner: how to check round two by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, then `git pull`.
+2. `npm --prefix server install` and `npm --prefix client install`.
+3. `npm run db:empty`. Start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+4. Open http://localhost:5173/ in a private Chrome window: **Create your account** and **See the live demo** side by
+   side, and nothing written under them.
+5. Click **Create your account** at full width (1440px or more): the form is in the middle of the left part, with
+   "← Back to home", the heading, the box and the link lined up on one left edge. On the right, on a faint grid:
+   WeeklyView, a small "This week" card marked SAMPLE DATA (Mon–Wed blue, Thu outlined, Fri dotted grey) with
+   Wednesday's two lines, then "One short update a day." The squares come in once, Monday to Friday.
+6. F12 → Ctrl+Shift+M → Responsive: try **1280**, **1024** and **360** (reload each time). The left part stays a
+   little wider than the right down to 1024; at 360 the slim bar is on top and the form follows.
+7. **The lost answer, by hand:** in DevTools open the **Network** tab. Fill in the sign-up form, then, the moment
+   you click **Create account**, choose **Offline** in the throttling menu (next to "Disable cache"). If the click
+   was quick enough the account is still created on the server. Switch back to **No throttling**. If the page
+   shows "Your account may already have been created." click **Sign in**: your email is already filled in. (If it
+   shows "Couldn't reach the server." with the form still there, nothing was saved — press Create account again.)
+8. Sign in (or create the account normally). Sign out from the menu under your name.
+9. Open http://localhost:5173/ again: under **See the live demo** ("No account needed. Nothing is saved.") is
+   "Already on a team? **Sign in**". `/signup` says "This team is invite-only." with the same split layout.
+10. Dark mode: your name → **Appearance** → Dark, then sign out: both halves dark, the grid faint.
+11. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
+### Auth pages, round three: form on the right, matched pair, looping preview (owner feedback on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. Recorded in `product_design_system.md` §3.12 (round-three block), §8.4 (the exception)
+and §8.5 entry 32, `frontend_architecture.md` §9.15, `project_structure.md` and `docs/USER_MANUAL.md` §4.
+1. **Sides swapped** on every auth screen: brand panel left, form right (reverses round two). The form stays first in
+   the DOM, so keyboard focus, screen readers and the phone layout (slim header, form first) are unchanged.
+2. **A matched pair.** Equal halves; each holds one 420px block centred in it, so the outer margins mirror. Both blocks
+   sit on one grid with four shared rows (CSS subgrid): "Back to home" ↔ wordmark, the heading row, form panel ↔
+   sample card (the card stretches to the panel's height), links ↔ caption. Measured in the browser: the two blocks'
+   tops and bottoms are equal to the pixel at every size checked, and so are the two cards'. The sign-up-closed
+   screen (one button) keeps its link under the button.
+   **The clipping bug:** the old frame centred the form in a sticky full-height layout and dropped its bottom padding
+   when the form was taller than the screen. Now the rows above and below the pair are at least 52px, so when content
+   is taller than the screen (sign up at 1366×768 or 1280×800) the page scrolls normally with 52px kept above and
+   below. Nothing scrolls sideways at any size.
+3. **Looping preview** (replaces the one-time fill-in; design §8.5 entry 32). Every 3 s the chosen day's bar slides
+   Mon → Tue → Wed → Thu and the day's lines cross-fade; on Thursday ("today, not posted yet") the square then fills
+   and two posted lines rise into place; after 3.8 s it returns calmly to Monday. Friday stays a holiday. Cycle 15 s.
+   It uses `opacity` and `transform`/`scale` transitions only, and every day's content is stacked in one cell, so
+   nothing reflows. It runs on one `setTimeout` and stops on `visibilitychange` (tab hidden) and when an
+   `IntersectionObserver` reports the panel out of view (it is hidden on phones). Under reduced motion it does not
+   start, and the posted Thursday is shown. The card is `aria-hidden`; the caption is real text; nothing on the form
+   side moves or takes focus. No new dependency. The card gains a footer: "Friday's weekly report" with a Draft chip.
+- **Files.** New: `components/auth/previewSteps.js`. Changed: `AuthLayout`, `AuthBrandPanel`, `AuthScreen` (its three
+  parts are now three elements; `compact`; `AuthPanel` fills its row from 1024px), `LinkExpired`, `ResponseLost`
+  (fill their row), `SignUpPage` (`compact` on the closed state), the auth-screen tests.
+- **Checks.** `npm run lint` clean. `npm test`: server 389, client 613. Tests added: the sides and the shared rows; the
+  sample week's states; the loop's timeline (12–16 s, Mon→Thu, Thursday posted last); a source check that the panel
+  transitions only opacity/transform/scale, sets one timer, and listens for `visibilitychange` and visibility.
+  **Headless Chromium** (in-memory MongoDB only): sign in, sign up open and closed, a real invite link, an expired
+  reset link and the response-lost screen at 1920×1080, 1440×900, 1366×768, 1280×800, 1280×768, 1024×768 and 360,
+  light and dark; block edges measured (e.g. 1440×900 sign in: both blocks 188–712, both cards 319–618; margins 150 /
+  150). **The loop, measured in the browser:** bar at 0 / 100 / 200 / 300 / 300% at 0.8 / 3.8 / 6.8 / 9.8 / 12.4 s,
+  Thursday posted at 12.4 s, back to Monday at 15.8 s; no step during 7 s with the tab hidden, resumed when visible;
+  **no loop timer** at 360px or under reduced motion (the only 3 s timers there are the boot splash's). A real
+  bug found on the way: two transition classes on Thursday's square merged into one, dropping its fade; it now uses
+  one `transition-[opacity,scale]`. The response-lost flows (sign-up and invite) were re-run and still work.
+- **Not verified:** Firefox and Safari (subgrid needs Firefox 71+, Safari 16+, Chrome 117+); Windows font rendering;
+  CPU use measured on a real laptop (by construction: one timer every 2–4 s, compositor-only changes); screen readers.
+
+**Owner: how to check round three by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, `git pull`.
+2. `npm --prefix server install` and `npm --prefix client install`.
+3. `npm run db:empty`; start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+4. Open http://localhost:5173/signin in a private Chrome window, full screen. The WeeklyView panel with the grid is on
+   the **left**, the form on the **right**. Check: "Back to home" and "WeeklyView" are on one line; the sample card
+   and the sign-in box start and end at the same height; the caption and the links below start on one line; the gap
+   from the sample card to the left edge equals the gap from the form to the right edge.
+5. Watch the sample card for 15 seconds: the dark bar above the days moves Mon → Tue → Wed → Thu every few seconds
+   and the lines change softly; on Thursday the outlined square fills and two lines appear; then it goes back to
+   Monday. Nothing on the form side moves; click into Email while it runs — the cursor stays there.
+6. Switch to another tab for a while and come back: it carries on from where it was (it paused).
+7. F12 → Ctrl+Shift+M → Responsive. Try **1366 × 768**, **1280 × 800**, **1024 × 768**: nothing touches an edge; on
+   `/signup` the page scrolls a little and the "Already have an account? Sign in" link is reachable with space below
+   it. Try **360 × 780**: the slim bar, then the form; the sample card isn't shown.
+8. Reduced motion: Windows Settings → Accessibility → Visual effects → Animation effects **off**; reload `/signin`:
+   the card shows Thursday posted and never moves. Turn animation effects back on.
+9. Create the owner account, sign out, and open `/signup`: "This team is invite-only." with **Open the demo** and the
+   sign-in link right under it, beside the sample card.
+10. Dark mode: sign in → your name → **Appearance** → Dark → sign out; check `/signin` again, both halves dark.
+11. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
+### Auth pages, round four: smooth entry, page-specific panel copy, grid motion, loop fixes (owner feedback on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. Recorded in `product_design_system.md` §3.12 (round-four block), §8.4 (the
+exceptions) and §8.5 entries 32–34, `frontend_architecture.md` §9.15, `project_structure.md` and `docs/USER_MANUAL.md` §4.
+1. **Loop bugs fixed.**
+   - *Overlap:* each change of day is now three moves that never overlap: the old day fades out (0–160 ms), the
+     bar slides (140–340 ms), then the new day fades in (240–420 ms).
+   - *Two selected tabs:* the blue "today" underline is gone; the 2px ink bar is the only selection mark (today is
+     still the hollow square).
+   - *Stretched card:* the card keeps its natural height, its bottom level with the form panel's.
+   - **Measured in the browser** (every animation frame for a full 16 s cycle, `/signup` at 1440×900, 961 frames):
+     no frame with two days above 15% opacity (the second-most-visible day's highest opacity was 0.000), and no
+     frame where the bar sat under a different day from the one shown. The first version had 14 such frames, at
+     the start of each change; the timings above fixed them. I also looked at screenshots taken during the
+     Mon→Tue and Thu→Mon changes.
+2. **Smooth entry.** The View Transitions route was not taken. The landing page's links are full page loads on
+   purpose: an earlier decision keeps the landing styles and font out of the app's session. That rules out a
+   same-document view transition. A cross-document one would capture the app before React has drawn the screen.
+   Instead, on arrival the brand panel fades in, and the two blocks rise 8 px with a fade (320 ms), the form 80 ms
+   after the brand side. It is CSS only, works in every browser, and is off under reduced motion. Measured on
+   arriving from the landing page's "Sign in": brand block first, form 80 ms later. "Back to home" is
+   unchanged: it opens the landing page, which has its own entrance.
+3. **Page-specific panel copy** (`panelIntros.js`). Under the wordmark:
+   - sign in: "Welcome back. / Your week is where you left it."
+   - create account: three numbered steps
+   - sign-up closed, invite, reset, an expired link and a lost answer: a line each
+   The page names its line through `AuthIntroContext`; an expired link or a lost answer overrides it. Any room
+   left beside a taller form is shared above and below the line. Short screens (closed, expired, lost) keep
+   heading, message and button together, top-aligned with the brand side. Before, the brand side's taller column
+   opened gaps between them.
+4. **Grid motion.** One oversized CSS layer drifts one 32 px cell down and right every 48 s, seamlessly. Measured:
+   2.0 px in 3 s; frozen while the tab is hidden (`data-paused`); not displayed on phones; `animation: none` and
+   0 px movement under reduced motion.
+- **Files.** New: `components/auth/panelIntros.js`, `components/auth/authIntro.js`. Changed: `AuthLayout` (the intro
+  channel, entrance classes), `AuthBrandPanel` (intro, grid layer, one `usePanelActive` for the loop and the grid,
+  the loop's timings, no underline, natural-height card), `AuthScreen` (`intro`, the short layout), `LinkExpired`,
+  `ResponseLost` (override the line), the four auth pages (name their line), `styles/base.css` (entrance and grid
+  keyframes, reduced motion), the auth-screen tests.
+- **Checks.** `npm run lint` clean. `npm test`: server 389, client 621; the landing isolation tests are green, and no
+  landing file changed. **Headless Chromium** (in-memory MongoDB only):
+  - `/signin` and `/signup` with sign-up open, and `/signup` with sign-up closed and a real invite link, at
+    1920×1080, 1440×900, 1366×768, 1280×800, 1024×768 and 360×780, light and dark.
+  - An expired reset link, and the recovery screen (reached by letting the sign-up request through and dropping
+    its answer).
+  - Every desktop view: both blocks share top and bottom edges; outer margins mirror; no sideways scroll.
+  - The sign-up and invite recovery flows re-run: no update loop.
+- **Not verified:** Firefox and Safari; real CPU use on a laptop; screen readers.
+
+**Owner: how to check round four by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, `git pull`; `npm --prefix server install`,
+   `npm --prefix client install`.
+2. `npm run db:empty`; start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+3. Open http://localhost:5173/ (private window, full screen) and click **Create your account**: the panel fades in and
+   the two sides rise into place, the left one just before the right.
+4. On `/signup`, the left side shows "Three steps to your team's first week" with three numbered steps above the
+   sample card. The card is not stretched: its bottom lines up with the bottom of the form box.
+5. Watch the sample card through a day change (every 3 s): the old day disappears, the dark bar moves, then the new
+   day appears — never two days on top of each other, and only one tab has the dark bar. On Thursday the outlined
+   square fills and two lines appear; then it returns to Monday.
+6. Look closely at the background grid on the left: it creeps very slowly down and to the right (one square takes
+   48 s). Switch to another tab and back: it carries on.
+7. Open `/signin`: "Welcome back. Your week is where you left it." under WeeklyView.
+8. Create the owner account, sign out, open `/signup`: "This team is invite-only." with **Open the demo** and the
+   sign-in link right under the heading; the left side says "This team is already set up."
+9. Users → invite someone → open the link in a private window: the left side says "You've been invited to join the
+   team." Open `/reset/abc`: "This link has expired…" on the right, "Links work once, for a limited time." on the left.
+10. F12 → Ctrl+Shift+M → Responsive: **1366 × 768**, **1280 × 800**, **1024 × 768** — no edge touching, page scrolls if
+    needed; **360 × 780** — slim bar, form first, no panel.
+11. Reduced motion (Windows Settings → Accessibility → Visual effects → Animation effects off): reload `/signin` —
+    no entrance, the grid and the card are still. Turn it back on.
+12. Dark mode: sign in → your name → **Appearance** → Dark → sign out; check `/signin` again.
+13. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
+### Auth pages, round five: intro card, livelier grid (owner feedback on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. Recorded in `product_design_system.md` §3.12 (round-five block), §8.4 and §8.5
+entry 34, and `docs/USER_MANUAL.md` §4.
+1. **The panel's line on a card**, like the sample card: `--card`, hairline border, square corners, no shadow, the same
+   width, 20 / 16 px padding. **Chosen for every screen**, the one-line intros too. In the screenshots, the one-liners on
+   a card read as one set with the sign-up steps; bare text on the now-moving grid looked less finished. The two cards
+   keep one 24 px gap on every screen (measured: 24 px at every size and screen checked). Any room a taller form leaves
+   goes above the pair, beside the form's heading. Top and bottom edges still match the form's.
+2. **A livelier grid.** The drift is now one square every 14 s (was 48 s); measured about 2.3 px/s. Eight cells of the
+   drifting layer light to cobalt (`--acc`) in four turns, two at a time, each fading in and out over about 1.4 s. The
+   peak is 12% in light and 28% in dark: at 12%, the dark theme's cobalt on its dark tint was almost invisible in the
+   screenshots. The cells run on the layer's own CSS clock, so they move with the lines and are dark whenever the loop
+   resets (they never jump). They are placed, once and on resize, only in cells whose whole drift stays clear of the
+   brand block and away from the panel's edges, so none ever sits behind text or a card. Measured over 30 s in each
+   theme: at most 2 lit at once; 0 lit at the loop's seam; 0 overlapping the brand block. CSS only, no per-frame
+   JavaScript: one `ResizeObserver` places them. They pause with the panel (`[data-paused]`, checked: play-state paused
+   when the tab is hidden). The panel isn't displayed on phones. Under reduced motion there is no animation and the cells
+   stay at opacity 0. That needed one fix: the per-turn `animation-name` rules out-ranked the reduced-motion reset. The
+   optional glow following the chosen day was left out to keep the grid calm.
+   - At 1024 px the panel's side margins are narrower than two cells, so few or no cells qualify there; the drift
+     still shows.
+- **Checks.** `npm run lint` clean. `npm test`: server 389, client 624 (3 new: the intro card on every screen; the
+  14 s drift and the eight cells in four turns; dark at the seam, the two peaks, `--acc`). **Headless Chromium**
+  (in-memory MongoDB only):
+  - `/signin` and `/signup` with sign-up open, and `/signup` with sign-up closed and a real invite link, at 1440×900,
+    1366×768, 1024×768 and 360×780, light and dark.
+  - An expired reset link, and the recovery screen: sign-up and invite flows re-run, both still work.
+  - Every desktop view: edges match, cards 24 px apart, no sideways scroll. Text sits only on cards or on the plain
+    tint, never over a lit cell, so its contrast is the same as before.
+- **Not verified:** Firefox and Safari; real laptop CPU; screen readers.
+
+**Owner: how to check round five by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, `git pull`; `npm --prefix server install`,
+   `npm --prefix client install`.
+2. `npm run db:empty`; start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+3. Open http://localhost:5173/signup full screen: "Three steps to your team's first week" is on a white card the same
+   width as the "This week" card, with the same gap between the two cards as on `/signin` ("Welcome back." card).
+4. Watch the left side for 15 seconds: the grid moves gently down and to the right (a square every 14 s), and here and
+   there a square softly fills with light blue and fades — two at a time, never behind the text or the cards.
+5. Switch to dark (sign in → your name → **Appearance** → Dark → sign out) and look again: the blue squares are visible
+   but quiet; all text reads as clearly as before.
+6. Create the owner account, sign out, open `/signup` (closed), then an invite link from **Users**: each shows its line
+   on a card, 24 px above the sample card.
+7. F12 → Ctrl+Shift+M → Responsive: **1366 × 768**, **1024 × 768** (the grid moves; few or no squares light at this
+   width), **360 × 780** (no panel).
+8. Reduced motion (Windows Settings → Accessibility → Visual effects → Animation effects off): reload `/signin` — the
+   grid is still and no square lights. Turn it back on.
+9. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
+### Auth pages, round six: smooth landing transitions, staggered entrance (owner decision on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. **Owner decision:** the landing page and the auth screens move between each other
+client-side, replacing "the landing page's links are full page loads". Recorded in `brand_design_strategy.md` §6.0
+rule 14, `frontend_architecture.md` §4 and §9.16, `product_design_system.md` §8.4 and §8.5 entries 33 and 35,
+`project_structure.md` and `docs/USER_MANUAL.md` §48.
+1. **Client-side moves with a cross-fade.** Every landing link to `/signin` and `/signup` (hero, nav "Sign in" and
+   pill, "Already on a team? Sign in", closing band, footer), "← Back to home" and the links between the auth screens
+   are `TransitionLink`s: a click loads the target page's chunk, then navigates with React Router's `viewTransition`.
+   The two auth chunks are also preloaded when the landing page is idle. The cross-fade (`base.css`) is 300 ms, old
+   and new on one curve, the new page rising 6 px. Browser Back and Forward replay it. `/demo` stays a plain page
+   load. The bootstrap result comes from the query cache, so the auth screen renders at once.
+2. **Staggered entrance** (`.wv-stagger`). Brand side: wordmark, intro card, sample card, caption. Form side, 40 ms
+   behind: back link, heading, line, panel, links. Each part rises 10 px with a fade, 50 ms apart, 380 ms each,
+   `--ease-out`; done at about 600 ms. Inside a view transition the parts only rise: the cross-fade already fades
+   them, and fading twice washed the middle frames out (found in the first frame capture). Opacity and transform
+   only: the email field takes focus during the entrance.
+3. **Isolation.** The landing chunk (with GSAP and Bricolage) still loads only for `/`. A direct `/signin` requests
+   no landing file until "Back to home" is clicked, and the production build has GSAP and Bricolage in the
+   `LandingPage` chunk only. Leaving `/`, `html.landing-active` and the font link are gone. Returning, the
+   landing's motion is rebuilt from scratch. Without view transitions it fades in on its own (`l-page-in`).
+4. **Tests.**
+   - Landing tests render in a router now. They check that sign in and sign up are client-side links, that demo
+     links stay plain, and that the link loads the page before navigating.
+   - Auth tests check: the stagger order and timing; one cross-fade length and curve both ways; no animation
+     under reduced motion; rise-only inside a transition; the entrance never touching `pointer-events`,
+     `visibility` or `display`; home and the auth links being `TransitionLink`s.
+   - **The requested computed-style test can't run in `npm test`:** the client tests have no DOM, and adding jsdom
+     or a browser runner (e.g. `@playwright/test`) is a new dependency (see *Open questions*). The same check was
+     run in Chromium, below.
+
+**Checks.** `npm run lint` clean. `npm test`: server 389, client 631 (landing isolation green). Chromium, in-memory
+MongoDB only, on the dev server and a production build:
+- **Client-side only:** landing → sign up, Back to home, landing → sign in, browser Back, browser Forward, then a
+  refresh: exactly two full page loads (the first visit and the refresh). No boot splash; 0 page errors.
+- **Frames:** each transition was filmed with Chrome's screencast at 1440 and 360, light and dark (5 transitions × 4
+  = 20 films, 24–54 frames each). No blank frame: the lowest frame contrast was 10–27, up from 5 before the
+  rise-only fix. No flash in dark: the brightest frame in every dark film is the landing's own green, and the auth
+  page arrives dark. Contact sheets looked at.
+- **Timing (production build, this container):** the transition starts within 6–14 ms of the click. The dissolve
+  begins 170–230 ms later: about 65 ms for the browser to capture the old page, plus 100–175 ms for React to
+  swap the landing page in or out (auth → auth: 7 ms). This container has no GPU and a slow CPU, so real
+  machines should be quicker; not measured on one.
+- **Computed styles after landing → `/signin` client-side** (then `/signup`), light and dark: 0 elements with a
+  landing colour, Bricolage or a border radius. Headings Chivo, body Instrument Sans.
+- **Returning to `/`:** the scroll stories match a fresh load pixel for pixel (mean difference 0.00–0.01, at the
+  week story's 4th step and the dashboard's 6th). The hero plays again. "Back to home" starts at the top; browser
+  Back restores the scroll position.
+- **Refresh on `/signin`:** a full load; the stagger plays (sampled per frame: all parts at 0, partly in by
+  200 ms, all at 1 at the end).
+- **Reduced motion:** the switch is one cut (no in-between frame); the stagger and the cross-fade are `none`.
+- **Not verified:** Firefox and Safari (whether and how they run view transitions; the fallback is coded but
+  only reasoned about); real-device timing; screen readers.
+
+**Owner: how to check round six by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, `git pull`; `npm --prefix server install`,
+   `npm --prefix client install`.
+2. `npm run db:empty`; start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+3. Open http://localhost:5173/ in Chrome (private window). Click **Create your account**: the green page dissolves
+   into the sign-up screen (about a third of a second), with no white flash and no loading screen; then the
+   parts settle in, left side first.
+4. Click **← Back to home**: the landing page dissolves back in, at the top, and its hero animation plays. Scroll
+   down: the "Follow one person's week" and manager stories still hold and step as before.
+5. Click **Sign in** in the top bar, then press the browser's **Back** and **Forward** buttons: each switch is the
+   same dissolve.
+6. On `/signin`, press **F5**: a normal reload, and the parts settle in one after another. Click into Email at once:
+   you can type straight away.
+7. Dark mode: sign in once, your name → **Appearance** → Dark, sign out, then repeat steps 3–5: no light flash.
+8. F12 → Ctrl+Shift+M → **360** wide: repeat steps 3–4.
+9. Reduced motion (Windows Settings → Accessibility → Visual effects → Animation effects off): repeat step 3 — the
+   switch is instant and nothing settles in. Turn it back on.
+10. Optional, in Firefox or Safari: steps 3–5 still work (with or without the dissolve), and nothing green appears
+    on the sign-in screens.
+11. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -2482,6 +2904,14 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- **Auth pages round six — a committed browser test?** The client suite has no DOM, so the "landing → `/signin`
+  client-side, computed styles use app tokens only" check runs in Chromium by script, not in `npm test`. Making it a
+  committed test needs a new dev dependency (`@playwright/test`, or jsdom, which cannot compute real styles).
+  Say if you want it added (`tech_stack.md` §8 deferred E2E).
+- **Auth pages, to confirm or change** (see *Owner decision: redesigned sign-in pages…*): `Go to that week`
+  appears only once the first week has begun. Small and reversible. ~~(1) the brand panel's fill-in, (2) A1 on
+  `/signin`, (3) "Forgot your password?" as a panel~~ **Resolved (owner, PR #27 review, 2026-10-17):** all three
+  accepted as built — see *Auth pages: owner decisions accepted*.
 - **Landing polish, to confirm or change:** the stories' panels are pinned with CSS `position: sticky` (ScrollTrigger
   does the scrub and snap) instead of ScrollTrigger's own `pin`, because the GSAP pin scored a layout shift of 7.78
   in Chrome against 0.0008 for sticky (see *Landing polish*). Say if you want the GSAP pin anyway; it is a small,

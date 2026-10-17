@@ -263,6 +263,20 @@ sit pending for up to a minute: boot (`A4`) and the landing page's `A1`.
 
 ## 4. Routing
 
+> **Owner decision (auth pages round six, 2026-10-17): view transitions between `/` and the auth
+> screens.** The landing page's links to `/signin` and `/signup`, "← Back to home", and the links between
+> the auth screens are `TransitionLink`s (`routes/TransitionLink.jsx`): React Router links with
+> `viewTransition`. A click first loads the target page's chunk (`lazyPage.preload()`), then navigates
+> with `{ viewTransition: true }`, so the transition never captures a fallback or the boot splash; a
+> modified click is left to the browser. On the landing page the two auth chunks are preloaded when the
+> browser is idle (`prefetchAuthPages`, from `IndexRoute`); the landing chunk is loaded only when "Back
+> to home" is clicked or `/` is shown, never preloaded by the auth screens. Browser Back and Forward
+> reuse the transition (React Router replays it for a POP). The bootstrap result fetched by the landing
+> page is reused from the query cache, so the auth screen renders at once. A page that mounts inside a
+> transition (`useArrivedInTransition`, `:active-view-transition`) lets its entrance only rise, since
+> the cross-fade already fades it. The cross-fade is styled in `base.css`
+> (`product_design_system.md` §8.5 entry 33). `/demo` stays a full page load (§3.1).
+
 ### 4.1 The route table
 
 `routes/index.jsx` exports `buildRoutes()`. Routes that make no sense in the demo carry
@@ -1252,14 +1266,27 @@ current session survives while every other one ends.
 
 ### 9.15 Sign in, sign up, accept invite, reset password
 
-Under `AuthLayout`, no shell.
+Under `AuthLayout`, no shell. *(Owner decisions, auth pages 2026-10-17: the brand panel on the
+left and the form on the right from 1024px, the form first in the DOM; the panel's sample week
+loops on one timer, paused while the tab is hidden or the panel is out of view, and not at all
+under reduced motion — `product_design_system.md` §3.12, §8.5 entry 32. Round four: each screen
+names the panel's line through `AuthIntroContext` (`components/auth/authIntro.js`, provided by
+`AuthLayout`): `AuthScreen`'s `intro` sets it, and `LinkExpired` / `ResponseLost` override it while
+they show — which also lays the screen out as a short one.)*
 
 | Screen | Data |
 | --- | --- |
-| `/signin` | `useLogin` → `signIn`, then `navigate(location.state?.from ?? "/")`. "Forgot your password?" opens a static panel |
+| `/signin` | `useLogin` → `signIn`, then `navigate(location.state?.from ?? "/")`. "Forgot your password?" opens a static panel. `useBootstrapStatus()` (cached A1): only when `available: true` does "No team here yet? Create the owner account" link to `/signup`; pending or failed, nothing is offered. It is the same bootstrap check the landing page uses (§9.16), asked here only for that link *(owner decision, auth pages 2026-10-17; accepted in the PR #27 review)* |
 | `/signup` | `useBootstrapStatus()`: `available` → the form (`useSignUp`); otherwise the closed state with `Open the demo` — a plain `<a href="/demo">` |
-| `/invite/:token` | `useLinkPreview(token)` on mount → role and email read-only, name + password form → `useAcceptLink`; `LINK_INVALID` → the single expired-link block |
-| `/reset/:token` | the same, without the name field |
+| `/invite/:token` | `useLinkPreview(token)` on mount → role and email read-only, name + password form → `useAcceptLink`; `LINK_INVALID` → the single expired-link block — unless an earlier try in this visit got no response (`error.isNetwork`), then the "may already have been created" block (`ResponseLost`; `lib/authRecovery.js`) *(owner report, 2026-10-17)* |
+| `/reset/:token` | the same, without the name field ("Your new password may already have been saved.") |
+
+**A lost answer (owner report, 2026-10-17).** `/signup`: when `useSignUp` fails with no
+response, the page keeps the email, re-fetches A1, and if sign-up is now closed — by that
+re-check, or by `SIGNUP_CLOSED` on the next press — shows `ResponseLost` instead of the
+invite-only state; a failed re-check keeps the form. `ResponseLost`'s `Sign in` passes the
+email in router state; `/signin` uses it as the email field's default. The choice of screen
+is `lib/authRecovery.js`, pure and tested.
 
 **Link tokens (rule 7).** The token is read from `useParams`, sent in a body (A7, then A8),
 and kept in component state — not in a query key's returned data, a form default, or any
@@ -1274,8 +1301,13 @@ query cache first.
 **While it is pending, and if it errors, the page shows the demo as primary and renders no
 signup link** — the common deployed case — and swaps to "Create your account" only if
 `available: true` arrives. A visitor never waits on a sleeping API to see a button, and
-never sees a button that leads to a closed door. *(Call, FA14.)* "See the live demo" is
-`<a href="/demo">`. All marketing content is static.
+never sees a button that leads to a closed door. *(Call, FA14.)* Only when `available: false`
+arrives does the hero add "Already on a team? Sign in" (`brand_design_strategy.md` §6.0 rule 13;
+owner decision, auth pages 2026-10-17). "See the live demo" is
+`<a href="/demo">`. All marketing content is static. *(Owner decision, auth pages round six: its links to
+`/signin` and `/signup` are client-side `TransitionLink`s, through `components/marketing/AppLink.jsx`; see
+§4. Leaving, the page undoes everything it set on `<html>` and `<head>` and reverts GSAP's `matchMedia`;
+returning re-creates it. `brand_design_strategy.md` §6.0 rule 14.)*
 
 **The landing page is a different look from the app** (`brand_design_strategy.md` §6.0), and
 the code keeps it that way:

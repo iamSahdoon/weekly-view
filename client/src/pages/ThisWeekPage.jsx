@@ -30,9 +30,14 @@ import {
 import { useOnLeave, useSetLeave } from "../hooks/useUserQueries.js";
 import { useWeekParam, useWeekdayParam } from "../hooks/useWeekParam.js";
 import { WEEKDAYS } from "../lib/constants.js";
-import { weekKeyOf, weekdayOf } from "../lib/dates.js";
+import {
+  compareWeekKeys,
+  currentWeekKey,
+  weekKeyOf,
+  weekdayOf,
+} from "../lib/dates.js";
 import { errorCopy } from "../lib/errorCopy.js";
-import { deriveWeekAction } from "../lib/weekActions.js";
+import { deriveWeekAction, joinedAfterWeek } from "../lib/weekActions.js";
 
 // This week — "/" signed in (design §3.1, frontend_architecture.md §9.1). The strip
 // chooses a day, the day panel writes it, and the panels below summarise the week and
@@ -147,6 +152,7 @@ export default function ThisWeekPage() {
     view.report === null &&
     recent.data?.meta?.total === 0 &&
     !searchParams.has("day");
+  const joinedLater = firstWeek ? joinedAfterWeek(view, me.joinedAt) : null;
   const today = weekdayOf(new Date());
   const otherNames = (onLeave.data?.items ?? [])
     .filter((u) => u._id !== me._id)
@@ -191,7 +197,9 @@ export default function ThisWeekPage() {
             />
           </div>
 
-          {firstWeek ? (
+          {joinedLater ? (
+            <JoinedLaterPanel {...joinedLater} />
+          ) : firstWeek ? (
             <FirstWeekPanel
               canPostToday={Boolean(today) && view.dayStates[today] === "today"}
               onStart={() => chooseDay(today)}
@@ -263,6 +271,35 @@ export default function ThisWeekPage() {
         </div>
       </PageContainer>
     </>
+  );
+}
+
+function JoinedLaterPanel({ joined, firstWeek, firstMonday }) {
+  // A link only once that week has begun; before then it can't be opened.
+  const current = currentWeekKey();
+  const canOpen = compareWeekKeys(firstWeek, current) <= 0;
+  return (
+    <section className="flex flex-col items-start gap-11 border border-hair bg-card p-24">
+      <h2 className="font-display text-panel font-bold text-ink">
+        Your first week starts{" "}
+        <span className="whitespace-nowrap">
+          {format(firstMonday, "EEE d MMM")}.
+        </span>
+      </h2>
+      <p className="text-base text-body">
+        You joined on{" "}
+        <span className="whitespace-nowrap">{format(joined, "EEE d MMM")}</span>
+        , after this week’s working days. Your daily updates start that Monday,
+        and your weekly report builds itself from them.
+      </p>
+      {canOpen && (
+        <Button asChild variant="secondary">
+          <Link to={firstWeek === current ? "/" : `/?week=${firstWeek}`}>
+            Go to that week
+          </Link>
+        </Button>
+      )}
+    </section>
   );
 }
 

@@ -459,12 +459,13 @@ client/
 │   │   ├── DevOnlyRoute.jsx           # gates /design behind import.meta.env.DEV
 │   │   ├── pages.js                   # added in C8: every routed page as a lazyPage — the route table and prefetch.js both name each page here
 │   │   ├── lazyPage.jsx               # added in C8: React.lazy that renders at once once its chunk has loaded (no 300 ms Suspense hold)
-│   │   ├── prefetch.js                # added in C8: preloads the route chunks a role may open next, when the browser is idle
+│   │   ├── prefetch.js                # added in C8: preloads the route chunks a role may open next, when the browser is idle; prefetchAuthPages (round six)
+│   │   ├── TransitionLink.jsx         # added for the auth pages (round six): a client-side link between "/" and the auth screens, in a view transition, loading the target page first
 │   │   └── __tests__/routeGuards.test.jsx  # added in C2: ProtectedRoute's 403, ParamGuard, and the Sidebar's DOM per role (static render); C8 adds routeFallbacks.test.jsx (lazyPage, a fallback on every route, no `fallback={null}` in the source)
 │   ├── layouts/
 │   │   ├── RootLayout.jsx             # router root: SkipLink, Outlet, Toaster, ReAuthModal, ScrollRestoration — C2: OfflineStrip is mounted by AppShell, under the top bar (design §3.13)
 │   │   ├── AppShell.jsx               # sidebar + top bar frame; renders <Outlet/>
-│   │   ├── AuthLayout.jsx             # the centred 420px column, no shell (§3.12)
+│   │   ├── AuthLayout.jsx             # no shell (§3.12); since the auth-pages change (2026-10-17) the split: brand panel left, form right, on shared rows; a slim header below 1024px
 │   │   └── MarketingLayout.jsx        # sticky nav + footer for the landing page, in the landing theme (brand §6.0)
 │   ├── pages/
 │   │   ├── LandingPage.jsx            # /  when signed out — brand §6–7, requirements §13
@@ -631,12 +632,19 @@ client/
 │   │   │   ├── SignInForm.jsx         # added in C1: shared by /signin and ReAuthModal
 │   │   │   ├── FormStrip.jsx          # added in C1: the --st-corr-bg failure strip
 │   │   │   ├── LinkPreviewGate.jsx    # added in C1: A7 before the invite / reset form
-│   │   │   └── LinkExpired.jsx        # added in C1: the one expired-link state
+│   │   │   ├── LinkExpired.jsx        # added in C1: the one expired-link state
+│   │   │   ├── AuthBrandPanel.jsx     # added for the auth pages (owner, 2026-10-17): wordmark, a looping sample week in the app's style, one line
+│   │   │   ├── previewSteps.js        # added for the auth pages (round three): the sample week's loop, step by step
+│   │   │   ├── panelIntros.js         # added for the auth pages (round four): the brand panel's line for each screen
+│   │   │   ├── authIntro.js           # added for the auth pages (round four): AuthIntroContext and useAuthIntro
+│   │   │   ├── ResponseLost.jsx       # added for the auth pages: "Your account may already have been created", when an answer was lost
+│   │   │   └── __tests__/AuthScreens.test.jsx  # added for the auth pages: the split frame, the way home, the bootstrap-led links
 │   │   └── marketing/                 # the landing page's sections, ported from landing-reference/index.html (brand §6.0)
-│   │       ├── HeroSection.jsx · ProblemSection.jsx · WeekSection.jsx · DeskSection.jsx · PrivacySection.jsx · DemoSection.jsx · QuestionsSection.jsx · FinalSection.jsx   # added in C10, one per section, in page order (landing revamp: Sides and Limits gone, Privacy and Demo added — brand §6.0 rule 10); Hero, Questions and Final take `signupOpen`
+│   │       ├── HeroSection.jsx · ProblemSection.jsx · WeekSection.jsx · DeskSection.jsx · PrivacySection.jsx · DemoSection.jsx · QuestionsSection.jsx · FinalSection.jsx   # added in C10, one per section, in page order (landing revamp: Sides and Limits gone, Privacy and Demo added — brand §6.0 rule 10); Hero, Questions and Final take `signupOpen`; Hero also takes `signupClosed` (its sign-in line, brand §6.0 rule 13)
 │   │       ├── StoryCaptions.jsx      # added in the landing revamp: the two scroll stories' captions — the pinned, typed column and the stacked numbered notes
 │   │       ├── storySteps.js          # added in the landing revamp: the stories' steps (kicker, sentence, the dashboard's filter)
-│   │       ├── CtaPill.jsx            # added in C10: the pill link (solid with the arrow circle, or ghost) — always a plain <a>, so the landing styles never outlive the page
+│   │       ├── CtaPill.jsx            # added in C10: the pill link (solid with the arrow circle, or ghost) — through AppLink since round six
+│   │       ├── AppLink.jsx            # added for the auth pages (round six): /signin and /signup as TransitionLinks; /demo and the rest plain <a>
 │   │       ├── Words.jsx              # added in C10: a heading's words in their masks (the reference split them in its script)
 │   │       └── __tests__/LandingPage.test.jsx  # added in C10: the CTA swap, the honesty rules, the ids the motion needs, no hex in the components
 │   ├── demo/                          # the client-side demo — tech_stack.md §6.9
@@ -680,6 +688,7 @@ client/
 │   │   ├── useAppendMotion.js         # added in the polish pass (2026-10-10): the row just added with "Add a …" settles in (design §8.5, 27)
 │   │   ├── useHasMounted.js           # lets charts animate data changes but not mount
 │   │   ├── usePermissions.js          # lib/permissions bound to the current user
+│   │   ├── useArrivedInTransition.js  # added for the auth pages (round six): whether a page mounted inside a view transition
 │   │   ├── useLandingMotion.js        # the landing page's motion, as one effect hook: the hero's typed blocker, the two guided scroll stories, entrances, parallax and the footer's week (GSAP + ScrollTrigger, imported here only)
 │   │   ├── useReportQueries.js        # TanStack Query hooks wrapping reportService (incl. team updates)
 │   │   ├── useReviewQueries.js        # review desk, review actions, comments
@@ -740,7 +749,8 @@ client/
 │   │   ├── invalidateWeek.js          # added in C3: the one invalidation helper for a week and its report (frontend_architecture §5.7)
 │   │   ├── errorToast.js              # added in C3: the error toast with `Retry` for a failed write that has no form (frontend_architecture §5.7)
 │   │   ├── submitChecklist.js         # the submit checklist from dayStates + task statuses
-│   │   ├── weekActions.js             # the top-bar primary action for a week
+│   │   ├── weekActions.js             # the top-bar primary action for a week; `joinedAfterWeek` (auth pages, 2026-10-17)
+│   │   ├── authRecovery.js            # added for the auth pages (owner report, 2026-10-17): which screen after a lost answer
 │   │   ├── reviewDeskParams.js        # added in C6: the review desk's URL spec, and the query behind "Next in review desk"
 │   │   ├── reviewOutcome.js           # added in C6: "Approved by Ruwan P. at 10:22"
 │   │   ├── updatesDay.js              # added in C6: which days Team updates can show, and the default one
@@ -1008,7 +1018,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. C9 adds `demo/__tests__/demoMarkers.test.js` (N1 and V4 in the demo), `lib/__tests__/clearMarkers.test.js` and `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. C9 adds `demo/__tests__/demoMarkers.test.js` (N1 and V4 in the demo), `lib/__tests__/clearMarkers.test.js` and `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`. The auth-pages change (owner, 2026-10-17) adds `components/auth/__tests__/AuthScreens.test.jsx`, `lib/__tests__/authRecovery.test.js` and extends the This week, `weekActions` and landing tests. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

@@ -1,7 +1,13 @@
+import { AppLink } from "./AppLink.jsx";
 import { CtaPill } from "./CtaPill.jsx";
 import { Words } from "./Words.jsx";
 
-export function HeroSection({ signupOpen }) {
+// The hero's actions follow the bootstrap check (brand §6.0 rules 7 and 13): open → "Create
+// your account" first; closed → the demo first and, under it, "Already on a team? Sign in";
+// pending or failed → the demo only, with no sign-up or sign-in line. Open, the two buttons
+// stand alone (owner decision, auth pages 2026-10-17: the "Set up your first week…" line is
+// gone); otherwise the demo pill keeps "No account needed. Nothing is saved." beside it.
+export function HeroSection({ signupOpen, signupClosed = false }) {
   return (
     <section className="hero s-sp" id="top" aria-labelledby="h1">
       <div className="wrap hgrid">
@@ -26,20 +32,21 @@ export function HeroSection({ signupOpen }) {
                 <CtaPill href="/demo" variant="ghost">
                   See the live demo
                 </CtaPill>
-                <span className="micro">
-                  Set up your first week in minutes. No sign-up to explore the
-                  demo.
-                </span>
               </>
             ) : (
               <>
                 <CtaPill href="/demo">See the live demo</CtaPill>
                 <span className="micro">
-                  No sign-up. Everything works, nothing is saved.
+                  No account needed. Nothing is saved.
                 </span>
               </>
             )}
           </div>
+          {signupClosed && (
+            <p className="hsign">
+              Already on a team? <AppLink href="/signin">Sign in</AppLink>
+            </p>
+          )}
         </div>
         <div className="hvis">
           <div

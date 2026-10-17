@@ -9,6 +9,7 @@ const twMerge = extendTailwindMerge({
       text: [
         "metric",
         "metric-sm",
+        "title",
         "page",
         "sub",
         "panel",

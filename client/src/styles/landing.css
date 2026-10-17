@@ -62,6 +62,11 @@
 .landing *,.landing *::before,.landing *::after{box-sizing:border-box}
 html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scrollbar-color:var(--l-ln) var(--l-bg2)}
 .landing{margin:0;background:var(--l-bg);color:var(--l-fg);font-family:var(--l-f);font-size:17px;line-height:1.55;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;caret-color:var(--l-acc)}
+/* Owner decision (auth pages round six, brand §6.0 rule 14): coming back from the sign-in screens client-side, the page fades in (inside the view transition where there is one; on its own where there is not). */
+@keyframes l-page-in{from{opacity:0}}
+.landing{animation:l-page-in .26s cubic-bezier(.2,0,0,1) both}
+.landing.l-in-vt{animation:none}
+@media (prefers-reduced-motion:reduce){.landing{animation:none}}
 .landing ::selection{background:var(--l-acc);color:var(--l-on-acc)}
 .landing svg{display:block}
 .landing a{color:inherit}
@@ -122,6 +127,10 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .sub{margin-top:28px;font-size:20px;line-height:1.5;color:var(--l-fg2);max-width:36ch}
 .landing .acts{margin-top:34px;display:flex;align-items:center;gap:12px 18px;flex-wrap:wrap}
 .landing .micro{font-size:15px;line-height:1.45;color:var(--l-fg3);max-width:19ch}
+/* Owner decision (auth pages, 2026-10-17; brand §6.0 rule 13): on a closed instance, the way in for people already on the team. */
+.landing .hsign{margin-top:20px;font-size:17px;line-height:1.45;color:var(--l-fg2)}
+.landing .hsign a{display:inline-block;padding:10px 2px;color:var(--l-fg);font-weight:650;text-underline-offset:5px;text-decoration-thickness:1.5px;transition:text-underline-offset .2s var(--l-ease-m)}
+.landing .hsign a:hover{text-underline-offset:7px}
 .landing .door{flex:1 1 0;display:flex;flex-direction:column;gap:2px;padding:14px 20px;border:1px solid var(--l-ln);border-radius:18px;text-decoration:none;min-width:180px;transition:background-color .2s linear,border-color .2s linear}
 .landing .door:hover{background:var(--l-up);border-color:var(--l-fg2)}
 .landing .door b{color:var(--l-fg);font-weight:650;font-size:17px;line-height:1.35}

@@ -511,6 +511,30 @@ sees the real thing.
       fits it exactly in whatever face has loaded, so it never wraps or overflows from 360px up. Its gap to the
       rule above the © line is set from the descender. It stays `aria-hidden` and keeps its rise into place
       (rule 11).
+13. **Owner decision (auth pages, 2026-10-17): a way in for people already on a team.** Rule 7's bootstrap swap
+    stays: sign-up open → "Create your account" is the primary action. When the check says sign-up is **closed**
+    (the team exists), the hero adds a line under its actions, "Already on a team? **Sign in**", in the page's
+    `--l-fg2` with an underlined `--l-fg` link to `/signin` (17px, Bricolage Grotesque, `.landing .hsign`). The
+    demo caption beside the pill is shortened from "No sign-up. Everything works, nothing is saved." to "No
+    account needed. Nothing is saved." While the check is pending or has failed, the hero is as before: the demo
+    pill only, no sign-up link and no sign-in line (FA14). Landing tokens only; nothing reaches the app.
+    *Round two (owner, after testing, 2026-10-17):* with sign-up open, the hero is its two buttons alone — the
+    line "Set up your first week in minutes. No sign-up to explore the demo." is removed. "No account needed.
+    Nothing is saved." stays beside the demo pill in the other states, where it reads as the demo's caption.
+14. **Owner decision (auth pages round six, 2026-10-17): the landing page and the sign-in screens are one smooth
+    move.** This replaces the earlier rule that the landing page's links are full page loads. Every link to
+    `/signin` and `/signup` (the hero's buttons, the nav's "Sign in" and pill, "Already on a team? Sign in", the
+    closing band, the footer) opens the screen client-side, inside a view transition (a calm 300ms cross-fade,
+    the new page rising 6px), and "← Back to home" returns the same way. Browser Back and Forward reuse it.
+    `/demo` stays a plain link and a different page load. **Isolation still holds:** `landing.css` stays loaded
+    once the page has been visited, but every rule is scoped to `.landing` (the isolation test), and the page
+    removes `html.landing-active`, the Bricolage Grotesque link, its title and description when it unmounts; the
+    landing chunk (and GSAP) loads only when `/` is shown. Measured in Chromium after landing → `/signin`
+    client-side, light and dark: no element on the auth screens has a landing colour, the landing typeface or a
+    rounded corner. Returning, the page re-creates its motion from scratch (GSAP's `matchMedia` was reverted on
+    leaving): the hero plays, the stories pin, and "Back to home" starts at the top (browser Back restores the
+    scroll). Without view transitions the landing page fades in on its own (`l-page-in`, 260ms); under reduced
+    motion nothing animates.
 
 ### 6.1 Job of the page
 

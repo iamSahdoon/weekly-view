@@ -102,6 +102,11 @@
   --text-metric-sm--line-height: 1;
   --text-metric-sm--letter-spacing: -0.025em;
 
+  /* The auth screens' heading (owner decision, auth pages 2026-10-17; design §3.12). */
+  --text-title: 40px;
+  --text-title--line-height: 1.08;
+  --text-title--letter-spacing: -0.04em;
+
   --text-page: 28px;
   --text-page--line-height: 1.12;
   --text-page--letter-spacing: -0.035em;

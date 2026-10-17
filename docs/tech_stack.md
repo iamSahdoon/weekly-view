@@ -46,7 +46,7 @@ design tokens from `product_design_system.md`.
 | Security headers   | **helmet**                                             | `^8`                | CSP matters more than usual because the JWT lives in `localStorage`                                                          |
 | HTTP logging       | **morgan**                                             | `^1.10`             | `dev` format locally, `combined` in production; Render captures stdout                                                       |
 | Dates              | **date-fns**                                           | `^4`                | The same library as the client: ISO week keys and Monday-based weeks (`utils/weeks.js`, `calendarService`) computed one way on both sides |
-| Dev reload         | **`node --watch`**                                     | built-in            | Node's built-in watcher removes the `nodemon` dependency entirely                                                            |
+| Dev reload         | **`node --watch`**                                     | built-in            | Node's built-in watcher removes the `nodemon` dependency entirely. *(Owner report, 2026-10-17: run as `--watch-path=src`, so changes under `node_modules` — an install, a file scanner — no longer restart the API mid-request; `server.js` closes gracefully on SIGTERM.)* |
 | Tests              | **vitest** + **supertest** + **mongodb-memory-server** | `^3` / `^7` / `^10` | RBAC tests only, against an in-memory Mongo so tests never touch Atlas                                                       |
 
 **Deliberately not included:** `express-rate-limit`, `compression`,
@@ -916,7 +916,7 @@ Not omissions — decisions, to be revisited if WeeklyView takes real users.
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
-    "dev": "node --watch src/server.js",
+    "dev": "node --watch-path=src src/server.js",
     "start": "node src/server.js",
     "db:empty": "node src/seed/index.js --empty",
     "db:sample": "node src/seed/index.js",

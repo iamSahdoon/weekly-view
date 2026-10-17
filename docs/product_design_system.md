@@ -470,7 +470,7 @@ a first impression, and a returning user should never be shown it again.
 
 | State                       | Treatment                                                                                                                                                                     |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Empty** (nothing ever)    | Week strip renders. A single panel: Chivo 17px "Your first week starts here.", body "Post what you did today. Your weekly report builds itself from your daily updates.", primary `Post today's update`. Other panels not rendered — no zero-filled cells. |
+| **Empty** (nothing ever)    | Week strip renders. A single panel: Chivo 17px "Your first week starts here.", body "Post what you did today. Your weekly report builds itself from your daily updates.", primary `Post today's update`. Other panels not rendered — no zero-filled cells. *(Owner decision, auth pages 2026-10-17 — **joined after the week**: when none of the shown week's days can be posted because the person joined after its Friday (e.g. the owner signs up on a Saturday, so every day reads "Not on the team", or a holiday), the panel says instead: Chivo 17px "Your first week starts Mon 19 Oct.", body "You joined on Sat 17 Oct, after this week's working days. Your daily updates start that Monday, and your weekly report builds itself from them.", and a secondary `Go to that week` once that week has begun (before then it can't be opened). No `Post today's update`. The server rule is unchanged: updates are expected from the join date.)* |
 | **Loading**                 | Skeletons: H1 `220×28`, week strip live, day panel at real height, the 8/4 pairs at real heights.                                                                             |
 | **Error**                   | Inline error panel replaces the affected panel; H1 and week strip still render.                                                                                               |
 
@@ -988,7 +988,125 @@ separated by `32px`.
 
 Product screens outside the shell: no sidebar, no top bar.
 
-**Shared layout.** Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
+> **Owner decision (auth pages, 2026-10-17): a calm split layout.** It replaces the centred
+> column described in the next paragraph for the five auth screens (sign in, create account
+> open and closed, accept invite, reset password; "Forgot your password?" stays a panel on
+> sign in, not a page, with no route of its own — owner decision, accepted in the PR #27 review,
+> 2026-10-17). The look is the app's: cobalt on cool neutrals, Chivo / Instrument
+> Sans, square corners, hairlines, no shadow, tokens only.
+>
+> - **From 1024px: two equal halves.** The **form side** (`--paper`) holds a 420px column:
+>   at the top a `--mut` 13px "← Back to home" link to `/`; then, `max(52px, 14vh)` down, the
+>   heading in Chivo 700 **40px** (`--text-title`: line-height 1.08, tracking −0.04em; 28px
+>   `text-page` below 640px), the optional `--mut` line at 16px, the form panel as before, and
+>   the secondary links stacked under it. The **brand panel** (`--card`, a 1px `--hair` line
+>   between, sticky at full height) holds the glyph and wordmark (Chivo 800, 22px) on the same
+>   line as "Back to home", and, centred in the panel, a quiet week: five 22px Updates squares
+>   Mon–Fri in a hairline strip that fill in once (§8.5, entry 32), then "One short update a
+>   day." (Chivo 700 20px) and "Each person posts what they did, and Friday's weekly report
+>   builds itself from the five days." Nothing else — no illustration, no marketing copy.
+> - **Below 1024px:** the brand panel collapses to a 52px `--card` header with a hairline
+>   under it: the wordmark (17px) on the left, "← Back to home" on the right. The form comes
+>   straight after it, `32px` down (`max(52px, 10vh)` from 640px).
+> - **Headings and links.** Sign in: "Sign in to WeeklyView" (the tab still says "Sign in");
+>   under the panel "Forgot your password?" and, **only when the bootstrap check says sign-up
+>   is open**, "No team here yet? Create the owner account" (sign in asks the same A1 check as
+>   the landing page — owner decision, accepted in the PR #27 review, 2026-10-17). Create account (open): "Create
+>   the owner account" / "You're the first person here, so this account will be the admin and
+>   the owner. Everyone else joins with an invite link from you." The other headings, every
+>   field, error, route and request are unchanged.
+> - The demo's chooser keeps the earlier centred column; the auth routes are not in the demo,
+>   so "Back to home" never appears inside `/demo`.
+
+> **Owner decisions (auth pages, round two after testing, 2026-10-17)** — these replace the
+> composition above where they differ; the headings, copy and links above stand.
+>
+> - **The form is always on the left**, on every auth screen (sign in, create account open
+>   and closed, accept invite, reset password, the expired-link and response-lost states).
+> - **Split 55 / 45** (`11fr / 9fr`) from 1024px; checked at 1440, 1280 and 1024.
+> - **Form side:** one 420px column, centred in its half both ways, with "← Back to home",
+>   the heading, the panel and the links on one left edge (Back to home 24px above the
+>   heading). No fixed top offset: the column is centred, so there is no dead band above it.
+> - **Brand panel:** `--tint` with a faint `--hair` grid (32px); one block, max 400px, centred
+>   both ways — the wordmark (22px), then a small **sample week** in the app's own style, then
+>   "One short update a day." and its line. The sample week is a `--card` panel: a "This week"
+>   header with the dashed `SAMPLE DATA` marker, the week strip with the real Updates states
+>   (Mon–Wed posted, Thu today with its `--acc` underline, Fri a holiday on `--tint`; Wed
+>   chosen, with the 2px `--ink` bar), and the posted Wednesday as a day card — "Posted
+>   17:42", 7 h, two work lines with their type marks (`--c1` Development, `--c2` Testing) and
+>   hours in mono. It is `aria-hidden`; the sentence under it says the same. Its squares are
+>   the §8.5 entry 32 motion.
+> - **Below 1024px:** unchanged — the slim header, the form first from the top.
+> - **When an answer never arrives** (owner report, 2026-10-17): if Create account, Join the
+>   team or Save password fails with no response, and the server then shows it already
+>   happened (sign-up closed; the link used up), the screen does not say "This team is
+>   invite-only." or "This link has expired". It shows a `--tint` block, drawn like the
+>   expired-link one: "Your account may already have been created." / "Sign in with the email
+>   you just used." (reset: "Your new password may already have been saved." / "Sign in with
+>   your new password.") and a primary `Sign in`, which opens `/signin` with that email filled
+>   in. Sign-up re-checks by itself right after the failure; the link screens show it when
+>   the next try finds the link used.
+
+> **Owner decisions (auth pages, round three after the second test, 2026-10-17)** — these
+> replace the round-two composition where they differ (the copy, links and the response-lost
+> state stand):
+>
+> - **The brand panel is on the left and the form on the right**, on every auth screen (sign
+>   in, create account open and closed, accept invite, reset password, the expired-link and
+>   response-lost states). This reverses round two's "form on the left". The form stays first
+>   in the DOM, so focus, screen readers and the phone layout (slim header, form first) are
+>   unchanged.
+> - **A matched pair.** Two equal halves from 1024px, each holding one 420px block centred in
+>   it, so the outer margins mirror (1440: 150px each side). The blocks share one grid (CSS
+>   subgrid) with four rows: "Back to home" level with the wordmark; the heading's row; the
+>   form's panel level with the sample card, which stretches to the panel's height (the
+>   expired-link and response-lost blocks stretch the same way); the form's links level with
+>   the caption. So the two blocks' top and bottom edges line up exactly, and the sample card
+>   and the form card are one size. The sign-up-closed screen, whose body is one button,
+>   keeps its link under the button.
+> - **Never clipped.** The rows above and below the pair are at least 52px and share the rest
+>   of the height, so the pair sits on the screen's centre line; when the content is taller
+>   than the screen (sign up at 768px high) the page scrolls with 52px kept top and bottom.
+>   Checked at 1920×1080, 1440×900, 1366×768, 1280×800/768, 1024×768 and 360, light and dark.
+> - **The sample card** gains a footer, "Friday's weekly report" with a `Draft` chip, and its
+>   days loop (§8.5 entry 32): Monday to Wednesday posted, Thursday today then posted, Friday a
+>   holiday that is never chosen.
+
+> **Owner decisions (auth pages, round four after the third test, 2026-10-17)** — on top of
+> round three:
+>
+> - **The panel's own line.** Under the wordmark, beside the heading and the form panel, the
+>   brand panel says something for this screen (`panelIntros.js`), Chivo 700 17px with one
+>   `--body` line: sign in "Welcome back." / "Your week is where you left it."; create
+>   account (open) "Three steps to your team's first week" with three numbered steps (create
+>   the owner account; invite your team; everyone posts a short update each day); sign-up
+>   closed "This team is already set up."; accept invite "You've been invited to join the
+>   team."; reset password "A new password, then back to your week."; an expired link "Links
+>   work once, for a limited time."; a lost answer "The connection dropped, not your work."
+>   The page names its line; an expired link or a lost answer replaces it while it shows.
+>   Any room left beside a taller form is shared above and below the line.
+> - **The sample card keeps its natural height**, its bottom level with the form panel's.
+>   It is never stretched.
+> - **Short screens** (sign-up closed, an expired link, a lost answer) keep the heading, the
+>   message and its button together, top-aligned with the brand side, instead of spreading
+>   them over the shared rows.
+> - **One selection mark.** The sample week's only "chosen" mark is the 2px `--ink` bar; the
+>   blue "today" underline is gone (today is still the hollow square).
+> - **The day change is sequential** — §8.5 entry 32.
+> - **Arrival and the grid** — §8.5 entries 33 and 34.
+
+> **Owner decisions (auth pages, round five after the fourth test, 2026-10-17):**
+>
+> - **The panel's line sits on a card**, drawn like the sample card: `--card`, a 1px `--hair`
+>   border, square corners, no shadow, the same width, `20px` / `16px` inner padding. Every
+>   screen gets the card, the one-line intros included: side by side in the screenshots, the
+>   one-liners on a card read as one set with the three-step list, and bare text on the
+>   moving grid was the less finished of the two.
+> - **The two cards keep one 24px gap on every screen**; any room a taller form leaves goes
+>   above the pair, beside the form's heading. Top and bottom edges still match the form's.
+> - **A livelier grid** — §8.5 entry 34.
+
+**Shared layout** *(before the owner decision above)*. Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
 polish 2026-10-10: the column starts `18vh` down, never less than `52px` (`32px` below
 480px), so it sits in the upper middle of the screen rather than hugging the top; a fixed
 offset, not flex centring, so nothing jumps when a skeleton gives way to a taller form. The
@@ -1001,8 +1119,8 @@ copy, no illustration.
 
 | Screen             | Route            | Heading                 | Fields                                  | Primary          | Secondary link                     |
 | ------------------ | ---------------- | ----------------------- | --------------------------------------- | ---------------- | ---------------------------------- |
-| **Sign in**        | `/signin`        | "Sign in"               | email, password                         | `Sign in`        | "Forgot your password?" (see below) |
-| **Create account** | `/signup`        | "Create your account"   | name, email, password                   | `Create account` | "Already have an account? Sign in" |
+| **Sign in**        | `/signin`        | "Sign in to WeeklyView" | email, password                         | `Sign in`        | "Forgot your password?" (see below) |
+| **Create account** | `/signup`        | "Create the owner account" | name, email, password                   | `Create account` | "Already have an account? Sign in" |
 | **Accept invite**  | `/invite/:token` | "Join the team"         | name, password (email and role shown read-only) | `Join the team` | —                          |
 | **Reset password** | `/reset/:token`  | "Choose a new password" | new password, confirm (email shown read-only) | `Save password` | —                             |
 
@@ -2100,6 +2218,18 @@ than merely shortened.
 - Confetti or any celebratory motion on approval, beyond entry 14.
 - Page-load entrance staggering of any kind.
 
+*Owner-approved exceptions (auth pages, PR #27; rounds three and four, 2026-10-17), on the
+signed-out auth screens only, never inside the app:* (1) the brand panel's sample week is a
+**continuous decorative loop** — it walks Monday to Thursday and posts Thursday, every 15 s
+(§8.5, entry 32; it replaces the one-time fill-in accepted earlier); (2) the screens **arrive**
+in a view transition from the landing page and with a staggered entrance (entries 33 and 35,
+round six); (3) the panel's hairline grid **drifts** one cell every
+14 s and a few of its cells softly light in turn (entry 34; round five sped the drift up from
+48 s and added the cells). All three move only `opacity` and `transform`; the loop runs on one timer, the
+grid on one CSS layer; both wait while the tab is hidden or the panel is out of view (the
+phone layout hides it); under reduced motion none of them runs (the posted Thursday is shown).
+Nothing else in the product is excused from the list above.
+
 ### 8.5 Owner decision — whole-app polish (2026-10-10)
 
 > **Owner decision (polish pass after C10, 2026-10-10).** The app should not feel like a
@@ -2123,7 +2253,22 @@ than merely shortened.
 | 29  | Autosave state change               | the words fade in; the 6px square fills | 120 / 160ms | `--ease-out` / linear | CSS                  | save              |
 | 30  | Light ↔ dark switch                 | background, border and text colours cross-fade | 200ms | `ease`     | CSS (`.wv-theme-easing`, 260ms)  | Appearance switch |
 | 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
+| 32  | Auth screens' brand panel: the sample week loops *(owner decision, auth pages 2026-10-17, rounds three and four)* | each change in three moves that never overlap: the old day fades out (`opacity`, 0–160ms, `--ease-in`); the chosen day's 2px `--ink` bar slides (`transform`, 140–340ms); the new day fades in (240–420ms) — on Thursday its square fills (`opacity`, `scale(.5→1)`) and the posted lines rise 4px. Mon → Tue → Wed → Thu, Thursday posted, back to Monday | steps 3 / 3 / 3 / 2.2 / 3.8 s — a 15 s cycle | `--ease-out` | CSS transitions, one `setTimeout` (`previewSteps.js`) | continuous while visible |
+| 33  | Landing ↔ auth screens: the view transition *(owner decision, round six; replaces round four's block rise)* | the old page fades out as the new one fades in and rises 6px (one length and curve both ways, so the browser's plus-lighter blend never washes out the middle); also between the auth screens, and for browser Back and Forward | 300ms | `--ease-soft` | React Router `viewTransition`; CSS on `::view-transition-old/new(root)` | a click on a `TransitionLink`, or Back / Forward |
+| 35  | Auth screens: staggered entrance *(owner decision, round six)* | each part rises 10px with a fade, 50ms after the one before — brand side: wordmark, intro card, sample card, caption; form side 40ms behind: back link, heading, line, panel, links (the last done at about 600ms). Inside a view transition the parts only rise (the cross-fade fades them). The brand panel's background fades in (280ms). The form can be focused and typed in at once | 380ms each | `--ease-out` | CSS (`.wv-stagger` with `--stagger`, `.wv-in-transition`, `.wv-auth-fade`) | the screen mounts (a direct load, a refresh, an arrival, or a change of auth screen) |
+| 34  | Auth screens' brand panel: the grid drifts and a few cells light *(owner decisions, rounds four and five)* | one oversized layer of the 32px `--hair` grid moves one cell down and right (`transform`), seamlessly; eight of its cells light to `--acc` at 12% (light) / 28% (dark) and back (`opacity`), in four turns, two at a time — placed only where they never sit behind text or a card | 14s, `infinite` (each cell: ~1.4s in, ~1.4s out, dark at the loop's seam) | linear | CSS (`.wv-grid-drift`, `.wv-grid-cell`), paused by `[data-paused]`; positions measured once and on resize (`ResizeObserver`) | continuous while visible |
 
+- **Entries 32–34 are the exceptions to §8.4** — owner decisions (PR #27, rounds three and
+  four, 2026-10-17); 32 replaces the one-time fill-in. Signed-out auth screens only, never in
+  the app. **Round six (owner decision) changed 33:** the landing page's links are now
+  client-side, so 33 is a real view transition (the earlier "full page loads" rule is
+  withdrawn; `brand_design_strategy.md` §6.0 rule 14), and the arrival is the stagger (35).
+  Without view transitions, navigation still works and 35 plays; under reduced motion the
+  switch is instant and nothing staggers.
+  Entry 32: It never moves the form or takes focus; it
+  pauses on `visibilitychange` (tab hidden) and when an `IntersectionObserver` says the panel
+  is out of view (the phone layout hides it); under reduced motion it does not start and the
+  posted Thursday is shown. The card is `aria-hidden`; the caption is the real text.
 - **Reduced motion:** 23–25 jump; 26 is a fade with no travel (`useReducedMotion`); 27–29 and
   31 are cut to 1ms by §8.3; 30 stays — it is colour only, and a gentle cross-fade is kinder
   than a full-screen brightness jump (Apple's guidance, the owner's reference).
@@ -2504,6 +2649,11 @@ td.num,
   --text-metric-sm: 26px;
   --text-metric-sm--line-height: 1;
   --text-metric-sm--letter-spacing: -0.025em;
+
+  /* Owner decision (auth pages, 2026-10-17): the auth screens' heading (§3.12). */
+  --text-title: 40px;
+  --text-title--line-height: 1.08;
+  --text-title--letter-spacing: -0.04em;
 
   --text-page: 28px;
   --text-page--line-height: 1.12;
