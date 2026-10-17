@@ -21,7 +21,7 @@ import { resetPasswordSchema } from "../schemas/authSchema.js";
 export default function ResetPasswordPage() {
   const { token } = useParams();
   return (
-    <AuthScreen heading="Choose a new password">
+    <AuthScreen heading="Choose a new password" intro="reset">
       <LinkPreviewGate token={token} purpose="reset">
         {(preview) => <ResetPasswordForm token={token} preview={preview} />}
       </LinkPreviewGate>

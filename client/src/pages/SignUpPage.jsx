@@ -34,7 +34,7 @@ export default function SignUpPage() {
 
   if (screen === "lost") {
     return (
-      <AuthScreen heading={OPEN_HEADING}>
+      <AuthScreen heading={OPEN_HEADING} intro="signup">
         <ResponseLost email={lostEmail} />
       </AuthScreen>
     );
@@ -42,7 +42,7 @@ export default function SignUpPage() {
 
   if (screen === "pending") {
     return (
-      <AuthScreen heading={OPEN_HEADING}>
+      <AuthScreen heading={OPEN_HEADING} intro="signup">
         <AuthPanel>
           <div className="flex flex-col gap-20">
             <Skeleton className="h-[67px]" />
@@ -57,7 +57,7 @@ export default function SignUpPage() {
   // A failed re-check keeps the form (and what was typed) when the first check had answered.
   if (screen === "error") {
     return (
-      <AuthScreen heading={OPEN_HEADING}>
+      <AuthScreen heading={OPEN_HEADING} intro="signup">
         <InlineError
           title={errorCopy(bootstrap.error)}
           onRetry={() => bootstrap.refetch()}
@@ -84,6 +84,7 @@ function SignUpClosed() {
     <AuthScreen
       heading="This team is invite-only."
       compact
+      intro="closed"
       line="Ask an admin for an invite link. You can look around the demo in the meantime."
       footer={
         <AuthLink to="/signin">Already have an account? Sign in</AuthLink>
@@ -126,6 +127,7 @@ function SignUpForm({ onResponseLost }) {
   return (
     <AuthScreen
       heading={OPEN_HEADING}
+      intro="signup"
       line="You're the first person here, so this account will be the admin and the owner. Everyone else joins with an invite link from you."
       footer={
         <AuthLink to="/signin">Already have an account? Sign in</AuthLink>

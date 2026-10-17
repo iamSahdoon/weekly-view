@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { WEEKDAYS, WEEKDAY_SHORT } from "../../lib/constants.js";
 import { cn } from "../../lib/cn.js";
 import { DaySquare } from "../dashboard/UpdatesCell.jsx";
-import { StatusChip } from "../ui/StatusChip.jsx";
 import { BrandMark } from "../shell/BrandMark.jsx";
+import { StatusChip } from "../ui/StatusChip.jsx";
+import { PANEL_INTROS } from "./panelIntros.js";
 import {
   FINAL_STEP,
   PREVIEW_DAYS,
@@ -13,16 +14,20 @@ import {
 } from "./previewSteps.js";
 
 // The auth screens' brand panel (owner decisions, auth pages 2026-10-17; design §3.12): on the
-// left from 1024px, on --tint with a faint --hair grid. One 420px block, the form block's
-// twin on AuthLayout's shared rows: the wordmark level with "Back to home", a sample week
-// in the app's own style level with the form's panel and as tall, and the caption level
-// with the form's links. The sample week loops (design §8.5 entry 32,
-// an owner-approved exception to §8.4, on these screens only): the chosen day moves Monday →
-// Thursday every 3 s and its content cross-fades; on Thursday ("today") the square fills
-// and a work line appears; then it starts again. One timer, opacity and transform only;
-// it waits while the tab is hidden or the panel is out of view (the phone layout hides
-// it), and under reduced motion it shows the posted Thursday and never moves. Decorative
-// (aria-hidden): the caption is the real text. Nothing here takes focus or moves the form.
+// left from 1024px, on --tint with a faint --hair grid that drifts one cell every 48 s. One
+// 420px block, the form block's twin on AuthLayout's shared rows: the wordmark level with
+// "Back to home"; beside the heading and the form panel, the screen's own line (`intro`,
+// panelIntros.js) and a sample week in the app's own style at its natural height, its bottom
+// level with the form panel's; the caption level with the form's links.
+//
+// The sample week loops (design §8.5 entry 32, an owner-approved exception to §8.4, on these
+// screens only): the chosen day moves Monday → Thursday every 3 s; the old day's content
+// fades out, then the new one fades in (180 ms each, never both legible); on Thursday
+// ("today") the square fills and two lines appear; then it starts again. One timer,
+// opacity and transform only. It and the grid wait while the tab is hidden or the panel is
+// out of view (the phone layout hides it); under reduced motion neither moves and the
+// posted Thursday is shown. Decorative (aria-hidden); the line and caption are real text.
+// Nothing here takes focus or moves the form.
 
 const WEEK = { mon: "posted", tue: "posted", wed: "posted", fri: "holiday" };
 
@@ -65,61 +70,69 @@ const DAYS = {
   },
 };
 
-// The hairline grid behind the block: --hair lines on --tint, 32px apart.
+// The hairline grid: --hair lines on --tint, 32px apart, on one layer one cell larger than
+// the panel so the drift (wv-grid-drift, base.css) loops seamlessly.
 const GRID = {
   backgroundImage:
     "linear-gradient(var(--hair) 1px, transparent 1px), linear-gradient(90deg, var(--hair) 1px, transparent 1px)",
   backgroundSize: "32px 32px",
-  backgroundPosition: "-1px -1px",
 };
 
-const FADE = "transition-opacity duration-[400ms] ease-[var(--ease-out)]";
-const SLIDE = "transition-transform duration-[400ms] ease-[var(--ease-out)]";
+// A change of day, in three moves that never overlap: the outgoing day fades out (0–160
+// ms), the chosen-day bar slides while the card is nearly blank (140–340 ms), then the
+// incoming day fades in (240–420 ms). So two days are never legible at once, and the bar
+// is never under one day while another is showing.
+const FADE_IN =
+  "opacity-100 transition-opacity duration-[180ms] delay-[240ms] ease-[var(--ease-out)]";
+const FADE_OUT =
+  "opacity-0 transition-opacity duration-[160ms] delay-0 ease-[var(--ease-in)]";
+const BAR =
+  "transition-transform duration-[200ms] delay-[140ms] ease-[var(--ease-out)]";
+// The incoming lines rise 4px with the fade.
+const LIFT =
+  "transition-transform duration-[180ms] delay-[240ms] ease-[var(--ease-out)]";
 // Thursday's square: a fade and a small scale together (one transition list — two
-// transition classes would merge into one).
+// transition classes would merge into one), in step with the incoming content.
 const POP =
-  "transition-[opacity,scale] duration-[400ms] ease-[var(--ease-out)]";
+  "transition-[opacity,scale] duration-[180ms] delay-[240ms] ease-[var(--ease-out)]";
 
-/** The step to show: advances on one timer while the panel is on screen and the tab visible. */
-function usePreviewStep(ref, still) {
-  const [step, setStep] = useState(0);
+/** Whether the panel is worth animating: on screen (not hidden by the phone layout) and the tab visible. */
+function usePanelActive(ref) {
+  const [inView, setInView] = useState(
+    typeof IntersectionObserver === "undefined",
+  );
+  const [visible, setVisible] = useState(
+    () => typeof document === "undefined" || !document.hidden,
+  );
   useEffect(() => {
-    if (still) return undefined;
-    const node = ref.current;
-    let current = 0;
-    let timer = null;
-    let inView = typeof IntersectionObserver === "undefined";
-
-    const stop = () => {
-      clearTimeout(timer);
-      timer = null;
-    };
-    const run = () => {
-      stop();
-      if (!inView || document.hidden) return;
-      timer = setTimeout(() => {
-        current = (current + 1) % PREVIEW_STEPS.length;
-        setStep(current);
-        run();
-      }, PREVIEW_STEPS[current].ms);
-    };
-
+    const onVisibility = () => setVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
     const observer =
       typeof IntersectionObserver === "undefined"
         ? null
-        : new IntersectionObserver(([entry]) => {
-            inView = entry.isIntersecting;
-            run();
-          });
-    observer?.observe(node);
-    document.addEventListener("visibilitychange", run);
-    run();
+        : new IntersectionObserver(([entry]) =>
+            setInView(entry.isIntersecting),
+          );
+    observer?.observe(ref.current);
     return () => {
-      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
       observer?.disconnect();
-      document.removeEventListener("visibilitychange", run);
     };
-  }, [ref, still]);
+  }, [ref]);
+  return inView && visible;
+}
+
+/** The step to show: one timer, set only while the panel is active and motion is allowed. */
+function usePreviewStep(active, still) {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    if (still || !active) return undefined;
+    const timer = setTimeout(
+      () => setStep((current) => (current + 1) % PREVIEW_STEPS.length),
+      PREVIEW_STEPS[step].ms,
+    );
+    return () => clearTimeout(timer);
+  }, [active, still, step]);
   return still ? FINAL_STEP : step;
 }
 
@@ -173,7 +186,7 @@ function WeekPreview({ step }) {
   const { day, thuPosted } = PREVIEW_STEPS[step];
   const layer = previewLayer(step);
   return (
-    <div className="flex w-full flex-col border border-hair bg-card">
+    <div className="border border-hair bg-card">
       <div className="flex items-center justify-between gap-11 border-b border-hair px-20 py-14">
         <span className="font-display text-panel-sm font-bold text-ink">
           This week
@@ -187,12 +200,13 @@ function WeekPreview({ step }) {
           <div
             key={weekday}
             className={cn(
-              "relative flex items-center justify-center gap-6 py-14 text-dense font-medium",
+              "flex items-center justify-center gap-6 py-14 text-dense font-medium",
               weekday === "fri" ? "bg-tint text-mut" : "text-ink",
             )}
           >
             {WEEKDAY_SHORT[weekday]}
             {weekday === "thu" ? (
+              // Today: the hollow square, which fills once Thursday is posted.
               <span className="relative size-[10px]">
                 <DaySquare
                   state="today"
@@ -212,35 +226,34 @@ function WeekPreview({ step }) {
             ) : (
               <DaySquare state={WEEK[weekday]} size={10} />
             )}
-            {weekday === "thu" && (
-              <span className="absolute inset-x-0 bottom-0 h-2 bg-acc" />
-            )}
           </div>
         ))}
-        {/* The chosen day's 2px bar: one element, moved by transform only. */}
+        {/* The chosen day: the one 2px --ink bar, moved by transform only. It is the only
+            mark of selection (no "today" underline), so one tab looks chosen at a time. */}
         <span
-          className={cn("absolute top-0 left-0 h-2 w-1/5 bg-ink", SLIDE)}
+          data-preview-bar=""
+          className={cn("absolute top-0 left-0 h-2 w-1/5 bg-ink", BAR)}
           style={{
             transform: `translateX(${PREVIEW_DAYS.indexOf(day) * 100}%)`,
           }}
         />
       </div>
       {/* Every day's content in one cell: the tallest sets the height, so a change of
-          day is a cross-fade and nothing reflows. */}
-      <div className="grid flex-1 content-start px-20 pt-16 pb-20">
+          day is a fade and nothing reflows. */}
+      <div className="grid px-20 pt-16 pb-20">
         {["mon", "tue", "wed", "thu-posted"].map((key) => (
           <div
             key={key}
+            data-preview-layer={key}
             className={cn(
               "[grid-area:1/1]",
-              FADE,
-              layer === key ? "opacity-100" : "opacity-0",
+              layer === key ? FADE_IN : FADE_OUT,
             )}
           >
             <DayHead {...DAYS[key]} />
             <div
               className={cn(
-                SLIDE,
+                LIFT,
                 key === "thu-posted" && layer !== key && "translate-y-[4px]",
               )}
             >
@@ -249,10 +262,10 @@ function WeekPreview({ step }) {
           </div>
         ))}
         <div
+          data-preview-layer="thu-empty"
           className={cn(
             "[grid-area:1/1]",
-            FADE,
-            layer === "thu-empty" ? "opacity-100" : "opacity-0",
+            layer === "thu-empty" ? FADE_IN : FADE_OUT,
           )}
         >
           <DayHead title="Thursday" meta="Today · not posted yet" />
@@ -271,28 +284,75 @@ function WeekPreview({ step }) {
   );
 }
 
-export function AuthBrandPanel({ className }) {
+/** The screen's own line under the wordmark: a title and a sentence, or three steps. */
+function Intro({ intro }) {
+  const copy = PANEL_INTROS[intro];
+  if (!copy) return null;
+  return (
+    <div key={intro} data-panel-intro={intro} className="wv-fade-in">
+      <p className="font-display text-panel font-bold text-ink">{copy.title}</p>
+      {copy.line && <p className="mt-8 text-base text-body">{copy.line}</p>}
+      {copy.steps && (
+        <ol className="mt-20 flex flex-col gap-20">
+          {copy.steps.map(([step, note], i) => (
+            <li key={step} className="flex gap-14">
+              <span className="flex size-[24px] shrink-0 items-center justify-center border border-hair2 bg-card font-mono text-caption text-ink">
+                {i + 1}
+              </span>
+              <span>
+                <span className="block text-dense font-medium text-ink">
+                  {step}
+                </span>
+                <span className="block text-dense text-mut">{note}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+export function AuthBrandPanel({ intro, className }) {
   const ref = useRef(null);
   const still = useReducedMotion();
-  const step = usePreviewStep(ref, still);
+  const active = usePanelActive(ref);
+  const step = usePreviewStep(active, still);
   return (
     <aside
       ref={ref}
       aria-label="About WeeklyView"
-      className={cn("border-r border-hair bg-tint", className)}
-      style={GRID}
+      data-paused={active ? undefined : ""}
+      className={cn(
+        "wv-auth-fade relative overflow-hidden border-r border-hair bg-tint",
+        className,
+      )}
     >
       <div
+        aria-hidden="true"
+        className="wv-grid-drift pointer-events-none absolute -top-[32px] right-0 bottom-0 -left-[32px]"
+        style={GRID}
+      />
+      <div
         data-auth-block="brand"
-        className="row-span-4 row-start-2 grid w-full max-w-[420px] grid-rows-subgrid justify-self-center"
+        className="wv-auth-enter relative row-span-4 row-start-2 grid w-full max-w-[420px] grid-rows-subgrid justify-self-center"
       >
         {/* Level with "Back to home". */}
         <div className="row-start-1 flex min-h-[32px] items-start pb-24">
           <BrandMark className="h-[32px] text-[22px]" glyphSize={22} />
         </div>
-        {/* Level with the form's panel, and as tall. */}
-        <div aria-hidden="true" className="row-start-3 flex">
-          <WeekPreview step={step} />
+        {/* Beside the heading and the form panel: the screen's line, then the sample card
+            at its own height, its bottom level with the form panel's (the column is a
+            flex column whose last item ends at the row's end). */}
+        <div className="row-span-2 row-start-2 flex flex-col">
+          {/* Any room the form leaves is shared above and below the line, so it never
+              collects into one gap. */}
+          <div className="my-auto pb-24">
+            <Intro intro={intro} />
+          </div>
+          <div aria-hidden="true">
+            <WeekPreview step={step} />
+          </div>
         </div>
         {/* Level with the form's links. */}
         <div className="row-start-4 pt-20">

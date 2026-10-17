@@ -9,6 +9,7 @@ import { qk } from "../../../lib/queryKeys.js";
 import SignInPage from "../../../pages/SignInPage.jsx";
 import SignUpPage from "../../../pages/SignUpPage.jsx";
 import { FINAL_STEP, PREVIEW_STEPS, previewLayer } from "../previewSteps.js";
+import { PANEL_INTROS } from "../panelIntros.js";
 import { ResponseLost } from "../ResponseLost.jsx";
 
 // The auth screens as one set (owner decision, auth pages 2026-10-17; design §3.12): the
@@ -81,7 +82,9 @@ describe("the frame", () => {
       "holiday",
     ]);
     expect(panel).toContain("SAMPLE DATA");
-    expect(panel).toMatch(/<div aria-hidden="true" class="row-start-3 flex">/);
+    expect(panel).toMatch(
+      /<div aria-hidden="true"><div class="border border-hair bg-card">/,
+    );
     expect(text(panel)).toContain("One short update a day.");
   });
 
@@ -102,7 +105,14 @@ describe("the frame", () => {
         new RegExp(`data-auth-block="${block}" class="[^"]*grid-rows-subgrid`),
       );
     }
-    expect(html).not.toMatch(/(?<!min-)h-\[100dvh\]|overflow-hidden/);
+    // No fixed height and no clipping on the frame or the form side. (The brand panel
+    // clips only its oversized, drifting grid layer; it has no fixed height either.)
+    const frame = /^<div class="([^"]*)"/.exec(html)[1];
+    const main = /<main[^>]*class="([^"]*)"/.exec(html)[1];
+    const aside = /<aside[^>]*class="([^"]*)"/.exec(html)[1];
+    for (const cls of [frame, main])
+      expect(cls).not.toMatch(/(?<!min-)h-\[100dvh\]|overflow-hidden/);
+    expect(aside).not.toMatch(/(?<!min-)h-\[100dvh\]|h-screen/);
   });
 });
 
@@ -202,7 +212,8 @@ describe("the brand panel's loop", () => {
   });
 
   it("moves only opacity and transform, on one timer, and waits while hidden", () => {
-    const transitions = source.match(/transition-(?:\[[a-z,]+\]|[a-z-]+)/g) ?? [];
+    const transitions =
+      source.match(/transition-(?:\[[a-z,]+\]|[a-z-]+)/g) ?? [];
     expect(new Set(transitions)).toEqual(
       new Set([
         "transition-opacity",
@@ -215,6 +226,104 @@ describe("the brand panel's loop", () => {
     expect(source).toContain('"visibilitychange"');
     expect(source).toContain("IntersectionObserver");
     expect(source).toContain("useReducedMotion");
+  });
+});
+
+// Owner feedback, round four: the loop's fixes, the panel's own line, the grid, the entrance.
+describe("the brand panel, round four", () => {
+  const html = render("/signin", { available: false });
+  const panel = html.slice(html.indexOf('aria-label="About WeeklyView"'));
+  const css = readFileSync(
+    new URL("../../../styles/base.css", import.meta.url),
+    "utf8",
+  );
+
+  it("marks one chosen day only: one bar, no 'today' underline", () => {
+    expect(panel.match(/data-preview-bar=""/g)).toHaveLength(1);
+    expect(panel).not.toMatch(/bottom-0 h-2 bg-acc/);
+  });
+
+  it("changes day in sequence: the shown day fades in only after the others have faded out", () => {
+    const layers = [
+      ...panel.matchAll(/data-preview-layer="([a-z-]+)" class="([^"]*)"/g),
+    ].map(([, key, cls]) => ({ key, cls }));
+    expect(layers.map((l) => l.key)).toEqual([
+      "mon",
+      "tue",
+      "wed",
+      "thu-posted",
+      "thu-empty",
+    ]);
+    const shown = layers.filter((l) => l.cls.includes("opacity-100"));
+    expect(shown.map((l) => l.key)).toEqual(["mon"]);
+    const ms = (cls, prop) =>
+      Number(new RegExp(`${prop}-\\[(\\d+)ms\\]`).exec(cls)?.[1] ?? 0);
+    const fadeIn = shown[0].cls;
+    for (const out of layers.filter((l) => l !== shown[0]))
+      expect(ms(fadeIn, "delay")).toBeGreaterThanOrEqual(
+        ms(out.cls, "delay") + ms(out.cls, "duration"),
+      );
+  });
+
+  it("keeps the sample card at its natural height", () => {
+    expect(panel).not.toMatch(/bg-card[^"]*(h-full|flex-1)/);
+  });
+
+  it("draws the grid on one drifting layer, still under reduced motion and paused with the panel", () => {
+    expect(panel.match(/wv-grid-drift/g)).toHaveLength(1);
+    expect(css).toMatch(
+      /\[data-paused\] \.wv-grid-drift \{\s*animation-play-state: paused;/,
+    );
+    const reduced = css.slice(
+      css.lastIndexOf("@media (prefers-reduced-motion"),
+    );
+    for (const name of [".wv-grid-drift", ".wv-auth-enter", ".wv-auth-fade"])
+      expect(reduced).toContain(name);
+    expect(reduced).toContain("animation: none");
+  });
+
+  it("brings the pair in on arrival: the brand side first, then the form", () => {
+    expect(html).toMatch(/data-auth-block="brand" class="wv-auth-enter /);
+    expect(html).toMatch(/data-auth-block="form" class="wv-auth-enter-late /);
+  });
+
+  it("gives every screen its own short line, in plain sentence case", () => {
+    for (const [key, copy] of Object.entries(PANEL_INTROS)) {
+      const words = [copy.title, copy.line, ...(copy.steps ?? []).flat()]
+        .filter(Boolean)
+        .join(" ");
+      expect(words, key).not.toContain("!");
+      expect(copy.title.split(" ").slice(1).join(" "), key).not.toMatch(
+        /\b(?!WeeklyView|Users)[A-Z][a-z]/,
+      );
+    }
+    expect(PANEL_INTROS.signup.steps).toHaveLength(3);
+  });
+
+  it("each screen names its line, and an expired link or a lost answer overrides it", () => {
+    const source = (f) => readFileSync(new URL(f, import.meta.url), "utf8");
+    for (const [file, key] of [
+      ["../../../pages/SignInPage.jsx", "signin"],
+      ["../../../pages/SignUpPage.jsx", "signup"],
+      ["../../../pages/SignUpPage.jsx", "closed"],
+      ["../../../pages/AcceptInvitePage.jsx", "invite"],
+      ["../../../pages/ResetPasswordPage.jsx", "reset"],
+    ])
+      expect(source(file), `${file} ${key}`).toContain(`intro="${key}"`);
+    expect(source("../LinkExpired.jsx")).toContain(
+      'useAuthIntro("expired", { override: true })',
+    );
+    expect(source("../ResponseLost.jsx")).toContain(
+      'useAuthIntro("lost", { override: true })',
+    );
+  });
+
+  it("keeps a short screen's parts together across the heading and panel rows", () => {
+    const closed = render("/signup", { available: false });
+    expect(closed).toMatch(
+      /<main[^]*<div class="lg:row-span-2"><div class="pb-32"><h1/,
+    );
+    expect(html).toMatch(/<div class="contents"><div class="pb-32"><h1/);
   });
 });
 

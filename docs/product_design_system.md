@@ -1072,6 +1072,29 @@ Product screens outside the shell: no sidebar, no top bar.
 >   days loop (§8.5 entry 32): Monday to Wednesday posted, Thursday today then posted, Friday a
 >   holiday that is never chosen.
 
+> **Owner decisions (auth pages, round four after the third test, 2026-10-17)** — on top of
+> round three:
+>
+> - **The panel's own line.** Under the wordmark, beside the heading and the form panel, the
+>   brand panel says something for this screen (`panelIntros.js`), Chivo 700 17px with one
+>   `--body` line: sign in "Welcome back." / "Your week is where you left it."; create
+>   account (open) "Three steps to your team's first week" with three numbered steps (create
+>   the owner account; invite your team; everyone posts a short update each day); sign-up
+>   closed "This team is already set up."; accept invite "You've been invited to join the
+>   team."; reset password "A new password, then back to your week."; an expired link "Links
+>   work once, for a limited time."; a lost answer "The connection dropped, not your work."
+>   The page names its line; an expired link or a lost answer replaces it while it shows.
+>   Any room left beside a taller form is shared above and below the line.
+> - **The sample card keeps its natural height**, its bottom level with the form panel's.
+>   It is never stretched.
+> - **Short screens** (sign-up closed, an expired link, a lost answer) keep the heading, the
+>   message and its button together, top-aligned with the brand side, instead of spreading
+>   them over the shared rows.
+> - **One selection mark.** The sample week's only "chosen" mark is the 2px `--ink` bar; the
+>   blue "today" underline is gone (today is still the hollow square).
+> - **The day change is sequential** — §8.5 entry 32.
+> - **Arrival and the grid** — §8.5 entries 33 and 34.
+
 **Shared layout** *(before the owner decision above)*. Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
 polish 2026-10-10: the column starts `18vh` down, never less than `52px` (`32px` below
 480px), so it sits in the upper middle of the screen rather than hugging the top; a fixed
@@ -2184,13 +2207,15 @@ than merely shortened.
 - Confetti or any celebratory motion on approval, beyond entry 14.
 - Page-load entrance staggering of any kind.
 
-*Owner-approved exception (auth pages, PR #27; round three, 2026-10-17):* the auth screens'
-brand panel runs a **continuous decorative loop** — its sample week walks Monday to Thursday and
-posts Thursday, every 15 s (§8.5, entry 32). It replaces the one-time fill-in accepted earlier.
-It is on the signed-out auth screens only and never inside the app; it moves only `opacity` and
-`transform` on one timer, waits while the tab is hidden or the panel is out of view, and under
-reduced motion does not run at all (the posted Thursday is shown). Nothing else in the product
-is excused from the list above: no other loop, no page-load entrance anywhere else.
+*Owner-approved exceptions (auth pages, PR #27; rounds three and four, 2026-10-17), on the
+signed-out auth screens only, never inside the app:* (1) the brand panel's sample week is a
+**continuous decorative loop** — it walks Monday to Thursday and posts Thursday, every 15 s
+(§8.5, entry 32; it replaces the one-time fill-in accepted earlier); (2) the screens **arrive**
+with a short fade and rise (entry 33); (3) the panel's hairline grid **drifts** one cell every
+48 s (entry 34). All three move only `opacity` and `transform`; the loop runs on one timer, the
+grid on one CSS layer; both wait while the tab is hidden or the panel is out of view (the
+phone layout hides it); under reduced motion none of them runs (the posted Thursday is shown).
+Nothing else in the product is excused from the list above.
 
 ### 8.5 Owner decision — whole-app polish (2026-10-10)
 
@@ -2215,11 +2240,17 @@ is excused from the list above: no other loop, no page-load entrance anywhere el
 | 29  | Autosave state change               | the words fade in; the 6px square fills | 120 / 160ms | `--ease-out` / linear | CSS                  | save              |
 | 30  | Light ↔ dark switch                 | background, border and text colours cross-fade | 200ms | `ease`     | CSS (`.wv-theme-easing`, 260ms)  | Appearance switch |
 | 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
-| 32  | Auth screens' brand panel: the sample week loops *(owner decision, auth pages 2026-10-17, round three)* | the chosen day's 2px `--ink` bar slides (`transform`) Mon → Tue → Wed → Thu; the day's content cross-fades (`opacity`); on Thursday its square fills (`opacity`, `scale(.5→1)`) and the posted lines rise 4px into place; then back to Monday | 400ms per change; steps 3 / 3 / 3 / 2.2 / 3.8 s — a 15 s cycle | `--ease-out` | CSS transitions, one `setTimeout` (`previewSteps.js`) | continuous while visible |
+| 32  | Auth screens' brand panel: the sample week loops *(owner decision, auth pages 2026-10-17, rounds three and four)* | each change in three moves that never overlap: the old day fades out (`opacity`, 0–160ms, `--ease-in`); the chosen day's 2px `--ink` bar slides (`transform`, 140–340ms); the new day fades in (240–420ms) — on Thursday its square fills (`opacity`, `scale(.5→1)`) and the posted lines rise 4px. Mon → Tue → Wed → Thu, Thursday posted, back to Monday | steps 3 / 3 / 3 / 2.2 / 3.8 s — a 15 s cycle | `--ease-out` | CSS transitions, one `setTimeout` (`previewSteps.js`) | continuous while visible |
+| 33  | Auth screens: arrival *(owner decision, round four)* | the brand panel fades in; the brand block, then (80ms later) the form block, rise 8px with a fade | 280 / 320ms | `--ease-out` | CSS (`.wv-auth-fade`, `.wv-auth-enter`, `.wv-auth-enter-late`) | the auth frame mounts (arriving from the landing page or a link; not between auth screens) |
+| 34  | Auth screens' brand panel: the grid drifts *(owner decision, round four)* | one oversized layer of the 32px `--hair` grid moves one cell down and right (`transform`), seamlessly | 48s, `infinite` | linear | CSS (`.wv-grid-drift`), paused by `[data-paused]` | continuous while visible |
 
-- **Entry 32 is the one exception to §8.4** — an owner decision (PR #27, round three,
-  2026-10-17) that replaces the one-time fill-in: a continuous, decorative loop on the
-  signed-out auth screens only, never in the app. It never moves the form or takes focus; it
+- **Entries 32–34 are the exceptions to §8.4** — owner decisions (PR #27, rounds three and
+  four, 2026-10-17); 32 replaces the one-time fill-in. Signed-out auth screens only, never in
+  the app. **Why not a view transition for 33:** the landing page's links are full page loads
+  on purpose (its styles and font must not stay behind in the app), so a same-document view
+  transition can't span them, and a cross-document one would capture the app before React has
+  drawn the screen. The CSS entrance works in every browser and is none under reduced motion.
+  Entry 32: It never moves the form or takes focus; it
   pauses on `visibilitychange` (tab hidden) and when an `IntersectionObserver` says the panel
   is out of view (the phone layout hides it); under reduced motion it does not start and the
   posted Thursday is shown. The card is `aria-hidden`; the caption is the real text.

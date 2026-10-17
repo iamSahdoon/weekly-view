@@ -634,6 +634,8 @@ client/
 │   │   │   ├── LinkExpired.jsx        # added in C1: the one expired-link state
 │   │   │   ├── AuthBrandPanel.jsx     # added for the auth pages (owner, 2026-10-17): wordmark, a looping sample week in the app's style, one line
 │   │   │   ├── previewSteps.js        # added for the auth pages (round three): the sample week's loop, step by step
+│   │   │   ├── panelIntros.js         # added for the auth pages (round four): the brand panel's line for each screen
+│   │   │   ├── authIntro.js           # added for the auth pages (round four): AuthIntroContext and useAuthIntro
 │   │   │   ├── ResponseLost.jsx       # added for the auth pages: "Your account may already have been created", when an answer was lost
 │   │   │   └── __tests__/AuthScreens.test.jsx  # added for the auth pages: the split frame, the way home, the bootstrap-led links
 │   │   └── marketing/                 # the landing page's sections, ported from landing-reference/index.html (brand §6.0)

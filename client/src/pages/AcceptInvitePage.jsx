@@ -22,7 +22,7 @@ import { acceptInviteSchema } from "../schemas/authSchema.js";
 export default function AcceptInvitePage() {
   const { token } = useParams();
   return (
-    <AuthScreen heading="Join the team">
+    <AuthScreen heading="Join the team" intro="invite">
       <LinkPreviewGate token={token} purpose="invite">
         {(preview) => <AcceptInviteForm token={token} preview={preview} />}
       </LinkPreviewGate>

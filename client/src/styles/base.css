@@ -167,3 +167,42 @@ button:not(:disabled),
     transform: translate(-50%, -50%);
   }
 }
+
+/* The signed-out auth screens only (owner decisions, auth pages 2026-10-17; design §8.5
+   entries 32–34). Arrival: the brand panel fades in and the two blocks rise 8px, the
+   brand side first. The panel's grid drifts one cell every 48 s, on one layer, paused
+   with the panel (data-paused). Under reduced motion none of it runs. */
+@keyframes wv-auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.wv-auth-enter {
+  animation: wv-auth-rise 320ms var(--ease-out) both;
+}
+.wv-auth-enter-late {
+  animation: wv-auth-rise 320ms var(--ease-out) 80ms both;
+}
+.wv-auth-fade {
+  animation: wv-fade-in 280ms var(--ease-out) both;
+}
+@keyframes wv-grid-drift {
+  to {
+    transform: translate(32px, 32px);
+  }
+}
+.wv-grid-drift {
+  animation: wv-grid-drift 48s linear infinite;
+}
+[data-paused] .wv-grid-drift {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wv-auth-enter,
+  .wv-auth-enter-late,
+  .wv-auth-fade,
+  .wv-grid-drift {
+    animation: none;
+  }
+}

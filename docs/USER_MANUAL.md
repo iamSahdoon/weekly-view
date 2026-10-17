@@ -235,8 +235,10 @@ invite link from you. While sign-up is open, the sign-in page also offers ***No 
 Create the owner account***.
 
 All the sign-in screens (sign in, create account, invite, reset password) share one layout: the
-form on the right and, on a wide screen, a WeeklyView panel on the left whose small sample week
-quietly plays through a week (on a phone, a slim bar at the top, and nothing moves). ***← Back to home*** above the heading returns to the start
+form on the right and, on a wide screen, a WeeklyView panel on the left: a short line for that
+screen (on Create account, the three steps to a team's first week), and a small sample week
+that quietly plays through a week on a slowly drifting grid (on a phone, a slim bar at the top,
+and nothing moves). With "reduce motion" on, nothing on these screens moves. ***← Back to home*** above the heading returns to the start
 page.
 
 **"Couldn't reach the server" when creating an account.** If the connection drops after the

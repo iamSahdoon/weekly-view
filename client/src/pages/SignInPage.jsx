@@ -26,6 +26,7 @@ export default function SignInPage() {
     <AuthScreen
       heading="Sign in to WeeklyView"
       title="Sign in"
+      intro="signin"
       footer={
         <>
           <div className="w-full">
