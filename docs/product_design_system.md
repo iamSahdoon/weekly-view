@@ -991,7 +991,8 @@ Product screens outside the shell: no sidebar, no top bar.
 > **Owner decision (auth pages, 2026-10-17): a calm split layout.** It replaces the centred
 > column described in the next paragraph for the five auth screens (sign in, create account
 > open and closed, accept invite, reset password; "Forgot your password?" stays a panel on
-> sign in, not a page). The look is the app's: cobalt on cool neutrals, Chivo / Instrument
+> sign in, not a page, with no route of its own — owner decision, accepted in the PR #27 review,
+> 2026-10-17). The look is the app's: cobalt on cool neutrals, Chivo / Instrument
 > Sans, square corners, hairlines, no shadow, tokens only.
 >
 > - **From 1024px: two equal halves.** The **form side** (`--paper`) holds a 420px column:
@@ -1009,7 +1010,8 @@ Product screens outside the shell: no sidebar, no top bar.
 >   straight after it, `32px` down (`max(52px, 10vh)` from 640px).
 > - **Headings and links.** Sign in: "Sign in to WeeklyView" (the tab still says "Sign in");
 >   under the panel "Forgot your password?" and, **only when the bootstrap check says sign-up
->   is open**, "No team here yet? Create the owner account". Create account (open): "Create
+>   is open**, "No team here yet? Create the owner account" (sign in asks the same A1 check as
+>   the landing page — owner decision, accepted in the PR #27 review, 2026-10-17). Create account (open): "Create
 >   the owner account" / "You're the first person here, so this account will be the admin and
 >   the owner. Everyone else joins with an invite link from you." The other headings, every
 >   field, error, route and request are unchanged.
@@ -2128,6 +2130,11 @@ than merely shortened.
 - Confetti or any celebratory motion on approval, beyond entry 14.
 - Page-load entrance staggering of any kind.
 
+*Owner-approved exception (auth pages, accepted in the PR #27 review, 2026-10-17):* the auth
+screens' brand panel fills in its five Updates squares once when the screen opens (§8.5, entry
+32). It plays once, is subtle, never loops, and is skipped under reduced motion. Nothing else in
+the product is excused from the list above.
+
 ### 8.5 Owner decision — whole-app polish (2026-10-10)
 
 > **Owner decision (polish pass after C10, 2026-10-10).** The app should not feel like a
@@ -2153,8 +2160,8 @@ than merely shortened.
 | 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
 | 32  | Auth screens' brand panel: the week fills in *(owner decision, auth pages 2026-10-17)* | five squares, opacity 0→1 and `scale(.8→1)`, one after another | 200ms each, 120ms apart, from 300ms | `--ease-out` | **Motion** | the screen opens (once) |
 
-- **Entry 32 is the one exception to §8.4's "no page-load entrance"**, asked for by the owner:
-  it is on the signed-out auth screens only, decorative, plays once and never loops. Under
+- **Entry 32 is the one exception to §8.4's "no page-load entrance"** — an owner decision,
+  accepted in the PR #27 review (2026-10-17): it is on the signed-out auth screens only, decorative, plays once and never loops. Under
   reduced motion the squares are drawn filled, with no animation.
 - **Reduced motion:** 23–25 jump; 26 is a fade with no travel (`useReducedMotion`); 27–29 and
   31 are cut to 1ms by §8.3; 30 stays — it is colour only, and a gentle cross-fade is kinder

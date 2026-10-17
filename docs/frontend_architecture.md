@@ -1256,7 +1256,7 @@ Under `AuthLayout`, no shell.
 
 | Screen | Data |
 | --- | --- |
-| `/signin` | `useLogin` → `signIn`, then `navigate(location.state?.from ?? "/")`. "Forgot your password?" opens a static panel. `useBootstrapStatus()` (cached A1): only when `available: true` does "No team here yet? Create the owner account" link to `/signup` *(owner decision, auth pages 2026-10-17)* |
+| `/signin` | `useLogin` → `signIn`, then `navigate(location.state?.from ?? "/")`. "Forgot your password?" opens a static panel. `useBootstrapStatus()` (cached A1): only when `available: true` does "No team here yet? Create the owner account" link to `/signup`; pending or failed, nothing is offered. It is the same bootstrap check the landing page uses (§9.16), asked here only for that link *(owner decision, auth pages 2026-10-17; accepted in the PR #27 review)* |
 | `/signup` | `useBootstrapStatus()`: `available` → the form (`useSignUp`); otherwise the closed state with `Open the demo` — a plain `<a href="/demo">` |
 | `/invite/:token` | `useLinkPreview(token)` on mount → role and email read-only, name + password form → `useAcceptLink`; `LINK_INVALID` → the single expired-link block |
 | `/reset/:token` | the same, without the name field |

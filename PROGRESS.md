@@ -1897,6 +1897,14 @@ Not a stage; **C11 is still next.** Branch `claude/auth-pages` from `main`. Reco
 - **Not verified:** the `Go to that week` link in a browser (it needs a later date; covered by a static-render test
   on a frozen Tuesday); Firefox and Safari; Windows font rendering; widths other than those listed; screen readers.
 
+**Auth pages: owner decisions accepted (PR #27 review, 2026-10-17).** All three accepted as built; no code changed.
+1. **The brand panel's squares fill in on open** — an owner-approved exception to design §8.4 (no page-load
+   entrance): it plays once, it is subtle, and it is skipped under reduced motion. Recorded in design §8.4 and
+   §8.5 (entry 32).
+2. **`/signin` asks the bootstrap check (A1)** — the same check the landing page uses, only to show or hide "No
+   team here yet? Create the owner account". Recorded in `frontend_architecture.md` §9.15.
+3. **"Forgot your password?" stays a panel on the sign-in page** — no new route. Recorded in design §3.12.
+
 **Owner: how to check by hand** (Windows; a local database only)
 1. In a terminal at the repo root: `git fetch origin` then `git checkout claude/auth-pages`.
 2. Run `npm --prefix server install` and `npm --prefix client install` (once for this branch).
@@ -2561,11 +2569,10 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
-- **Auth pages, to confirm or change** (see *Owner decision: redesigned sign-in pages…*): (1) the brand panel's
-  fill-in is the one page-load entrance in the product (design §8.5 entry 32, an exception to §8.4 recorded as
-  your request); (2) `/signin` now asks the bootstrap check (A1) so it can offer "Create the owner account" while
-  sign-up is open; (3) "Forgot your password?" stays a panel on sign in rather than its own page; (4) `Go to that
-  week` appears only once the first week has begun. Each is small and reversible.
+- **Auth pages, to confirm or change** (see *Owner decision: redesigned sign-in pages…*): `Go to that week`
+  appears only once the first week has begun. Small and reversible. ~~(1) the brand panel's fill-in, (2) A1 on
+  `/signin`, (3) "Forgot your password?" as a panel~~ **Resolved (owner, PR #27 review, 2026-10-17):** all three
+  accepted as built — see *Auth pages: owner decisions accepted*.
 - **Landing polish, to confirm or change:** the stories' panels are pinned with CSS `position: sticky` (ScrollTrigger
   does the scrub and snap) instead of ScrollTrigger's own `pin`, because the GSAP pin scored a layout shift of 7.78
   in Chrome against 0.0008 for sticky (see *Landing polish*). Say if you want the GSAP pin anyway; it is a small,
