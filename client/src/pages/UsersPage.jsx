@@ -130,7 +130,10 @@ export default function UsersPage() {
           <PageHeader
             title="Users"
             primary={
-              <Button onClick={() => setDialog({ kind: "invite" })}>
+              <Button
+                data-tour="invite-person"
+                onClick={() => setDialog({ kind: "invite" })}
+              >
                 Invite person
               </Button>
             }

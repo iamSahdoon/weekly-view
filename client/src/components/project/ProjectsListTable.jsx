@@ -120,6 +120,8 @@ export function ProjectsListTable({
             size="sm"
             onClick={() => onPlan(row)}
             aria-label={`${row.progress?.plan ? "Extend" : "Set"} plan for ${row.name}`}
+            data-tour="extend-plan"
+            data-tour-id={row._id}
           >
             {row.progress?.plan ? "Extend plan" : "Set plan"}
           </Button>
@@ -143,6 +145,7 @@ export function ProjectsListTable({
       skeletonRows={5}
       emptyState={emptyState}
       caption="Projects"
+      tour="projects-table"
     />
   );
 }

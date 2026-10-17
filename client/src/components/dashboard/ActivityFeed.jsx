@@ -42,6 +42,7 @@ export function ActivityFeed({ query, meId, className }) {
   return (
     <section
       aria-label="Recent activity"
+      data-tour="activity-feed"
       className={`flex min-w-0 flex-col border border-hair bg-card ${className ?? ""}`}
     >
       <header className="flex min-h-[44px] items-center border-b border-hair px-24">

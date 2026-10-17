@@ -1172,7 +1172,8 @@ hard-coded sample data in the browser (`requirments_doc.md` §14, `tech_stack.md
   `Create your account`, `Sign in` — is a plain link to the real app
   (`frontend_architecture.md` §11.1).
 - **Choosing a perspective.** `/demo` opens on a single centred panel, the auth screens'
-  layout: "Try WeeklyView" / "Pick who you'd like to be. Everything works, nothing is
+  layout — since the guided tour (below) under "Explore on your own", after the tour's own
+  choice: "Pick who you'd like to be. Everything works, nothing is
   saved." and three large choices, each with one line: **Team member** — "Post updates,
   build and submit a week" (Imali J.); **Manager** — "Read the team, comment, approve,
   track projects" (Nadia F.); **Admin** — "Everything a manager does, plus people and
@@ -1180,8 +1181,9 @@ hard-coded sample data in the browser (`requirments_doc.md` §14, `tech_stack.md
 - **The demo bar.** A `36px` bar **above** the top bar, full width, `--ink` background,
   `--d-text` text: `SAMPLE DATA` (mono, caps — the one sanctioned all-caps in the
   product), "Demo · you're Nadia F., Manager" with a `Switch` text button reopening the
-  choice, and on the right `Start over` (ghost, inverted) and `Create your account` or
-  `Sign in` (inverted primary, per the landing page's rule in `requirments_doc.md` §13).
+  choice, and on the right `Tour` (the guided tour's launcher, below), `Start over` (ghost,
+  inverted) and `Create your account` or `Sign in` (inverted primary, per the landing page's
+  rule in `requirments_doc.md` §13).
 - **Every control works.** Posting, commenting, replying, submitting, approving, sending
   back, adding a project, extending a plan, adding a holiday, marking leave, making
   someone owner — each acts on the in-memory data, and switching perspective shows the
@@ -1192,6 +1194,71 @@ hard-coded sample data in the browser (`requirments_doc.md` §14, `tech_stack.md
   as the link state with a sample URL and the line "In the real product, you'd send this
   link to the person." Signing in and out are not part of the demo.
 - Every data panel carries the dashed `SAMPLE DATA` pill in its header.
+
+#### Guided tour *(owner decision, 2026-10-17; `requirments_doc.md` §14.1)*
+
+An overlay on the real demo pages, never a change to them. Everything is cobalt on cool
+neutrals in the app's fonts, square, hairline, tokens only; the tooltip and the panel are
+floating layers, so they — and only they — carry `--shadow-pop`. Both themes are designed: every
+colour below is a token that changes with `[data-theme="dark"]`.
+
+- **The first screen.** `/demo` keeps the auth screens' single centred column (420px) and offers
+  two ways in. Under "Try WeeklyView" / "Take the guided tour, or look around on your own.": a
+  panel whose first row is **Take the guided tour** — "One team's week, from setting up to
+  approving: every feature, for every role." and, in `--mut`, "About 15 minutes, or jump to any
+  part" (the minutes are computed from the steps) — styled exactly like the role choices
+  (Chivo 17px title, the 2px cobalt bar and chevron on hover), and below it a text link
+  **Jump to a part**. Then an `h2` (Chivo 20px) **Explore on your own**, the original line "Pick
+  who you'd like to be. Everything works, nothing is saved." and the three role choices,
+  unchanged.
+- **The launcher.** A text button **Tour** with a 13px route icon in the demo bar, between
+  `Switch`'s group and `Start over`, in the bar's own button style (`--d-text`, `--d-hover`).
+  It lives in the bar so it never covers a page's actions; below 480px it is the icon alone
+  (its name stays for screen readers) so the bar still fits "Sanduni B." at 360px.
+- **The highlight.** The page is dimmed with `--backdrop` everywhere except a cutout around the
+  target, grown by 6px, with a 2px `--acc` outline. Both are `pointer-events: none`: the visitor
+  can always use the highlighted element (and the rest of the page). The cutout follows the
+  target as the page scrolls; it never animates between steps.
+- **The tooltip.** `--card`, 1px `--hair2`, `--shadow-pop`, 360px wide, 20px padding, 11px
+  between parts. Top row: the chapter in `--mut` caption (`01` in mono, as a form eyebrow, then
+  the chapter's name) and the audience label — **Everyone**, **Managers and admins** or **Admins
+  only** — in the role chip's style (11px, `--tint`, 1px `--hair`); on the right a ghost
+  **Exit ×**. Then the title (Chivo 17px), one or two sentences (14px `--body`) and, on a step
+  that waits for an action, what to press, led by a 6px `--acc` square. Bottom row: "Step 12 of
+  72 · Team member" (12px `--mut`, tabular figures) and the buttons, small: ghost **Back**,
+  secondary **Do it for me** (action steps only), primary **Next**. The last step offers
+  secondary **Create your account** (a plain link to the real `/signup`) and primary **Explore
+  on your own**. A step whose target doesn't appear within 6 seconds shows the same card in
+  the middle of the screen, adds "This part of the screen didn't appear." and offers **Try
+  again** and **Skip this step**; a target that disappears mid-step reads "This part of the
+  screen has closed." with **Show it again**.
+- **Placement (wide screens).** Beside the highlight, never on it: below, above, right or left,
+  the first with room, centred on it and kept 12px inside the viewport and below the demo bar.
+  When there is no room below, the page scrolls the target up so the two sit one above the
+  other — so the tooltip never covers what the visitor is about to use. A step can ask for a
+  side first (above, for a row's ⋯ menu, which opens below).
+- **Phones (below 640px).** The tooltip is a sheet across the bottom of the screen, full width,
+  no side borders, at most 55% of the height, scrolling inside. The page scrolls the target
+  above it; when the target can't get there (the weekly form's bar, the end of a page) the sheet
+  sits across the top instead, **under the demo bar**, which stays usable. The sheet never
+  covers the highlight: a target taller than the space left is highlighted where it shows.
+- **The jump panel.** A modal sheet on the right, 420px from 640px and the full width below,
+  full height, `--card`, 1px `--hair2` left border, `--shadow-pop`, over `--backdrop`. Header:
+  **Guided tour** (Chivo 20px) and "One team's week, about 15 minutes. Or jump to any part: each
+  is grouped by who can use it."; a close button. A `--tint` strip: **Resume at step N** and
+  **Start again** (or **Start the tour**), and **End the tour** while one is under way. Then three
+  groups — **Everyone**, **Managers and admins**, **Admins only**, each with its count — of 40px
+  rows: the step number (`--mut`), the title and "As Imali J." under it, a check when seen, a
+  chevron that moves 2px on hover; the current step has the nav's `--acc-l` fill and 2px bar.
+- **Accessibility.** The tooltip is a labelled, non-modal dialog (`aria-labelledby` the title,
+  `aria-describedby` the body) and takes focus when its step opens; when focus is already in it
+  (pressing Next) a polite live region reads the new step. ← → move between steps, Tab from the
+  last button reaches the highlighted element, Esc ends the tour (after closing the page's own
+  open dialog or menu). Focus returns to where it was, or to **Tour**. The panel is a Radix
+  dialog: focus is trapped, Esc closes it. The tooltip stays operable above the page's dialogs
+  and menus: pointer and focus events that start in it don't reach them.
+- **Copy.** Short, plain and kind, in the product's vocabulary and sentence case, no exclamation
+  marks; people are named, never given a pronoun.
 
 ---
 
@@ -2257,6 +2324,8 @@ Nothing else in the product is excused from the list above.
 | 33  | Landing ↔ auth screens: the view transition *(owner decision, round six; replaces round four's block rise)* | the old page fades out as the new one fades in and rises 6px (one length and curve both ways, so the browser's plus-lighter blend never washes out the middle); also between the auth screens, and for browser Back and Forward | 300ms | `--ease-soft` | React Router `viewTransition`; CSS on `::view-transition-old/new(root)` | a click on a `TransitionLink`, or Back / Forward |
 | 35  | Auth screens: staggered entrance *(owner decision, round six)* | each part rises 10px with a fade, 50ms after the one before — brand side: wordmark, intro card, sample card, caption; form side 40ms behind: back link, heading, line, panel, links (the last done at about 600ms). Inside a view transition the parts only rise (the cross-fade fades them). The brand panel's background fades in (280ms). The form can be focused and typed in at once | 380ms each | `--ease-out` | CSS (`.wv-stagger` with `--stagger`, `.wv-in-transition`, `.wv-auth-fade`) | the screen mounts (a direct load, a refresh, an arrival, or a change of auth screen) |
 | 34  | Auth screens' brand panel: the grid drifts and a few cells light *(owner decisions, rounds four and five)* | one oversized layer of the 32px `--hair` grid moves one cell down and right (`transform`), seamlessly; eight of its cells light to `--acc` at 12% (light) / 28% (dark) and back (`opacity`), in four turns, two at a time — placed only where they never sit behind text or a card | 14s, `infinite` (each cell: ~1.4s in, ~1.4s out, dark at the loop's seam) | linear | CSS (`.wv-grid-drift`, `.wv-grid-cell`), paused by `[data-paused]`; positions measured once and on resize (`ResizeObserver`) | continuous while visible |
+| 36  | Demo tour: a step's tooltip appears *(owner decision, guided tour 2026-10-17)* | opacity `0→1`; the highlight and the tooltip's position change **instantly** — nothing travels between steps | 120ms | `--ease-out` | CSS (`.wv-fade-in`, keyed per step) | the visitor moves to a step, or a step's action finishes |
+| 37  | Demo tour: the jump panel | backdrop fades in / out, sheet fades in (no slide) | 180 / 120ms; sheet 120ms | `--ease-out` / `--ease-in` | CSS (`.wv-backdrop`, `.wv-fade-in`) | Tour, Jump to a part |
 
 - **Entries 32–34 are the exceptions to §8.4** — owner decisions (PR #27, rounds three and
   four, 2026-10-17); 32 replaces the one-time fill-in. Signed-out auth screens only, never in
@@ -2269,6 +2338,9 @@ Nothing else in the product is excused from the list above.
   pauses on `visibilitychange` (tab hidden) and when an `IntersectionObserver` says the panel
   is out of view (the phone layout hides it); under reduced motion it does not start and the
   posted Thursday is shown. The card is `aria-hidden`; the caption is the real text.
+- **Entries 36–37 (guided tour)** are caused by the visitor (Next, Back, a jump, finishing an
+  action). The tour scrolls the page to its target smoothly — or instantly under reduced
+  motion — and never animates the highlight; under reduced motion 36–37 are cut to 1ms by §8.3.
 - **Reduced motion:** 23–25 jump; 26 is a fade with no travel (`useReducedMotion`); 27–29 and
   31 are cut to 1ms by §8.3; 30 stays — it is colour only, and a gentle cross-fade is kinder
   than a full-screen brightness jump (Apple's guidance, the owner's reference).

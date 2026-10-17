@@ -26,6 +26,7 @@ export function BlockerRow({ blocker, dayLabel, onResolve }) {
           type="button"
           aria-pressed={resolved}
           aria-label="Mark this blocker as resolved."
+          data-tour="blocker-resolve"
           onClick={() => onResolve(!resolved)}
           className="focus-halo group flex size-[26px] shrink-0 items-center justify-center border border-rule bg-transparent transition-colors duration-[120ms] ease-linear hover:border-hair2"
         >

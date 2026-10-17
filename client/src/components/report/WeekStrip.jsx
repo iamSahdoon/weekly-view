@@ -58,6 +58,7 @@ export function WeekStrip({
     <div
       role="tablist"
       aria-label="Days of the week"
+      data-tour="week-strip"
       className={cn(
         "grid grid-cols-5 divide-x divide-hair border border-hair",
         size === "full" ? "h-[52px]" : "h-[36px]",

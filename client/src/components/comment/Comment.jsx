@@ -122,7 +122,10 @@ export function Comment({
       )}
 
       {writable && !editing && (
-        <div className="flex items-center gap-14 text-dense">
+        <div
+          data-tour="comment-edit"
+          className="flex items-center gap-14 text-dense"
+        >
           <button
             type="button"
             onClick={() => setEditing(true)}

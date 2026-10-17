@@ -124,5 +124,12 @@ const COLUMNS = [
 ];
 
 export function ReportHistoryTable({ columns = COLUMNS, ...props }) {
-  return <Table columns={columns} getRowHref={hrefOfRow} {...props} />;
+  return (
+    <Table
+      columns={columns}
+      getRowHref={hrefOfRow}
+      tour="report-history"
+      {...props}
+    />
+  );
 }

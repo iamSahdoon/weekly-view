@@ -191,7 +191,7 @@ function ReportWeek({ week, own }) {
       <PageContainer>
         <div className="print-report grid gap-x-44 gap-y-32 lg:grid-cols-[minmax(0,860px)_280px] print:block">
           <div className="flex min-w-0 flex-col gap-44">
-            <header className="flex flex-col gap-6">
+            <header data-tour="week-heading" className="flex flex-col gap-6">
               <p className="font-mono text-caption text-mut">
                 W{number} · {formatWeekRange(week.weekKey)}
                 {report.revisionNumber > 0 && ` · rev ${report.revisionNumber}`}
@@ -229,7 +229,7 @@ function ReportWeek({ week, own }) {
             aria-label="Status, versions and comments"
             className="flex min-w-0 flex-col gap-24 max-lg:order-first lg:sticky lg:top-[calc(94px+var(--demo-h,0px))] lg:max-h-[calc(100dvh-110px-var(--demo-h,0px))] lg:self-start lg:overflow-y-auto print:hidden"
           >
-            <RailBlock label="Status">
+            <RailBlock label="Status" tour="week-status">
               <div className="flex flex-wrap items-center gap-8">
                 <StatusChip value={report.status} />
                 {report.approvalRequested && (
@@ -239,7 +239,7 @@ function ReportWeek({ week, own }) {
             </RailBlock>
 
             {readable && (
-              <RailBlock label="Versions">
+              <RailBlock label="Versions" tour="week-versions">
                 <VersionsList
                   revisions={revisions}
                   selected={selected}
@@ -249,7 +249,7 @@ function ReportWeek({ week, own }) {
             )}
 
             {report.weekComments && (
-              <RailBlock label="Overall comments">
+              <RailBlock label="Overall comments" tour="week-comments">
                 <WeekComments
                   reportId={report._id}
                   threads={report.weekComments}

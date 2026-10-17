@@ -1346,9 +1346,11 @@ boundary — so one broken page leaves the shell usable (design §3.13).
 
 ### 9.18 The demo chooser — `/demo`
 
-`DemoEntryPage` (inside `IndexRoute` when `isDemo` and signed out). Three choices; picking
-one calls `demo.setPerspective("member" | "manager" | "admin")`, then `signIn(null, me)`
-with the `Me` the adapter returns for that person, then navigates to `/`.
+`DemoEntryPage` (inside `IndexRoute` when `isDemo` and signed out). Two ways in (owner
+decision, 2026-10-17): **Take the guided tour** and **Jump to a part** hand a request to the
+tour layer (`requestTour("start" | "panel")`, §11.6); **Explore on your own** is the three
+choices, unchanged — picking one calls `demo.setPerspective("member" | "manager" | "admin")`,
+then `signIn(null, me)` with the `Me` the adapter returns for that person, then navigates to `/`.
 
 ---
 
@@ -1434,7 +1436,8 @@ perspective are in memory, so the page boots signed out. That is the literal rea
 
 - **No page checks `isDemo` for data.** The three presentation exceptions are the demo
   bar, the `SAMPLE DATA` pill (`Panel` adds it from `useIsDemo()`), and the hidden Sign out
-  item.
+  item. The guided tour (§11.6) adds none: it is mounted by `RootLayout`, not by a page, and
+  what it needs from components is inert `data-tour` attributes.
 - **The adapter computes every derived field the API computes** — `WeekView.expectedDays`,
   `dayStates`, `state`, `tasks`, `hoursByType`, `contentSource`, `canSubmit`,
   `Day.hours`/`canComment`, `Thread.editableUntil`/`isNew`, the `N1` counts, the `R12` feed
@@ -1460,6 +1463,46 @@ the shape its hook reads (the keys the pages use, not a full schema). It fails w
 service gains an endpoint the demo doesn't answer — which is what keeps the demo honest
 (`project_structure.md` §3.4).
 
+
+### 11.6 The guided tour — an overlay layer *(owner decision, 2026-10-17)*
+
+`requirments_doc.md` §14.1 is the experience and design §3.14 "Guided tour" the look; this is
+the mechanism. **No page knows the tour exists.**
+
+| Part | Where | What it does |
+| --- | --- | --- |
+| Mount | `layouts/RootLayout.jsx` | Under `/demo` only (`useIsDemo()`), loads `demo/tour/TourLayer.jsx` with a dynamic `import()` and renders it. RootLayout is above the session layout, so the layer outlives a change of person; the real app never downloads the chunk, and the landing chunk never contains it |
+| Requests | `demo/tour/tourBus.js`; a DOM event | The chooser (`requestTour`) and the demo bar's **Tour** button (a `weeklyview:tour` `CustomEvent`, so the main bundle imports no tour code) ask for "start" or "panel". A request made while the layer is still loading waits for it |
+| The script | `demo/tour/tourSteps.js` | Data: chapters, steps (who, audience, route, target, the setup it needs, the manual features it covers, an optional action), `NOT_IN_TOUR`, `CAPABILITIES`, `tourMinutes()` |
+| Setup helpers | `demo/tour/tourSetup.js` | Pure functions on the store (`prepare(store, names)`): the story week to Draft / Submitted / Needs correction / resubmitted / Approved, a day Imali can post, one to edit, Ayesha's day open to the team… Real actions go through the demo's own route handlers as the person who would do them (`matchRoute`), so versions, comments and the desk come out exactly as clicks would leave them. Idempotent: a state already reached is left alone |
+| Do it for me | `demo/tour/tourRobot.js` | Drives the real controls: clicks, Radix menus (pointerdown), React-controlled inputs (the prototype's value setter, then `input`/`change`), the task combobox. Fills only what the visitor left empty |
+| Placement | `demo/tour/tourPlacement.js` | Pure geometry: the tooltip beside the highlight, the scroll that leaves room below it, the phone sheet's side and scroll, the highlight clipped to the open area |
+| Layer | `demo/tour/TourLayer.jsx`, `TourTooltip.jsx`, `TourPanel.jsx` | The controller and what it draws, portalled to `<body>` in a `[data-tour-layer]` element |
+
+**Running a step** (the layer's one effect, restarted by a `run` counter on every step,
+retry or jump): close the page's open dialogs and menus (unless the step's target is in
+one) → `prepare()` the store and, if it changed, `invalidateQueries()` → become the step's
+person through the chooser's own `useDemoSignIn` (`signIn` clears the cache on a change of
+person) → `navigate(route)` → wait for the router to arrive and the target to be on screen
+(up to 6 s, polled every 100 ms: data loads first) → show. A target is a `[data-tour="…"]`
+selector, or a list tried in order (the wide layout's element, then the phone's). While a
+step is shown, a frame loop follows the target's rect (it re-finds it after a re-render) and
+a 250 ms poll asks the step's `until(ctx)` — usually a store predicate — whether the action
+happened; then it moves on after 700 ms, or stays and points at the result (`done`).
+
+**Rules it keeps.** Pages never branch on the demo: components carry inert `data-tour`
+attributes (and `data-tour-id` where a row is meant), nothing else; `demoTour.test.js` checks
+that every target named by a step exists in the source, and that only `RootLayout` (by a
+dynamic import) and the demo chunk refer to `demo/tour/`. It adds no endpoint, so
+`demoCoverage.test.js` is unchanged. The overlay is `pointer-events: none` except the
+tooltip, which stops `pointerdown` and `focusin` at itself (a page's Radix dialog or menu
+would otherwise close or pull focus back) and is kept free of the `aria-hidden` a page dialog
+puts on the rest of `<body>`. Reduced motion: scrolling is instant, the fade is cut by §8.3.
+
+**Persistence.** None. A refresh under `/demo` returns to the chooser (§11.1) and the tour
+ends with the store it was telling the story of; resuming would point at a week that no
+longer exists. Within a page's life the panel offers **Resume at step N** after Exit or Esc,
+and **Switch** in the demo bar pauses the tour.
 ---
 
 ## 12. Accessibility and performance

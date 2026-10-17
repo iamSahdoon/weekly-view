@@ -115,7 +115,10 @@ export default function HolidaysPage() {
           />
         }
         primary={
-          <Button onClick={() => setDialog({ kind: "form" })}>
+          <Button
+            data-tour="add-holiday"
+            onClick={() => setDialog({ kind: "form" })}
+          >
             Add holiday
           </Button>
         }

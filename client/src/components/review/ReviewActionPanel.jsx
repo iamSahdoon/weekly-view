@@ -63,6 +63,7 @@ export function ReviewActionPanel({
     "This report hasn’t been submitted, so there is nothing to review yet.";
   return (
     <div
+      data-tour="review-panel"
       className={cn(
         acted === null
           ? "flex flex-col gap-11 bg-tint2 px-14 py-14"
@@ -77,7 +78,13 @@ export function ReviewActionPanel({
             Next in review desk
           </Button>
         ) : (
-          <Button variant="secondary" size="sm" asChild className="self-start">
+          <Button
+            variant="secondary"
+            size="sm"
+            asChild
+            data-tour="next-in-desk"
+            className="self-start"
+          >
             <Link to={next.to} state={next.state}>
               Next in review desk
               <ChevronRight aria-hidden="true" />
@@ -161,6 +168,7 @@ function ReviewForm({ report, onDone, className }) {
   return (
     <section
       aria-label="Review"
+      data-tour="review-panel"
       className={cn(
         "flex flex-col gap-11 border-t border-hair bg-tint px-14 py-14",
         className,
@@ -185,6 +193,7 @@ function ReviewForm({ report, onDone, className }) {
       </label>
       <Textarea
         id="review-comment-text"
+        data-tour="review-comment"
         rows={4}
         maxLength={2000}
         placeholder={PLACEHOLDER}
@@ -199,6 +208,7 @@ function ReviewForm({ report, onDone, className }) {
       )}
       <div className="flex flex-wrap items-center gap-8">
         <Button
+          data-tour="approve"
           loading={approve.isPending}
           disabled={behind || busy}
           onClick={doApprove}
@@ -207,6 +217,7 @@ function ReviewForm({ report, onDone, className }) {
         </Button>
         <Button
           variant="secondary"
+          data-tour="send-back"
           disabled={behind || busy || trimmed.length < MIN_SEND_BACK}
           title={
             trimmed.length < MIN_SEND_BACK

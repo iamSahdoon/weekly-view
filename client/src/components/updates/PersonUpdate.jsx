@@ -48,7 +48,11 @@ export function PersonUpdate({ entry, weekKey }) {
 
   if (state !== "posted") {
     return (
-      <li className="flex min-h-[var(--row-h)] items-center justify-between gap-11 border border-hair bg-card px-20 py-8">
+      <li
+        data-tour="team-update"
+        data-tour-id={user._id}
+        className="flex min-h-[var(--row-h)] items-center justify-between gap-11 border border-hair bg-card px-20 py-8"
+      >
         <Heading user={user} weekKey={weekKey} />
         {state === "leave" ? (
           <StatusChip kind="week" value="on_leave" />
@@ -62,7 +66,11 @@ export function PersonUpdate({ entry, weekKey }) {
   const week = { user, weekKey, report: { _id: reportId, author: user } };
   const projects = projectNames(day);
   return (
-    <li className="border border-hair bg-card">
+    <li
+      data-tour="team-update"
+      data-tour-id={user._id}
+      className="border border-hair bg-card"
+    >
       <div className="px-20 py-14">
         <Heading
           user={user}

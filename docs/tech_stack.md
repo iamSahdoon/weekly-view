@@ -780,6 +780,9 @@ it that has to be kept in step by hand.
   ago", resolved when demo mode starts, so the demo never shows a stale week.
 - **No server call is possible.** The demo adapter has no fallback to the network; an
   unhandled route returns a 404 envelope rather than reaching the API.
+- **The guided tour** *(owner decision, 2026-10-17)* is an overlay over these same pages,
+  mounted under `/demo` only, in its own chunk; its setup helpers act on the store through
+  the same handlers (`frontend_architecture.md` §11.6). It adds no dependency (§10).
 
 **What this replaces.** An earlier plan signed visitors into a seeded demo account on the
 real API and refused every write server-side with a demo flag. That put a special account
@@ -1019,6 +1022,15 @@ each step), its entrances, the hero parallax and the footer's week. It is import
 is never loaded by the app or the demo (`landingIsolation.test.js` asserts both). The app's own motion
 stays `motion` (§1.2). GSAP is free under its "Standard 'no charge' license" (gsap.com/standard-license).
 anime.js was considered and not added.
+
+**Owner decision (guided demo tour, 2026-10-17): no dependency added.** The owner approved one small,
+MIT-licensed tour library (driver.js was the candidate). It was not needed: the tour's steps span route
+changes and changes of person, wait for data to load, act on the demo store and must sit above the
+app's own Radix dialogs — all of it the tour's own logic either way — and the highlight, the tooltip and
+the phone sheet are a few dozen lines of React on the design tokens (the jump panel is the Radix Dialog
+already here). The tour is `client/src/demo/tour/`, loaded by a dynamic import under `/demo` only, so
+neither the app's main bundle nor the landing chunk carries it (`demoTour.test.js` checks the imports;
+the production build was checked by hand). See `frontend_architecture.md` §11.6.
 
 `vitest` is on the client for one reason: the constants parity test
 (`project_structure.md` §7.1), which asserts that the client's copy of the shared

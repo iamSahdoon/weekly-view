@@ -2270,6 +2270,257 @@ MongoDB only, on the dev server and a production build:
     on the sign-in screens.
 11. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
 
+### Owner request: guided demo tour (2026-10-17)
+Not a stage; **C11 is still next.** Branch `claude/demo-tour` from `main`, pull request
+[iamSahdoon/weekly-view#28](https://github.com/iamSahdoon/weekly-view/pull/28). Recorded as owner decisions in `requirments_doc.md`
+§14.1, `product_design_system.md` §3.14 "Guided tour" and §8.5 (entries 36–37), `frontend_architecture.md` §9.18,
+§11.3 and §11.6, `tech_stack.md` §6.9 and §10, `project_structure.md` (tree, §3.4) and `docs/USER_MANUAL.md` §49
+(and the feature index). No server code, API, rule or error message changed; no dependency was added.
+
+**The order, proposed before building** (as asked, then built as proposed):
+one team's week as a story, each feature explained once, in the chapter of the lowest role that has it. Every
+step names who it is for: **Everyone**, **Managers and admins** or **Admins only**.
+
+1. **Admin — setting up the team** (Sanduni B., the owner). Opens with "Admins can do everything managers and
+   members can. This part shows what only admins do." Users list → invite a person (the link shown once) →
+   change a role → change an email → password-reset link → remove and re-invite → the owner's protections →
+   pass ownership on → holidays.
+2. **Member — the core of the product** (Imali J.). Opens with "Everyone posts daily updates, managers and admins
+   included." This week → the week strip → other weeks → a work line (task, project, type, what was done, hours)
+   → blockers → open to team comments → save without posting → post → edit a posted day → who's away → your own
+   leave → Team updates → comment on a teammate's open day → edit or delete within 10 minutes → reply to a
+   comment → what teammates see → the weekly report builds itself (task statuses) → achievements and notes →
+   hours by task type → autosave → before you submit → ask for approval → submit → the filed week → day cards →
+   resolve a blocker → overall comments → print → My reports and statuses → My projects → your numbers.
+3. **Manager — reviewing and running the team** (Nadia F.). Opens with "Managers can do everything members can.
+   Admins can do everything here too." Comment on anyone's update → open a teammate's day to the team → the
+   review desk (with "Nobody reviews their own report…") → open Imali's report → read it → comment on the week →
+   send back with a reason → next in review desk → the dashboard's four numbers → the team table and Updates
+   squares → projects on the dashboard (Days / Hours) → charts → recent activity → People → a profile → leave
+   history → set anyone's leave → Projects → create a project (plan, people) → extend a plan.
+4. **Member — fixing a sent-back report** (Imali). The "new" marker → the Needs correction panel → fix and
+   resubmit → versions.
+5. **Manager — approving it** (Nadia). Approve → the status is Approved everywhere.
+6. **Wrap-up, for everyone.** Account (name, password) → appearance → where to go next (Explore on your own, or
+   Create your account on the real site).
+
+The story week is **Imali's last week**: every day of it is posted, so it can be submitted on any day of the
+week (the current week can only be submitted once Friday is posted). The tour turns it into a Draft when the member
+chapter starts; Imali's submit really lands on Nadia's review desk, and so on. A step reached by a jump prepares the
+state it needs through demo-store setup helpers.
+
+**As built: 72 steps in six chapters** (* = waits for the visitor and offers **Do it for me**; 11 of them).
+The first screen says "About 15 minutes" — computed from the steps (9 s to read one, 30 s to do an action
+yourself), not a fixed number.
+
+1. **Setting up the team** (Sanduni B., the owner): 1 Sanduni sets up the team · 2 Users · 3 Invite a person* · 4 Change a role · 5 Change an email · 6 Issue a password-reset link* · 7 Remove someone, and bring them back · 8 The owner is protected · 9 Pass ownership on · 10 Holidays
+2. **A member’s week** (Imali J.): 11 Imali’s week · 12 This week · 13 The week strip · 14 Other weeks · 15 A work line · 16 Blockers · 17 Open to team comments · 18 Save without posting · 19 Post the update* · 20 Edit a posted day · 21 Who’s away · 22 Your own leave · 23 Team updates · 24 Comment on a teammate’s day* · 25 Edit or delete, for 10 minutes · 26 Reply to a comment* · 27 What teammates see · 28 The weekly report builds itself · 29 Achievements and notes · 30 Hours by task type · 31 Autosave · 32 Before you submit · 33 Ask for approval · 34 Submit* · 35 Submitted · 36 Day cards · 37 Resolve a blocker · 38 Overall comments · 39 Print a week · 40 My reports · 41 My projects · 42 Your numbers
+3. **Reviewing and running the team** (Nadia F.): 43 Nadia runs the team · 44 Comment on anyone’s update* · 45 Open a teammate’s day · 46 The review desk · 47 Open Imali’s report* · 48 Reading a submitted report · 49 Comment on the week · 50 Send it back* · 51 Next in review desk · 52 The team dashboard · 53 The Updates squares · 54 Projects at a glance · 55 Charts · 56 Recent activity · 57 People · 58 A person’s profile · 59 Leave history · 60 Set anyone’s leave · 61 Projects · 62 Create a project · 63 Extend a plan
+4. **Fixing a sent-back report** (Imali J.): 64 Back to Imali · 65 Needs correction · 66 Fix and resubmit* · 67 Versions
+5. **Approving it** (Nadia F.): 68 Approve* · 69 Approved, everywhere
+6. **For everyone** (Nadia F.): 70 Your account · 71 Light or dark · 72 Where to go next
+
+**How it works** (`frontend_architecture.md` §11.6). An overlay layer, `client/src/demo/tour/`, which
+`RootLayout` loads under `/demo` only by a dynamic import. For each step it runs the step's demo-store setup
+helpers, becomes the step's person through the chooser's own sign-in, navigates, waits up to 6 s for the
+`[data-tour]` target to appear (data loads first), scrolls it into view and draws a `--backdrop` dim with a
+cutout, a 2px `--acc` outline and the tooltip. Action steps watch the store (or the screen) and move on once
+the visitor has done it; **Do it for me** presses the real buttons and fills only what was left empty. Pages
+gained inert `data-tour` attributes only. The jump panel is the **Tour** button in the demo bar (and **Jump to
+a part** on the first screen). Design: `product_design_system.md` §3.14 "Guided tour".
+
+**Feature coverage** (every entry of `docs/USER_MANUAL.md`'s feature index → its step → the label the
+step shows). `demo/__tests__/demoTour.test.js` fails when an index entry has no step and no reason, when
+a step names a feature the index doesn't have, or when a capability of `requirments_doc.md` §1 Roles has
+no step in the chapter of its lowest role.
+
+| Feature (manual index) | Step | Label |
+| --- | --- | --- |
+| Account page (name, password, theme, leave) | 70 Your account | Everyone |
+| Activity list (recent activity) | 56 Recent activity | Managers and admins |
+| Approve a report | 68 Approve | Managers and admins |
+| Ask for approval | 33 Ask for approval | Everyone |
+| Autosave (weekly form) | 31 Autosave | Everyone |
+| Blockers (write) | 16 Blockers | Everyone |
+| Blockers (resolve) | 37 Resolve a blocker | Everyone |
+| "Both sides" (team member vs manager) | 27 What teammates see | Everyone |
+| Carried-over tasks | 28 The weekly report builds itself | Everyone |
+| Charts (tasks completed, hours by type, workload) | 55 Charts | Managers and admins |
+| Comments on a day | 24 Comment on a teammate’s day | Everyone |
+| Comments on the week (overall comments) | 38 Overall comments | Everyone |
+| Compliance | 52 The team dashboard | Managers and admins |
+| Confirm before ending leave | 22 Your own leave | Everyone |
+| Dark theme | 71 Light or dark | Everyone |
+| Day cards | 36 Day cards | Everyone |
+| Demo (three perspectives) | 72 Where to go next | Everyone |
+| Guided tour (demo) | 72 Where to go next | Everyone |
+| Drafts (unposted text kept until sign-out) | 18 Save without posting | Everyone |
+| Edit email (admin) | 5 Change an email | Admins only |
+| Edit / delete a comment (10 minutes) | 25 Edit or delete, for 10 minutes | Everyone |
+| Error toast with Retry | — not in the tour: The demo’s saves don’t fail, and the tour won’t fake a failure. | — |
+| Extend plan | 63 Extend a plan | Managers and admins |
+| Holidays (manage) | 10 Holidays | Admins only |
+| Holiday week | 40 My reports | Everyone |
+| Hours | 15 A work line | Everyone |
+| Hours by task type | 30 Hours by task type | Everyone |
+| Invite a person | 3 Invite a person | Admins only |
+| Landing page | — not in the tour: It is outside the demo: the page the visitor came from, with its own look. | — |
+| Leave (turn on/off) | 22 Your own leave | Everyone |
+| Leave history | 59 Leave history | Managers and admins |
+| Make owner | 9 Pass ownership on | Admins only |
+| My projects | 41 My projects | Everyone |
+| My reports (history) | 40 My reports | Everyone |
+| "New" markers | 64 Back to Imali | Everyone |
+| Next in review desk | 51 Next in review desk | Managers and admins |
+| Not started | 40 My reports | Everyone |
+| Offline strip | — not in the tour: The demo never goes over the network, so it can’t lose the connection. | — |
+| On leave (week state) | 40 My reports | Everyone |
+| Open to team comments | 17 Open to team comments | Everyone |
+| Password change | 70 Your account | Everyone |
+| Password reset link (admin) | 6 Issue a password-reset link | Admins only |
+| People list and profiles | 57 People | Managers and admins |
+| Planned hours / working days | 62 Create a project | Managers and admins |
+| Post a daily update | 19 Post the update | Everyone |
+| Print a report | 39 Print a week | Everyone |
+| Privacy rules | 27 What teammates see | Everyone |
+| Projects | 61 Projects | Managers and admins |
+| Remove a person / re-invite | 7 Remove someone, and bring them back | Admins only |
+| Report statuses | 35 Submitted; 40 My reports | Everyone |
+| Review desk | 46 The review desk | Managers and admins |
+| Roles | 4 Change a role | Admins only |
+| Send back | 50 Send it back | Managers and admins |
+| Session expiry sign-in window | — not in the tour: The demo has no sessions to expire. | — |
+| Sign up (first account only) | — not in the tour: Accounts aren’t part of the demo; the last step links to the real site. | — |
+| "Starting up" screen | — not in the tour: It appears only while the real server wakes up; the demo has no server. | — |
+| Stale version banner | — not in the tour: It needs two people acting on one report at the same moment. | — |
+| Submit / Resubmit | 34 Submit; 66 Fix and resubmit | Everyone |
+| Submit checklist ("Before you submit") | 32 Before you submit | Everyone |
+| Task types (7 colours) | 15 A work line | Everyone |
+| Team dashboard | 52 The team dashboard | Managers and admins |
+| Team updates | 23 Team updates | Everyone |
+| This week | 12 This week | Everyone |
+| Updates squares and legend | 53 The Updates squares | Managers and admins |
+| Users (manage) | 2 Users | Admins only |
+| Versions (revisions) | 67 Versions | Everyone |
+| Week picker | 14 Other weeks | Everyone |
+| Week strip (Mon–Fri) | 13 The week strip | Everyone |
+| Weekly report form | 28 The weekly report builds itself | Everyone |
+| Your numbers | 42 Your numbers | Everyone |
+
+The role capabilities of `requirments_doc.md` §1 map the same way (`CAPABILITIES` in `tourSteps.js`):
+member — 15, 16, 19 (post); 23, 24 (read, comment on an open day); 28, 33, 34 (build, ask, submit); 40
+(history); 26, 38, 65 (reply on updates and the week); 41 (project progress); 21, 22 (who is away, own
+leave). Manager — 44, 49 (comment on anyone's update and week); 48 (read submitted reports); 46, 50, 68
+(review, send back, approve); 45 (open a teammate's day); 52, 58 (dashboard, profiles); 62, 63 (projects,
+plans, people); 60 (anyone's leave). Admin — 3 invite, 7 remove, 4 roles, 5 email, 6 reset link, 10 holidays.
+
+**Owner decisions to confirm or change** (all small and reversible):
+1. **No library.** Approval was given for one (driver.js); the tour's real work (steps across routes and
+   people, waiting for data, the store, sitting above the app's own Radix dialogs) is its own logic either
+   way, and the highlight, tooltip and phone sheet are a few dozen lines on the design tokens. Recorded in
+   `tech_stack.md` §10.
+2. **The launcher lives in the demo bar**, not floating: "Tour", between Switch and Start over; below 480px
+   the route icon alone, so "Sanduni B." still fits at 360px. A floating button would cover the weekly
+   form's bar and the phone's bottom sheet.
+3. **The story week is Imali's last week.** The current week can only be submitted once Friday is posted.
+   The member chapter turns last week back into a Draft, replacing the sample's sent-back history of that
+   week; the visitor then makes that history themselves.
+4. **Moving through the tour prepares each step's data.** Going **Back** from "Edit a posted day" to "Post the
+   update" takes the posted day off again, and a jump can reset the story week; the step needs that state.
+5. **The dim doesn't block the page.** The visitor can use the highlighted element and anything else; if a
+   step's target goes away, the card says "This part of the screen has closed." with **Show it again**.
+6. **A refresh ends the tour**, with the store it was telling the story of. I recommend keeping it: resuming
+   would point at a week that no longer exists. Within a page's life, Exit or Esc keeps **Resume at step N**,
+   and **Switch** pauses the tour.
+7. **"Overall comment" and the weekly form.** The form has no field by that name: overall comments are the
+   comments on a week (step 38 for Imali, step 49 for Nadia); the form's own text is achievements (step 29),
+   plans for next week, notes and links.
+8. **Seven features are left out**, each because it can't happen honestly in a browser-only demo: the landing
+   page, sign-up, the session-expiry window, the "Starting up" screen, the offline strip, the error toast with
+   Retry, the stale-version banner (`NOT_IN_TOUR`).
+9. **The first screen's lead line** is now "Take the guided tour, or look around on your own."; the original
+   line sits under "Explore on your own" with the three choices, unchanged.
+
+**Checks.** `npm run lint` clean; Prettier clean on every changed file. `npm test`: server 389, client 670
+(39 new: 38 in `demoTour.test.js`, 1 in `demoEntry.test.jsx`, which now counts the role picker's three buttons
+inside its list). `demoCoverage.test.js` green and unchanged: the tour adds no endpoint. `vite build` OK.
+**Bundle split** (production build, measured): the main bundle grew from 936.05 to 937.30 kB (gzip 301.65 →
+302.12: the `data-tour` attributes, the demo bar's button and the loader); it contains no tour code — only the
+DOM event's name and the dynamic-import stub. The landing chunk is the same size as on `main` (192.83 kB) and
+holds no tour code. The tour is two chunks, `TourLayer` (21.2 kB) and `tourSteps` (32.8 kB, shared with the
+chooser). In `vite preview`, `/` and `/signin` request none of the demo or tour chunks; `/demo` requests them.
+
+**Looked at in headless Chromium** (the in-memory demo only — no database, no Atlas, no `MONGODB_URI`; the
+container's date was Saturday 17 Oct 2026, and Monday and Wednesday were simulated with a fake clock):
+- The whole tour, pressing **Do it for me** on every action step, with a screenshot of every step and every
+  action's outcome: 1440×900 light and dark, 360×780 light and dark (dev server), 1440 light on the production
+  build, 360 light on a Monday. 72 of 72 steps found their target with the outline drawn, none fell back to
+  "didn't appear", every action finished. I looked at every picture of the final 1440 light and 360 dark runs,
+  every picture of an earlier 360 light run, and a selection of the 1440 dark and Monday runs. After the last
+  two touches (Day cards now outlines one card, not the whole column; the last step's buttons align right),
+  those two steps were re-checked by jumping to them at 1440 and 360.
+- The whole tour pressing only **Next** (a Wednesday, 1440): the setup helpers carried the story — the report
+  was submitted, sent back, resubmitted and approved without the visitor doing it.
+- Jumps from the panel, at 1440 light and 360 dark: from the first screen's **Jump to a part** into **Send it
+  back** (as Nadia; Do it for me → "Next in review desk"); from the demo bar's **Tour** into **Fix and
+  resubmit** (as Imali → "Versions"), **Approve** (→ "Approved, everywhere"), **Post the update** (→ "Edit a
+  posted day") and **Invite a person** (→ "The link is shown once").
+- Keyboard: → and ← move steps; Tab from the card's last button focuses the highlighted element; the first
+  Esc closes the invite dialog and leaves the tour, the second ends it and focus goes to **Tour**; the panel
+  then offers **Resume at step 4**, which resumes; the card takes focus with `aria-labelledby` and
+  `aria-describedby` set; **Switch** pauses the tour; a refresh at `/demo/team` returns to the first screen
+  with no tour.
+- Reduced motion: the page jumps to each target instead of scrolling smoothly, and the card's fade is cut to
+  1 ms. Normal motion: the card fades in over 120 ms; nothing travels between steps.
+- Found and fixed while looking: the "edit a day" helper took back the day just posted; the tooltip covered the
+  composer and the review panel the visitor had to use (the page now scrolls the target up to make room, and
+  action steps highlight the whole work area); a tooltip beside a ⋯ menu covered the opened menu; after **Do it
+  for me** the outline stayed on the button behind a dialog; on a phone the Tour button squeezed the name in
+  the demo bar, and a top sheet covered the demo bar.
+
+**Not verified:** Firefox and Safari; real phones and touch (the phone layout was checked at 360px in
+desktop Chromium); screen readers (the dialog's labels, focus moves and the live region were checked in the
+DOM, not heard); Windows font rendering; widths other than 1440 and 360; the hosted Vercel build. The
+console's one error in every run is `/favicon.ico` 404, which `main` has too.
+
+**Owner: how to check by hand** (Windows; nothing needs the database)
+1. In a terminal at the repo root: `git fetch origin`, then `git checkout claude/demo-tour`.
+2. `npm --prefix client install`, then `npm --prefix client run dev`. (No API is needed for the demo.)
+3. In Chrome open http://localhost:5173/demo. The first screen offers **Take the guided tour** ("About 15
+   minutes, or jump to any part") above **Explore on your own** and the three choices, unchanged.
+4. Click **Take the guided tour**. You are Sanduni on Users; a card points at "Demo · you're Sanduni B.,
+   Admin" and says "Admins can do everything managers and members can…". Press **Next** through the admin
+   part; on **Invite a person** press **Do it for me**: the invite window opens, fills in and shows the link,
+   and the card now points at it ("The link is shown once").
+5. Keep going into Imali's part. On **Post the update**, fill in the line yourself (task, type, what you did,
+   hours) and press **Post update**: the tour moves on by itself.
+6. On **Submit**, press **Do it for me**: every task gets a status, Ask for approval is ticked, the report is
+   submitted and the card shows "Submitted".
+7. In Nadia's part, **The review desk** shows Imali's report waiting. On **Send it back**, write a reason of
+   10+ characters, press **Send back** and confirm.
+8. In "Back to Imali", **Fix and resubmit**, then (as Nadia) **Approve**; the next card shows Imali's row
+   Approved on the dashboard.
+9. Click **Tour** in the dark demo bar: the panel lists every step under **Everyone**, **Managers and
+   admins** and **Admins only**. Choose **Send it back**: you become Nadia on Imali's submitted report.
+   Open the panel again and choose **Fix and resubmit**: you become Imali on the sent-back form.
+10. Press **Esc** (twice if a window of the app is open): the tour ends and focus is on **Tour**. Open the panel:
+    **Resume at step N** takes you back.
+11. Press F12 → Ctrl+Shift+M → Responsive → **360** wide, reload, start the tour: the card is a sheet at the
+    bottom (or under the demo bar when the highlighted part is at the bottom) and never covers the outlined
+    part; the panel fills the screen; the demo bar still reads "Sanduni B." with a small route icon for Tour.
+12. Dark: choose a perspective, your name → **Appearance** → Dark, then press **Tour** → **Start again**.
+13. Reduced motion (Windows Settings → Accessibility → Visual effects → Animation effects off): reload and
+    start the tour — the page jumps to each part instead of scrolling. Turn animation effects back on.
+14. Optional: `npm --prefix client run build` then `npm --prefix client run preview`; open
+    http://localhost:4173/ and F12 → Network → JS: no `TourLayer` or `tourSteps` file loads until you open
+    `/demo`.
+
+### Your next steps
+1. Review and merge [iamSahdoon/weekly-view#28](https://github.com/iamSahdoon/weekly-view/pull/28) (from
+   `claude/demo-tour` into `main`) after the checks above; say which of the nine decisions to change.
+2. Next session prompt, unchanged by this work: "Read `CLAUDE.md` and `PROGRESS.md`, then do stage C11
+   (verification, deployment, README) from `MASTER_PROMPT.md`."
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -2904,6 +3155,11 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- **Guided demo tour, to confirm or change** (see *Owner request: guided demo tour*): the nine decisions — no
+  library; the Tour button in the demo bar; Imali's last week as the story week, reset to a Draft; steps
+  re-preparing their data on Back and jumps; a dim that doesn't block the page; the tour ending on refresh
+  (recommended); "overall comment" read as the week's comments; seven features left out; the first screen's
+  new lead line.
 - **Auth pages round six — a committed browser test?** The client suite has no DOM, so the "landing → `/signin`
   client-side, computed styles use app tokens only" check runs in Chromium by script, not in `npm test`. Making it a
   committed test needs a new dev dependency (`@playwright/test`, or jsdom, which cannot compute real styles).
@@ -2944,6 +3200,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- The guided demo tour added `demo/tour/` (`TourLayer.jsx`, `TourTooltip.jsx`, `TourPanel.jsx`, `tourSteps.js`, `tourSetup.js`, `tourRobot.js`, `tourPlacement.js`, `tourBus.js`) and `demo/__tests__/demoTour.test.js`; `Table` takes a `tour` prop, `Tabs` and `DropdownMenu` pass rest props through (menu items take a `tour` key); `fixtures.js` exports `CAST` and `SAMPLE_PROJECTS`, `bootDemo.js` exposes the store. `project_structure.md` (tree and §3.4) is updated.
 - The landing revamp added `components/marketing/{PrivacySection,DemoSection,StoryCaptions}.jsx` and `storySteps.js`, and removed `SidesSection.jsx` and `LimitsSection.jsx` (`LimitsSection` became `PrivacySection`); `project_structure.md` §3.1 is updated.
 - C10 added `components/ui/SampleDataPill.jsx`, `hooks/useIsDemo.js`, eight section components, `CtaPill.jsx` and `Words.jsx` in `components/marketing/`, `client/.prettierignore` and four test files (`demo/__tests__/{demoCast.test.js,demoEntry.test.jsx}`, `components/marketing/__tests__/LandingPage.test.jsx`, `styles/__tests__/landingIsolation.test.js`); `AuthPanel` takes `padding="none"`; `project_structure.md` §3.1 and §6 are updated. `DemoEntryPage`, `DemoBar`, `MarketingLayout`, `LandingPage`, `useLandingMotion` and `landing.css` were in the tree. `pages.js` names `LandingPage` and `DemoEntryPage`.
 - C9 added `components/shell/{ErrorBoundary,ErrorStates}.jsx`, `components/report/PrintFooter.jsx`, `hooks/{useNewMarks,useRouteFocus,usePrintTheme}.js`, `lib/clearMarkers.js`, `services/markerService.js` (in the tree), `styles/print.css` and four test files (`demo/__tests__/demoMarkers.test.js`, `lib/__tests__/clearMarkers.test.js`, `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`); `project_structure.md` §3.1 and §6 are updated. The page-level error boundary is in `AppShell` as well as `RootLayout` (see C9 decisions).

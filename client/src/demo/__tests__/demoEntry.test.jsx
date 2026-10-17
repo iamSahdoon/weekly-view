@@ -57,7 +57,20 @@ describe("the chooser", () => {
     ]) {
       expect(html).toContain(text);
     }
-    expect(html.match(/<button/g)).toHaveLength(3);
+    // The role picker is unchanged: its list holds exactly the three choices.
+    const picker = html.slice(html.indexOf("<ul"), html.indexOf("</ul>"));
+    expect(picker.match(/<button/g)).toHaveLength(3);
+  });
+
+  it("first offers the guided tour, with an honest length, then exploring on your own", () => {
+    const tour = html.indexOf("Take the guided tour");
+    const own = html.indexOf("Explore on your own");
+    expect(tour).toBeGreaterThan(-1);
+    expect(own).toBeGreaterThan(tour);
+    expect(html).toMatch(/About \d+ minutes, or jump to any part/);
+    expect(html).toContain("Jump to a part");
+    // Two buttons for the tour, three for the perspectives.
+    expect(html.match(/<button/g)).toHaveLength(5);
   });
 
   it("sits on the product's page, with no landing class, and a way back", () => {

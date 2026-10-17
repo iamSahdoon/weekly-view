@@ -99,5 +99,12 @@ const COLUMNS = [
 const deskRowHref = (row) => `/review/${row._id}`;
 
 export function ReviewDeskTable(props) {
-  return <Table columns={COLUMNS} getRowHref={deskRowHref} {...props} />;
+  return (
+    <Table
+      columns={COLUMNS}
+      getRowHref={deskRowHref}
+      tour="review-desk"
+      {...props}
+    />
+  );
 }

@@ -32,6 +32,7 @@ export function ConfirmDialog({
           </Button>
           <Button
             variant={destructive ? "destructive" : "primary"}
+            data-tour="confirm-action"
             loading={pending}
             onClick={onConfirm}
           >

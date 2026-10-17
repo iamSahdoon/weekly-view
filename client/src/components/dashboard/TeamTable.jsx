@@ -127,7 +127,11 @@ export function TeamTable({
   onLimit,
 }) {
   return (
-    <section aria-label="Team" className="flex flex-col gap-11">
+    <section
+      aria-label="Team"
+      data-tour="team-table"
+      className="flex flex-col gap-11"
+    >
       <div className="flex min-h-[30px] flex-wrap items-center justify-between gap-11">
         <div className="flex min-w-0 items-center gap-8">
           <h2 className="font-display text-panel-sm font-bold text-ink">

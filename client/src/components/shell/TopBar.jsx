@@ -22,7 +22,10 @@ export function TopBar({ showMenu }) {
   const inMenu = narrow && hasSecondary;
 
   return (
-    <header className="sticky top-[var(--demo-h,0px)] z-30 flex flex-wrap items-center gap-x-11 border-b border-hair bg-card px-32 max-md:px-20 print:hidden">
+    <header
+      data-tour="topbar"
+      className="sticky top-[var(--demo-h,0px)] z-30 flex flex-wrap items-center gap-x-11 border-b border-hair bg-card px-32 max-md:px-20 print:hidden"
+    >
       {showMenu && (
         <Dialog.Trigger asChild>
           <Button
@@ -51,6 +54,7 @@ export function TopBar({ showMenu }) {
       </div>
       <div
         ref={slotRefs.weekPicker}
+        data-tour="topbar-week-picker"
         className="flex items-center empty:hidden max-sm:order-last max-sm:w-full max-sm:pb-11"
       />
       {inMenu ? (
@@ -63,6 +67,7 @@ export function TopBar({ showMenu }) {
               variant="secondary"
               iconOnly
               aria-label="More actions"
+              data-tour="topbar-more"
               className="touch-target"
             >
               <Ellipsis />
@@ -83,6 +88,7 @@ export function TopBar({ showMenu }) {
       )}
       <div
         ref={slotRefs.primary}
+        data-tour="topbar-primary"
         className="flex items-center gap-11 empty:hidden"
       />
     </header>

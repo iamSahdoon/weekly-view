@@ -40,7 +40,7 @@ export default function AccountPage() {
         <div className="flex flex-col gap-32">
           <ProfilePanel me={me} />
           <PasswordPanel />
-          <Panel title="Appearance">
+          <Panel title="Appearance" data-tour="account-appearance">
             <div className="flex flex-wrap items-center gap-14">
               <ThemeToggle />
               <span className="text-caption text-mut">
@@ -113,6 +113,7 @@ function ProfilePanel({ me }) {
   return (
     <Panel
       title="Profile"
+      data-tour="account-profile"
       footer={
         <Button
           type="submit"
@@ -265,7 +266,7 @@ function LeavePanel({ me }) {
   return (
     <LeaveToggleHost>
       {({ request, pending }) => (
-        <Panel title="Leave">
+        <Panel title="Leave" data-tour="account-leave">
           <div className="flex flex-col gap-8">
             <Switch
               label="I’m on leave"

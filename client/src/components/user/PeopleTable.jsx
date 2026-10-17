@@ -117,6 +117,7 @@ export function PeopleTable({
       emptyState={emptyState}
       keepHeader
       caption="People"
+      tour="people-table"
     />
   );
 }

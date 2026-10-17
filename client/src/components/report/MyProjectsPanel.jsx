@@ -17,6 +17,7 @@ export function MyProjectsPanel({ projects, unit, onUnitChange }) {
   return (
     <section
       aria-labelledby="my-projects"
+      data-tour="my-projects"
       className="flex flex-col border border-hair bg-card"
     >
       <header className="flex min-h-44 flex-wrap items-center justify-between gap-x-11 gap-y-6 border-b border-hair px-20 py-6">

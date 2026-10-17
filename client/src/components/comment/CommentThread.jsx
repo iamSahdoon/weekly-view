@@ -135,7 +135,12 @@ export function CommentThread({
           />
         ) : (
           <div className={conversation ? "-ml-8" : undefined}>
-            <Button size="sm" variant="ghost" onClick={() => setReplying(true)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              data-tour="reply"
+              onClick={() => setReplying(true)}
+            >
               Reply
             </Button>
           </div>
@@ -153,7 +158,12 @@ export function StartThread({ target, ownerName, label = "Comment" }) {
   if (!open) {
     return (
       <div>
-        <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
+        <Button
+          size="sm"
+          variant="secondary"
+          data-tour="comment-start"
+          onClick={() => setOpen(true)}
+        >
           {label}
         </Button>
       </div>

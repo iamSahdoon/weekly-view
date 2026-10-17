@@ -19,6 +19,7 @@ export function DayTabs({ days, value, onChange }) {
   }));
   return (
     <Tabs
+      data-tour="day-tabs"
       ariaLabel="Day"
       items={items}
       value={value}

@@ -566,7 +566,37 @@ A hands-on tour of the product, reachable from the landing page without signing 
 Because the demo never touches the server or the database, it cannot go stale, cannot be
 damaged by a visitor, and needs no special accounts or permissions on the server.
 
-Full specification: `product_design_system.md` §3.14 and `tech_stack.md` §6.9.
+### 14.1 The guided tour *(owner decision, 2026-10-17)*
+
+The demo's first screen offers two ways in: **take the guided tour** (with an honest length,
+"about 15 minutes, or jump to any part") or **explore on your own** (the three perspectives,
+unchanged).
+
+- **One team's week as a story.** Sanduni (the owner) sets the team up; Imali (a member)
+  posts days and files a week; Nadia (a manager) reviews it and sends it back; Imali fixes and
+  resubmits; Nadia approves; then Account and appearance, and where to go next. The roles are
+  cumulative (§1), so each feature is explained **once**, in the chapter of the lowest role
+  that has it, and each step says who can use it: *Everyone*, *Managers and admins* or
+  *Admins only*. The tour switches person by itself, and the store keeps what the visitor
+  did, so a week Imali submits really appears on Nadia's review desk.
+- **Every feature, for every role.** Every entry of `docs/USER_MANUAL.md`'s feature index and
+  every capability in §1 has at least one step, or is listed as left out with its reason (the
+  landing page, sign-up, session expiry, the "Starting up" screen, the offline strip, the error
+  toast and the stale-version banner — none can happen honestly in a browser-only demo). A
+  client test fails when a feature gains no step.
+- **Steps point at the real screens.** A step highlights a real element and explains it in one
+  or two sentences; where an action makes sense the tour waits for the visitor to do it (post
+  a day, submit, send back…) and offers **Do it for me**, which presses the real buttons.
+- **Jump to any part.** A **Tour** button in the demo bar opens a panel listing every step,
+  grouped by who can use it; choosing one switches to the right person, prepares the data that
+  step needs (a submitted report waiting to be sent back, a sent-back report to fix…) and starts
+  there. The panel also resumes, restarts or ends the tour.
+- **Nothing is stored.** Like the rest of the demo, a refresh returns to the first screen and
+  ends the tour.
+
+Full specification: `product_design_system.md` §3.14 and `tech_stack.md` §6.9; the tour's
+components in `product_design_system.md` §3.14 "Guided tour", its architecture in
+`frontend_architecture.md` §11.6.
 
 ---
 

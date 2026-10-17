@@ -13,6 +13,7 @@ export function RecentWeeksList({ rows }) {
   return (
     <section
       aria-labelledby="recent-weeks"
+      data-tour="recent-weeks"
       className="flex flex-col border border-hair bg-card"
     >
       <header className="flex h-44 items-center border-b border-hair px-20">

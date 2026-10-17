@@ -13,7 +13,7 @@ const ITEM =
   "focus-inset flex w-full cursor-pointer flex-col items-start justify-center gap-2 px-14 py-6 text-left text-dense text-body outline-none " +
   "data-[highlighted]:bg-tint data-[highlighted]:text-ink data-[disabled]:cursor-not-allowed data-[disabled]:text-mut";
 
-export function DropdownMenu({ label, items, align = "end" }) {
+export function DropdownMenu({ label, items, align = "end", ...triggerProps }) {
   return (
     <Menu.Root>
       <Menu.Trigger asChild>
@@ -23,6 +23,7 @@ export function DropdownMenu({ label, items, align = "end" }) {
           iconOnly
           aria-label={label}
           className="touch-target"
+          {...triggerProps}
         >
           <MoreHorizontal aria-hidden="true" />
         </Button>
@@ -40,6 +41,7 @@ export function DropdownMenu({ label, items, align = "end" }) {
                 <Menu.Separator className="my-4 h-px bg-hair" />
               )}
               <Menu.Item
+                data-tour={item.tour}
                 disabled={item.disabled}
                 onSelect={item.onSelect}
                 className={cn(ITEM, item.destructive && "text-st-corr-fg")}

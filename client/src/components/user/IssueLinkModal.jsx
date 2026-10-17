@@ -73,7 +73,11 @@ export function IssueLinkModal({ kind, person, open, onOpenChange }) {
             >
               Cancel
             </Button>
-            <Button loading={mutation.isPending} onClick={issue}>
+            <Button
+              data-tour="issue-link"
+              loading={mutation.isPending}
+              onClick={issue}
+            >
               {copy.action}
             </Button>
           </>

@@ -42,6 +42,8 @@ function RoleCell({ user, me, saved, onChangeRole }) {
     <Select
       size="sm"
       aria-label={`Role of ${user.name || user.email}`}
+      data-tour="role-select"
+      data-tour-id={user._id}
       className="w-[132px]"
       value={user.role}
       disabled={!gate.allowed}
@@ -81,6 +83,7 @@ function menuItems(user, me, on) {
   const a = userActions(me, user);
   const item = (label, gate, kind, extra = {}) => ({
     label,
+    tour: `menu-${kind}`,
     disabled: !gate.allowed,
     reason: gate.reason,
     onSelect: () => on(kind, user),
@@ -185,6 +188,8 @@ export function UsersTable({
           <DropdownMenu
             label={`Actions for ${user.name || user.email}`}
             items={menuItems(user, me, onAction)}
+            data-tour="user-menu"
+            data-tour-id={user._id}
           />
         ),
     },
@@ -200,6 +205,7 @@ export function UsersTable({
       emptyState={emptyState}
       keepHeader
       caption="Users"
+      tour="users-table"
     />
   );
 }

@@ -156,7 +156,10 @@ export default function TeamDashboardPage() {
               onUnitChange={(unit) => keepPage({ unit })}
               onExtend={setExtending}
             />
-            <div className="grid grid-cols-1 gap-24 min-[1200px]:grid-cols-12">
+            <div
+              data-tour="dashboard-charts"
+              className="grid grid-cols-1 gap-24 min-[1200px]:grid-cols-12"
+            >
               <TasksTrendChart
                 query={trend}
                 weeks={Number(filters.trendWeeks)}

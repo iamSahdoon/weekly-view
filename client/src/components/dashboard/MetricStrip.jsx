@@ -105,7 +105,11 @@ export function MetricStrip({ query }) {
       }
     >
       {(summary) => (
-        <section aria-label="This week in numbers" className={GRID}>
+        <section
+          aria-label="This week in numbers"
+          data-tour="metric-strip"
+          className={GRID}
+        >
           {metricsOf(summary).map((metric) => (
             <MetricCell key={metric.label} {...metric} />
           ))}

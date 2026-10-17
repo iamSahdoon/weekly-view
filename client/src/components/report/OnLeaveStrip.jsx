@@ -26,7 +26,10 @@ export function OnLeaveStrip({
   if (!others && days.length === 0 && !mine) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-20 gap-y-6 bg-tint px-14 py-8 text-dense text-body">
+    <div
+      data-tour="on-leave-strip"
+      className="flex flex-wrap items-center gap-x-20 gap-y-6 bg-tint px-14 py-8 text-dense text-body"
+    >
       {mine && (
         <span className="inline-flex items-center gap-8">
           You’re on leave
