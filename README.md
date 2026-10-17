@@ -39,6 +39,27 @@ npm test                           # server and client tests
 npm run lint
 ```
 
+## Database commands
+
+Two commands reset the database that `server/.env` points at (run them from the project folder):
+
+```bash
+npm run db:empty     # wipes everything and inserts nothing
+npm run db:sample    # wipes everything, then loads the sample team and six weeks of reports
+```
+
+- `db:empty` leaves a blank database. The first person to sign up becomes the owner.
+- `db:sample` fills it with a fictional team. Every sample account signs in with the **public**
+  password `weekly-view-dev` (the admin and owner is `sanduni@example.com`). Never use it on a
+  database real people will use.
+- **Both wipe whatever database `server/.env` points at.** Check `MONGODB_URI` first. Neither
+  command runs when `NODE_ENV` is `production`.
+- A browser that was signed in before the reset still holds a token for a person who no
+  longer exists. Sign out, or open a private window to see the landing page and sign-in as a
+  new visitor would.
+
+`seed` and `seed:reset` still work as older names for `db:sample`.
+
 ## Atlas network access is `0.0.0.0/0` — on purpose
 
 Render's free instances have no static outbound IP, so there is no address to allowlist.
@@ -49,5 +70,5 @@ tradeoff, not an oversight. It is compensated by:
 - a least-privilege database user (read/write on the `weeklyview` database only);
 - the credentials living only in Render's environment settings, never in the repository.
 
-Atlas M0 has no automated backups. The seed script can rebuild the demo dataset, which is
+Atlas M0 has no automated backups. `npm run db:sample` can rebuild the sample dataset, which is
 acceptable until a real team files real reports.

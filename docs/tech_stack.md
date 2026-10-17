@@ -701,9 +701,12 @@ filing action and the status chip changing is the whole feedback. Use
 
 ### 6.8 Seed script
 
-`npm run seed` connects, wipes the **seven** collections (`users`, `projects`, `tasks`,
+`npm run db:sample` connects, wipes the **seven** collections (`users`, `projects`, `tasks`,
 `reports`, `revisions`, `holidays`, `seenMarks`), and inserts the development dataset
-specified in `database_schema.md` §8. In short:
+specified in `database_schema.md` §8. `npm run db:empty` (`--empty`) wipes the same seven
+collections and syncs their indexes but inserts nothing, so the first person to sign up
+becomes the owner. Both **refuse when `NODE_ENV` is `production`**. `seed` and `seed:reset`
+remain as undocumented aliases of `db:sample`. The dataset, in short:
 
 - **Users** — the fixed fictional cast from `brand_design_strategy.md` §10
   (Nadia F., Ruwan P., Imali J., Tharindu S., Ayesha C., Dinesh K., Malith W.,
@@ -722,7 +725,7 @@ specified in `database_schema.md` §8. In short:
 - **Holidays**, including one in the current week.
 
 Deterministic — a fixed array and index arithmetic, **not** `faker` — so screenshots
-don't change between reseeds and names follow the brand's naming policy. `npm run seed`
+don't change between reseeds and names follow the brand's naming policy. `npm run db:sample`
 must produce a dataset in which every design system §3.13 state and every status chip is
 reachable **without a single write**.
 
@@ -871,7 +874,7 @@ requires a redeploy, not just a settings save.
   least-privilege database user, and the credentials living only in Render's env
   settings. Document it in the README rather than leaving a reviewer to assume
   carelessness.
-- **No automated backups on M0.** Since the seed script can rebuild the entire
+- **No automated backups on M0.** Since `db:sample` can rebuild the entire
   demo dataset, that's acceptable for now and stops being acceptable the day a
   real team files a real report.
 
@@ -915,6 +918,8 @@ Not omissions — decisions, to be revisited if WeeklyView takes real users.
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "db:empty": "node src/seed/index.js --empty",
+    "db:sample": "node src/seed/index.js",
     "seed": "node src/seed/index.js",
     "seed:reset": "node src/seed/index.js --reset",
     "test": "vitest run",

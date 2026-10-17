@@ -41,11 +41,20 @@ sure every PR you want live is merged (including the one that adds this file and
    **Add IP Address → Allow access from anywhere → Confirm**.
 
 **1.3 Decide on the database.** Use your `weeklyview` database on Atlas, but **don't seed it** if
-real people will use the site: the seed **wipes** the database. On a fresh database, the first
+real people will use the site: `db:sample` **wipes** the database. On a fresh database, the first
 person to sign up becomes the owner (step 4).
-- If you only want the live site as a demo-with-data portfolio, you can seed it from your PC
-  (`cd server`, `npm run seed`) *before* going live, then sign in with the seed accounts. Don't do
+- To start a database from blank (for example after testing), run `npm run db:empty` from the
+  project folder on your PC. It wipes everything and inserts nothing, so the first person to sign
+  up becomes the owner.
+- If you only want the live site as a demo-with-data portfolio, you can load sample data from your
+  PC with `npm run db:sample` *before* going live, then sign in with the sample accounts. Don't do
   this once real data exists.
+- **Both commands wipe whatever database `server\.env` points at.** Check `MONGODB_URI` in that
+  file first. They run on your PC only and refuse when `NODE_ENV` is `production`.
+- The sample accounts share the **public** password `weekly-view-dev`. Anyone who reads this
+  repository knows it.
+- After either command, a browser that was already signed in still holds an old sign-in. Sign
+  out, or use a private window.
 
 **1.4 Make a production JWT secret.** In PowerShell:
 ```
@@ -191,7 +200,7 @@ spirit. The **demo** never needs the server, so it's always instant.
 3. **Create the owner account:** click ***Create your account***, and enter your name, email and a
    strong password. You're now the owner and an admin. Sign-up closes after this; everyone else
    joins by invite.
-   - (If you seeded the database instead, sign in with `sanduni@example.com` / `weekly-view-dev`,
+   - (If you loaded the sample data instead, sign in with `sanduni@example.com` / `weekly-view-dev`,
      and **change that password** in Account straight away.)
 4. **Check these:**
    - [ ] `…/api/health` on the API address shows `success: true`.

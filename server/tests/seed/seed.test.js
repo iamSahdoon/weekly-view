@@ -1,3 +1,6 @@
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import mongoose from "mongoose";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import app from "../../src/app.js";
@@ -8,7 +11,7 @@ import { Revision } from "../../src/models/revisionModel.js";
 import { SeenMark } from "../../src/models/seenMarkModel.js";
 import { Task } from "../../src/models/taskModel.js";
 import { User } from "../../src/models/userModel.js";
-import { runSeed } from "../../src/seed/index.js";
+import { runEmpty, runSeed } from "../../src/seed/index.js";
 import { PASSWORD, buildDataset } from "../../src/seed/seedData.js";
 import { shiftWeek } from "../../src/utils/weeks.js";
 import { bearer } from "../helpers/testAuth.js";
@@ -409,5 +412,74 @@ describe("relative to the week it runs in", () => {
       ]),
     );
     expect(await Holiday.countDocuments()).toBe(8);
+  });
+});
+
+describe("db:empty", () => {
+  const MODELS = [Holiday, Project, Report, Revision, SeenMark, Task, User];
+
+  it("wipes all seven collections, keeps their indexes, and leaves sign-up open", async () => {
+    await seedAt(NOW);
+    expect(await User.countDocuments()).toBeGreaterThan(0);
+    expect((await api.get("/api/auth/bootstrap")).body.data.available).toBe(
+      false,
+    );
+
+    await runEmpty();
+
+    for (const model of MODELS) expect(await model.countDocuments()).toBe(0);
+    expect((await api.get("/api/auth/bootstrap")).body.data).toEqual({
+      available: true,
+    });
+    // The owner index is still there, so the first sign-up can become the owner.
+    const indexes = await User.collection.indexes();
+    expect(indexes.some((i) => i.unique && i.key.isOwner)).toBe(true);
+    const signup = await api.post("/api/auth/signup").send({
+      name: "First Person",
+      email: "first@example.com",
+      password: "a-long-enough-password",
+    });
+    expect(signup.status).toBe(201);
+    expect((await User.findOne({ email: "first@example.com" })).isOwner).toBe(
+      true,
+    );
+  });
+
+  it("can be run on an already empty database", async () => {
+    await clearDb();
+    await runEmpty();
+    for (const model of MODELS) expect(await model.countDocuments()).toBe(0);
+  });
+});
+
+describe("db:empty and db:sample refuse in production", () => {
+  const script = fileURLToPath(
+    new URL("../../src/seed/index.js", import.meta.url),
+  );
+  const run = (args) =>
+    spawnSync(process.execPath, [script, ...args], {
+      encoding: "utf8",
+      timeout: 15_000,
+      // The refusal comes before any connection; the URI is a placeholder.
+      env: {
+        PATH: process.env.PATH,
+        NODE_ENV: "production",
+        MONGODB_URI: "mongodb://in-memory.invalid/weeklyview-test",
+        JWT_SECRET: "test-only-secret-that-is-at-least-32-characters-long",
+        CLIENT_URL: "http://localhost:5173",
+      },
+    });
+
+  it.each([
+    ["db:empty", ["--empty"]],
+    ["db:sample", []],
+  ])("%s refuses and touches nothing", async (_name, args) => {
+    await seedAt(NOW);
+    const before = await User.countDocuments();
+    const out = run(args);
+    expect(out.status).toBe(1);
+    expect(out.stderr).toMatch(/Refusing to .*NODE_ENV is production/);
+    expect(await User.countDocuments()).toBe(before);
+    expect(mongoose.connection.readyState).toBe(1);
   });
 });

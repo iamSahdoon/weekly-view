@@ -154,10 +154,10 @@ rules, the stale-pin `409`, approving an unrequested report.
 `docs/tech_stack.md` §6.8 · `docs/requirments_doc.md` §6.
 
 **Build:** **D1–D8** (users-first pipelines, `status` filter on D2 only, D6 not week-scoped);
-`npm run seed` / `seed:reset` — deterministic, relative to the current week, all seven
+`npm run db:sample` (and `db:empty`, which wipes and inserts nothing; owner decision, see `PROGRESS.md`) — deterministic, relative to the current week, all seven
 collections, every state in the current week (`database_schema.md` §8).
 
-**Done when:** after `npm run seed`, every status and week state is reachable from the API
+**Done when:** after `npm run db:sample`, every status and week state is reachable from the API
 without a write, and a full run of the manual backend checks in
 `docs/development_approach_doc.md` passes.
 

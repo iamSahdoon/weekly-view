@@ -4,7 +4,9 @@
   "scripts": {
     "dev:client": "npm --prefix client run dev",
     "dev:server": "npm --prefix server run dev",
-    "seed": "npm --prefix server run seed",
+    "db:empty": "npm --prefix server run db:empty",
+    "db:sample": "npm --prefix server run db:sample",
+    "seed": "npm --prefix server run db:sample",
     "test": "npm --prefix server run test && npm --prefix client run test",
     "lint": "npm --prefix client run lint && npm --prefix server run lint"
   }
