@@ -521,6 +521,20 @@ sees the real thing.
     *Round two (owner, after testing, 2026-10-17):* with sign-up open, the hero is its two buttons alone — the
     line "Set up your first week in minutes. No sign-up to explore the demo." is removed. "No account needed.
     Nothing is saved." stays beside the demo pill in the other states, where it reads as the demo's caption.
+14. **Owner decision (auth pages round six, 2026-10-17): the landing page and the sign-in screens are one smooth
+    move.** This replaces the earlier rule that the landing page's links are full page loads. Every link to
+    `/signin` and `/signup` (the hero's buttons, the nav's "Sign in" and pill, "Already on a team? Sign in", the
+    closing band, the footer) opens the screen client-side, inside a view transition (a calm 300ms cross-fade,
+    the new page rising 6px), and "← Back to home" returns the same way. Browser Back and Forward reuse it.
+    `/demo` stays a plain link and a different page load. **Isolation still holds:** `landing.css` stays loaded
+    once the page has been visited, but every rule is scoped to `.landing` (the isolation test), and the page
+    removes `html.landing-active`, the Bricolage Grotesque link, its title and description when it unmounts; the
+    landing chunk (and GSAP) loads only when `/` is shown. Measured in Chromium after landing → `/signin`
+    client-side, light and dark: no element on the auth screens has a landing colour, the landing typeface or a
+    rounded corner. Returning, the page re-creates its motion from scratch (GSAP's `matchMedia` was reverted on
+    leaving): the hero plays, the stories pin, and "Back to home" starts at the top (browser Back restores the
+    scroll). Without view transitions the landing page fades in on its own (`l-page-in`, 260ms); under reduced
+    motion nothing animates.
 
 ### 6.1 Job of the page
 

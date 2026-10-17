@@ -2222,7 +2222,8 @@ than merely shortened.
 signed-out auth screens only, never inside the app:* (1) the brand panel's sample week is a
 **continuous decorative loop** — it walks Monday to Thursday and posts Thursday, every 15 s
 (§8.5, entry 32; it replaces the one-time fill-in accepted earlier); (2) the screens **arrive**
-with a short fade and rise (entry 33); (3) the panel's hairline grid **drifts** one cell every
+in a view transition from the landing page and with a staggered entrance (entries 33 and 35,
+round six); (3) the panel's hairline grid **drifts** one cell every
 14 s and a few of its cells softly light in turn (entry 34; round five sped the drift up from
 48 s and added the cells). All three move only `opacity` and `transform`; the loop runs on one timer, the
 grid on one CSS layer; both wait while the tab is hidden or the panel is out of view (the
@@ -2253,15 +2254,17 @@ Nothing else in the product is excused from the list above.
 | 30  | Light ↔ dark switch                 | background, border and text colours cross-fade | 200ms | `ease`     | CSS (`.wv-theme-easing`, 260ms)  | Appearance switch |
 | 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
 | 32  | Auth screens' brand panel: the sample week loops *(owner decision, auth pages 2026-10-17, rounds three and four)* | each change in three moves that never overlap: the old day fades out (`opacity`, 0–160ms, `--ease-in`); the chosen day's 2px `--ink` bar slides (`transform`, 140–340ms); the new day fades in (240–420ms) — on Thursday its square fills (`opacity`, `scale(.5→1)`) and the posted lines rise 4px. Mon → Tue → Wed → Thu, Thursday posted, back to Monday | steps 3 / 3 / 3 / 2.2 / 3.8 s — a 15 s cycle | `--ease-out` | CSS transitions, one `setTimeout` (`previewSteps.js`) | continuous while visible |
-| 33  | Auth screens: arrival *(owner decision, round four)* | the brand panel fades in; the brand block, then (80ms later) the form block, rise 8px with a fade | 280 / 320ms | `--ease-out` | CSS (`.wv-auth-fade`, `.wv-auth-enter`, `.wv-auth-enter-late`) | the auth frame mounts (arriving from the landing page or a link; not between auth screens) |
+| 33  | Landing ↔ auth screens: the view transition *(owner decision, round six; replaces round four's block rise)* | the old page fades out as the new one fades in and rises 6px (one length and curve both ways, so the browser's plus-lighter blend never washes out the middle); also between the auth screens, and for browser Back and Forward | 300ms | `--ease-soft` | React Router `viewTransition`; CSS on `::view-transition-old/new(root)` | a click on a `TransitionLink`, or Back / Forward |
+| 35  | Auth screens: staggered entrance *(owner decision, round six)* | each part rises 10px with a fade, 50ms after the one before — brand side: wordmark, intro card, sample card, caption; form side 40ms behind: back link, heading, line, panel, links (the last done at about 600ms). Inside a view transition the parts only rise (the cross-fade fades them). The brand panel's background fades in (280ms). The form can be focused and typed in at once | 380ms each | `--ease-out` | CSS (`.wv-stagger` with `--stagger`, `.wv-in-transition`, `.wv-auth-fade`) | the screen mounts (a direct load, a refresh, an arrival, or a change of auth screen) |
 | 34  | Auth screens' brand panel: the grid drifts and a few cells light *(owner decisions, rounds four and five)* | one oversized layer of the 32px `--hair` grid moves one cell down and right (`transform`), seamlessly; eight of its cells light to `--acc` at 12% (light) / 28% (dark) and back (`opacity`), in four turns, two at a time — placed only where they never sit behind text or a card | 14s, `infinite` (each cell: ~1.4s in, ~1.4s out, dark at the loop's seam) | linear | CSS (`.wv-grid-drift`, `.wv-grid-cell`), paused by `[data-paused]`; positions measured once and on resize (`ResizeObserver`) | continuous while visible |
 
 - **Entries 32–34 are the exceptions to §8.4** — owner decisions (PR #27, rounds three and
   four, 2026-10-17); 32 replaces the one-time fill-in. Signed-out auth screens only, never in
-  the app. **Why not a view transition for 33:** the landing page's links are full page loads
-  on purpose (its styles and font must not stay behind in the app), so a same-document view
-  transition can't span them, and a cross-document one would capture the app before React has
-  drawn the screen. The CSS entrance works in every browser and is none under reduced motion.
+  the app. **Round six (owner decision) changed 33:** the landing page's links are now
+  client-side, so 33 is a real view transition (the earlier "full page loads" rule is
+  withdrawn; `brand_design_strategy.md` §6.0 rule 14), and the arrival is the stagger (35).
+  Without view transitions, navigation still works and 35 plays; under reduced motion the
+  switch is instant and nothing staggers.
   Entry 32: It never moves the form or takes focus; it
   pauses on `visibilitychange` (tab hidden) and when an `IntersectionObserver` says the panel
   is out of view (the phone layout hides it); under reduced motion it does not start and the

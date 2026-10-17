@@ -423,10 +423,13 @@ export function AuthBrandPanel({ intro, className }) {
       <div
         ref={blockRef}
         data-auth-block="brand"
-        className="wv-auth-enter relative row-span-4 row-start-2 grid w-full max-w-[420px] grid-rows-subgrid justify-self-center"
+        className="relative row-span-4 row-start-2 grid w-full max-w-[420px] grid-rows-subgrid justify-self-center"
       >
         {/* Level with "Back to home". */}
-        <div className="row-start-1 flex min-h-[32px] items-start pb-24">
+        <div
+          className="wv-stagger row-start-1 flex min-h-[32px] items-start pb-24"
+          style={{ "--stagger": 0 }}
+        >
           <BrandMark className="h-[32px] text-[22px]" glyphSize={22} />
         </div>
         {/* Beside the heading and the form panel: the screen's line, then the sample card
@@ -435,15 +438,22 @@ export function AuthBrandPanel({ intro, className }) {
         <div className="row-span-2 row-start-2 flex flex-col">
           {/* The two cards keep one 24px gap on every screen; any room the form leaves
               goes above them, beside the form's heading. */}
-          <div className="mt-auto pb-24">
+          <div className="wv-stagger mt-auto pb-24" style={{ "--stagger": 1 }}>
             <Intro intro={intro} />
           </div>
-          <div aria-hidden="true">
+          <div
+            aria-hidden="true"
+            className="wv-stagger"
+            style={{ "--stagger": 2 }}
+          >
             <WeekPreview step={step} />
           </div>
         </div>
         {/* Level with the form's links. */}
-        <div className="row-start-4 pt-20">
+        <div
+          className="wv-stagger row-start-4 pt-20"
+          style={{ "--stagger": 3 }}
+        >
           <p className="font-display text-sub font-bold text-ink">
             One short update a day.
           </p>

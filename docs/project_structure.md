@@ -459,7 +459,8 @@ client/
 │   │   ├── DevOnlyRoute.jsx           # gates /design behind import.meta.env.DEV
 │   │   ├── pages.js                   # added in C8: every routed page as a lazyPage — the route table and prefetch.js both name each page here
 │   │   ├── lazyPage.jsx               # added in C8: React.lazy that renders at once once its chunk has loaded (no 300 ms Suspense hold)
-│   │   ├── prefetch.js                # added in C8: preloads the route chunks a role may open next, when the browser is idle
+│   │   ├── prefetch.js                # added in C8: preloads the route chunks a role may open next, when the browser is idle; prefetchAuthPages (round six)
+│   │   ├── TransitionLink.jsx         # added for the auth pages (round six): a client-side link between "/" and the auth screens, in a view transition, loading the target page first
 │   │   └── __tests__/routeGuards.test.jsx  # added in C2: ProtectedRoute's 403, ParamGuard, and the Sidebar's DOM per role (static render); C8 adds routeFallbacks.test.jsx (lazyPage, a fallback on every route, no `fallback={null}` in the source)
 │   ├── layouts/
 │   │   ├── RootLayout.jsx             # router root: SkipLink, Outlet, Toaster, ReAuthModal, ScrollRestoration — C2: OfflineStrip is mounted by AppShell, under the top bar (design §3.13)
@@ -642,7 +643,8 @@ client/
 │   │       ├── HeroSection.jsx · ProblemSection.jsx · WeekSection.jsx · DeskSection.jsx · PrivacySection.jsx · DemoSection.jsx · QuestionsSection.jsx · FinalSection.jsx   # added in C10, one per section, in page order (landing revamp: Sides and Limits gone, Privacy and Demo added — brand §6.0 rule 10); Hero, Questions and Final take `signupOpen`; Hero also takes `signupClosed` (its sign-in line, brand §6.0 rule 13)
 │   │       ├── StoryCaptions.jsx      # added in the landing revamp: the two scroll stories' captions — the pinned, typed column and the stacked numbered notes
 │   │       ├── storySteps.js          # added in the landing revamp: the stories' steps (kicker, sentence, the dashboard's filter)
-│   │       ├── CtaPill.jsx            # added in C10: the pill link (solid with the arrow circle, or ghost) — always a plain <a>, so the landing styles never outlive the page
+│   │       ├── CtaPill.jsx            # added in C10: the pill link (solid with the arrow circle, or ghost) — through AppLink since round six
+│   │       ├── AppLink.jsx            # added for the auth pages (round six): /signin and /signup as TransitionLinks; /demo and the rest plain <a>
 │   │       ├── Words.jsx              # added in C10: a heading's words in their masks (the reference split them in its script)
 │   │       └── __tests__/LandingPage.test.jsx  # added in C10: the CTA swap, the honesty rules, the ids the motion needs, no hex in the components
 │   ├── demo/                          # the client-side demo — tech_stack.md §6.9
@@ -686,6 +688,7 @@ client/
 │   │   ├── useAppendMotion.js         # added in the polish pass (2026-10-10): the row just added with "Add a …" settles in (design §8.5, 27)
 │   │   ├── useHasMounted.js           # lets charts animate data changes but not mount
 │   │   ├── usePermissions.js          # lib/permissions bound to the current user
+│   │   ├── useArrivedInTransition.js  # added for the auth pages (round six): whether a page mounted inside a view transition
 │   │   ├── useLandingMotion.js        # the landing page's motion, as one effect hook: the hero's typed blocker, the two guided scroll stories, entrances, parallax and the footer's week (GSAP + ScrollTrigger, imported here only)
 │   │   ├── useReportQueries.js        # TanStack Query hooks wrapping reportService (incl. team updates)
 │   │   ├── useReviewQueries.js        # review desk, review actions, comments

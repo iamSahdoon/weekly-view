@@ -870,6 +870,9 @@ shapes), separate from the app's look. It tells the story in order:
   waking up), only the demo button shows.
 - **Phones and "reduce motion":** nothing pins, types or draws. Captions become a numbered list
   above each picture, and every picture shows its final state.
+- ***Sign in*** and ***Create your account*** open their screens without reloading, with a short
+  cross-fade; ***← Back to home*** (and the browser's Back button) returns the same way. The demo
+  still opens as a separate page. With "reduce motion" on, the switch is instant.
 - If your browser remembers a sign-in, `/` takes you into the app instead. Use a private window
   to see the landing page.
 

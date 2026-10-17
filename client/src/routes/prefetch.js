@@ -1,5 +1,7 @@
 import {
   AccountPage,
+  SignInPage,
+  SignUpPage,
   HolidaysPage,
   PeoplePage,
   PersonProfilePage,
@@ -63,6 +65,24 @@ export function prefetchRoutes(role) {
     });
   };
   next(0);
+  return () => {
+    stopped = true;
+  };
+}
+
+/**
+ * Signed out on the landing page: load the sign-in and sign-up screens while the browser is
+ * idle, so its links open them inside the view transition with no wait (owner decision,
+ * auth pages round six). Returns a function that stops it.
+ */
+export function prefetchAuthPages() {
+  let stopped = false;
+  idle(() => {
+    if (stopped) return;
+    SignInPage.preload()
+      .then(() => SignUpPage.preload())
+      .catch(() => {});
+  });
   return () => {
     stopped = true;
   };

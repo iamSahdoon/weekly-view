@@ -1,9 +1,12 @@
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { AuthBrandPanel } from "../components/auth/AuthBrandPanel.jsx";
 import { AuthIntroContext } from "../components/auth/authIntro.js";
 import { BrandMark } from "../components/shell/BrandMark.jsx";
+import { useArrivedInTransition } from "../hooks/useArrivedInTransition.js";
+import { cn } from "../lib/cn.js";
+import { TransitionLink } from "../routes/TransitionLink.jsx";
 
 // The auth screens' frame (design §3.12; owner decisions, auth pages 2026-10-17, round
 // three). From 1024px: two equal halves, the brand panel on the left and the form on the
@@ -19,23 +22,27 @@ import { BrandMark } from "../components/shell/BrandMark.jsx";
 // form follows it, as one plain column.
 //
 // Round four (2026-10-17): the screen names a line for the panel (AuthIntroContext) that
-// fills the space above the sample card, and the pair arrives with a short rise — the
-// landing page's links are full page loads (they must not carry landing styles into the
-// app), so this CSS entrance stands in for a view transition (design §8.5 entry 33).
+// fills the space above the sample card. Round six: the landing page and these screens
+// move between each other client-side in a view transition ("Back to home" is a
+// TransitionLink), and each screen's parts come in one after another (`.wv-stagger`,
+// base.css; design §8.5 entries 33 and 35): the brand side's wordmark, intro card, sample
+// card and caption, and, 40ms behind, the form side's back link, heading, line, panel and
+// links. Opacity and transform only, so the form can be focused and typed in at once.
 
 function BackHome() {
   return (
-    <Link
+    <TransitionLink
       to="/"
       className="focus-halo -mx-4 inline-flex min-h-[32px] items-center gap-6 px-4 text-dense text-mut transition-colors duration-[120ms] ease-linear hover:text-ink"
     >
       <ArrowLeft size={14} aria-hidden="true" />
       Back to home
-    </Link>
+    </TransitionLink>
   );
 }
 
 export default function AuthLayout() {
+  const arrivedInTransition = useArrivedInTransition();
   const [base, setBase] = useState(null);
   const [override, setOverride] = useState(null);
   // `override` travels too: a screen showing an expired link or a lost answer lays itself
@@ -46,7 +53,12 @@ export default function AuthLayout() {
   );
   return (
     <AuthIntroContext.Provider value={channel}>
-      <div className="min-h-[100dvh] bg-paper lg:grid lg:grid-cols-2 lg:grid-rows-[minmax(52px,1fr)_auto_auto_auto_auto_minmax(52px,1fr)]">
+      <div
+        className={cn(
+          arrivedInTransition && "wv-in-transition",
+          "min-h-[100dvh] bg-paper lg:grid lg:grid-cols-2 lg:grid-rows-[minmax(52px,1fr)_auto_auto_auto_auto_minmax(52px,1fr)]",
+        )}
+      >
         <header className="flex h-[52px] items-center justify-between border-b border-hair bg-card px-16 lg:hidden">
           <BrandMark className="text-[17px]" glyphSize={18} />
           <BackHome />
@@ -58,9 +70,12 @@ export default function AuthLayout() {
         >
           <div
             data-auth-block="form"
-            className="wv-auth-enter-late mx-auto flex w-full max-w-[420px] flex-col lg:row-span-4 lg:row-start-2 lg:grid lg:grid-rows-subgrid"
+            className="mx-auto flex w-full max-w-[420px] flex-col lg:row-span-4 lg:row-start-2 lg:grid lg:grid-rows-subgrid"
           >
-            <div className="pb-24 max-lg:hidden">
+            <div
+              className="wv-stagger pb-24 max-lg:hidden"
+              style={{ "--stagger": 0, "--stagger-base": "40ms" }}
+            >
               <BackHome />
             </div>
             {/* The screen's heading, panel and links fill the next three rows. */}

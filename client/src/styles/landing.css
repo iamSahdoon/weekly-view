@@ -62,6 +62,11 @@
 .landing *,.landing *::before,.landing *::after{box-sizing:border-box}
 html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scrollbar-color:var(--l-ln) var(--l-bg2)}
 .landing{margin:0;background:var(--l-bg);color:var(--l-fg);font-family:var(--l-f);font-size:17px;line-height:1.55;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;caret-color:var(--l-acc)}
+/* Owner decision (auth pages round six, brand §6.0 rule 14): coming back from the sign-in screens client-side, the page fades in (inside the view transition where there is one; on its own where there is not). */
+@keyframes l-page-in{from{opacity:0}}
+.landing{animation:l-page-in .26s cubic-bezier(.2,0,0,1) both}
+.landing.l-in-vt{animation:none}
+@media (prefers-reduced-motion:reduce){.landing{animation:none}}
 .landing ::selection{background:var(--l-acc);color:var(--l-on-acc)}
 .landing svg{display:block}
 .landing a{color:inherit}

@@ -1,3 +1,4 @@
+import { AppLink } from "./AppLink.jsx";
 import { CtaPill } from "./CtaPill.jsx";
 import { Words } from "./Words.jsx";
 
@@ -43,7 +44,7 @@ export function HeroSection({ signupOpen, signupClosed = false }) {
           </div>
           {signupClosed && (
             <p className="hsign">
-              Already on a team? <a href="/signin">Sign in</a>
+              Already on a team? <AppLink href="/signin">Sign in</AppLink>
             </p>
           )}
         </div>

@@ -84,7 +84,7 @@ describe("the frame", () => {
     ]);
     expect(panel).toContain("SAMPLE DATA");
     expect(panel).toMatch(
-      /<div aria-hidden="true"><div class="border border-hair bg-card">/,
+      /<div aria-hidden="true" class="wv-stagger" style="--stagger:2"><div class="border border-hair bg-card">/,
     );
     expect(text(panel)).toContain("One short update a day.");
   });
@@ -275,23 +275,47 @@ describe("the brand panel, round four", () => {
     expect(css).toMatch(
       /\[data-paused\] \.wv-grid-drift,\s*\[data-paused\] \.wv-grid-cell \{\s*animation-play-state: paused;/,
     );
+    // The auth screens' own reduced-motion block (the one after the grid's cells).
     const reduced = css.slice(
-      css.lastIndexOf("@media (prefers-reduced-motion"),
+      css.indexOf(
+        "@media (prefers-reduced-motion",
+        css.indexOf('.wv-grid-cell[data-turn="3"]'),
+      ),
     );
     for (const name of [
       ".wv-grid-drift",
       ".wv-grid-cell",
       ".wv-grid-cell[data-turn]",
-      ".wv-auth-enter",
+      ".wv-stagger",
       ".wv-auth-fade",
     ])
       expect(reduced).toContain(name);
     expect(reduced).toContain("animation: none");
   });
 
-  it("brings the pair in on arrival: the brand side first, then the form", () => {
-    expect(html).toMatch(/data-auth-block="brand" class="wv-auth-enter /);
-    expect(html).toMatch(/data-auth-block="form" class="wv-auth-enter-late /);
+  it("brings each part in on its own, the brand side first (round six)", () => {
+    const steps = (from, to) =>
+      [
+        ...html
+          .slice(html.indexOf(from), to ? html.indexOf(to) : undefined)
+          .matchAll(
+            /class="wv-stagger[^"]*" style="--stagger:(\d)(;--stagger-base:40ms)?"/g,
+          ),
+      ].map((m) => `${m[1]}${m[2] ? "+" : ""}`);
+    // Brand side: wordmark, intro card, sample card, caption.
+    expect(steps('aria-label="About WeeklyView"')).toEqual([
+      "0",
+      "1",
+      "2",
+      "3",
+    ]);
+    // Form side, 40ms behind: back link, heading, panel, links (sign in has no line).
+    expect(steps('data-auth-block="form"', "<aside")).toEqual([
+      "0+",
+      "1+",
+      "3+",
+      "4+",
+    ]);
   });
 
   it("gives every screen its own short line, in plain sentence case", () => {
@@ -347,10 +371,10 @@ describe("the brand panel, round five", () => {
     for (const intro of Object.keys(PANEL_INTROS)) {
       const html = panelFor(intro);
       expect(html, intro).toContain(
-        `<div class="mt-auto pb-24"><div data-panel-intro="${intro}" class="wv-fade-in border border-hair bg-card px-20 py-16">`,
+        `<div class="wv-stagger mt-auto pb-24" style="--stagger:1"><div data-panel-intro="${intro}" class="wv-fade-in border border-hair bg-card px-20 py-16">`,
       );
       expect(html, intro).toContain(
-        '<div aria-hidden="true"><div class="border border-hair bg-card">',
+        '<div aria-hidden="true" class="wv-stagger" style="--stagger:2"><div class="border border-hair bg-card">',
       );
     }
   });
@@ -389,6 +413,66 @@ describe("the brand panel, round five", () => {
     );
     expect(peaks).toEqual([0.12, 0.28]);
     expect(css).toContain('[data-theme="dark"] .wv-grid-cell {');
+  });
+});
+
+// Owner decision, round six: client-side moves between the landing page and these screens,
+// in a view transition, and a staggered entrance.
+describe("arriving, round six", () => {
+  const css = readFileSync(
+    new URL("../../../styles/base.css", import.meta.url),
+    "utf8",
+  );
+  const source = (f) => readFileSync(new URL(f, import.meta.url), "utf8");
+
+  it("cross-fades the two pages with one length and curve, and cuts instantly under reduced motion", () => {
+    const old =
+      /::view-transition-old\(root\) \{\s*animation: wv-vt-out (\d+ms) (var\([^)]+\))/.exec(
+        css,
+      );
+    const neu =
+      /::view-transition-new\(root\) \{\s*animation: wv-vt-in (\d+ms) (var\([^)]+\))/.exec(
+        css,
+      );
+    expect(old.slice(1)).toEqual(neu.slice(1));
+    expect(Number.parseInt(old[1], 10)).toBeGreaterThanOrEqual(250);
+    expect(Number.parseInt(old[1], 10)).toBeLessThanOrEqual(350);
+    const reduced = css.slice(
+      css.lastIndexOf("@media (prefers-reduced-motion"),
+    );
+    expect(reduced).toMatch(
+      /::view-transition-old\(\*\),\s*::view-transition-new\(\*\) \{\s*animation: none !important;/,
+    );
+  });
+
+  it("staggers 50ms apart with the house ease-out, rising 10px, and only rises inside a view transition", () => {
+    expect(css).toMatch(
+      /\.wv-stagger \{\s*animation: wv-auth-rise 380ms var\(--ease-out\) both;\s*animation-delay: calc\(var\(--stagger, 0\) \* 50ms \+ var\(--stagger-base, 0ms\)\);/,
+    );
+    expect(css).toMatch(
+      /@keyframes wv-auth-rise \{\s*from \{\s*opacity: 0;\s*transform: translateY\(10px\);/,
+    );
+    expect(css).toMatch(
+      /\.wv-in-transition \.wv-stagger \{\s*animation-name: wv-auth-rise-only;/,
+    );
+    expect(source("../../../hooks/useArrivedInTransition.js")).toContain(
+      ":active-view-transition",
+    );
+  });
+
+  it("never holds the form back: the entrance moves opacity and transform only", () => {
+    const block = css.slice(
+      css.indexOf("@keyframes wv-auth-rise {"),
+      css.indexOf("@keyframes wv-grid-drift"),
+    );
+    expect(block).not.toMatch(/pointer-events|visibility|display:/);
+  });
+
+  it("goes home client-side, and between the auth screens too", () => {
+    expect(source("../../../layouts/AuthLayout.jsx")).toMatch(
+      /<TransitionLink\s+to="\/"/,
+    );
+    expect(source("../AuthLink.jsx")).toContain("<TransitionLink");
   });
 });
 

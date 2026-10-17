@@ -1,5 +1,7 @@
 import { useContext } from "react";
+import { useArrivedInTransition } from "../../hooks/useArrivedInTransition.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
+import { cn } from "../../lib/cn.js";
 import { AuthIntroContext, useAuthIntro } from "./authIntro.js";
 
 // The body of an auth screen (design §3.12; owner decisions, auth pages 2026-10-17): a
@@ -14,7 +16,8 @@ import { AuthIntroContext, useAuthIntro } from "./authIntro.js";
 // a lost answer showing in place of the form (the panel's override) — keeps its parts
 // together instead: one element across the heading and panel rows, so the brand side's
 // taller column can't open gaps between them. The element tree is the same either way
-// (the wrapper is `display: contents` when not short), so nothing remounts.
+// (the wrapper is `display: contents` when not short), so nothing remounts. Each part comes
+// in on the arrival stagger (`.wv-stagger`, round six); a change of screen replays it.
 
 export function AuthScreen({
   heading,
@@ -29,19 +32,46 @@ export function AuthScreen({
   useAuthIntro(intro);
   const channel = useContext(AuthIntroContext);
   const short = compact || Boolean(channel?.override);
+  // A change of screen inside a view transition (AuthLink): its parts only rise.
+  const arrivedInTransition = useArrivedInTransition();
   return (
-    <div className={short ? "lg:row-span-2" : "contents"}>
+    <div
+      className={cn(
+        short ? "lg:row-span-2" : "contents",
+        arrivedInTransition && "wv-in-transition",
+      )}
+    >
       <div className="pb-32">
-        <h1 className="font-display text-page font-bold text-ink sm:text-title">
+        <h1
+          className="wv-stagger font-display text-page font-bold text-ink sm:text-title"
+          style={step(1)}
+        >
           {heading}
         </h1>
-        {line && <p className="mt-11 text-lg text-mut sm:mt-14">{line}</p>}
+        {line && (
+          <p
+            className="wv-stagger mt-11 text-lg text-mut sm:mt-14"
+            style={step(2)}
+          >
+            {line}
+          </p>
+        )}
       </div>
-      <div>{children}</div>
-      {footer && <Footer>{footer}</Footer>}
+      <div className="wv-stagger" style={step(3)}>
+        {children}
+      </div>
+      {footer && (
+        <div className="wv-stagger" style={step(4)}>
+          <Footer>{footer}</Footer>
+        </div>
+      )}
     </div>
   );
 }
+
+// The form side's place in the arrival stagger (round six): after "Back to home" (0),
+// 40ms behind the brand side.
+const step = (i) => ({ "--stagger": i, "--stagger-base": "40ms" });
 
 function Footer({ children }) {
   return (

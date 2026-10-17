@@ -169,20 +169,32 @@ button:not(:disabled),
 }
 
 /* The signed-out auth screens only (owner decisions, auth pages 2026-10-17; design §8.5
-   entries 32–34). Arrival: the brand panel fades in and the two blocks rise 8px, the
-   brand side first. The panel's grid drifts one cell every 14 s, on one layer, paused
+   entries 32–35). Arrival: the brand panel fades in and the parts rise in turn (below). The panel's grid drifts one cell every 14 s, on one layer, paused
    with the panel (data-paused). Under reduced motion none of it runs. */
+/* Round six (owner decision): each part of an auth screen comes in on its own, a little
+   after the one before — brand side: wordmark, intro card, sample card, caption; form
+   side, 40ms behind: back link, heading, line, panel, links. Rise 10px with a fade, 380ms,
+   50ms apart (the last done at about 600ms). Opacity and transform only: nothing waits
+   on it, so the form can be focused and typed in at once. */
 @keyframes wv-auth-rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
 }
-.wv-auth-enter {
-  animation: wv-auth-rise 320ms var(--ease-out) both;
+.wv-stagger {
+  animation: wv-auth-rise 380ms var(--ease-out) both;
+  animation-delay: calc(var(--stagger, 0) * 50ms + var(--stagger-base, 0ms));
 }
-.wv-auth-enter-late {
-  animation: wv-auth-rise 320ms var(--ease-out) 80ms both;
+/* Arrived inside the view transition (useArrivedInTransition): the cross-fade already
+   fades the page in, so the parts only rise — the content is never twice faded. */
+@keyframes wv-auth-rise-only {
+  from {
+    transform: translateY(10px);
+  }
+}
+.wv-in-transition .wv-stagger {
+  animation-name: wv-auth-rise-only;
 }
 .wv-auth-fade {
   animation: wv-fade-in 280ms var(--ease-out) both;
@@ -280,12 +292,43 @@ button:not(:disabled),
   animation-play-state: paused;
 }
 @media (prefers-reduced-motion: reduce) {
-  .wv-auth-enter,
-  .wv-auth-enter-late,
+  .wv-stagger,
+  .wv-in-transition .wv-stagger,
   .wv-auth-fade,
   .wv-grid-drift,
   .wv-grid-cell,
   .wv-grid-cell[data-turn] {
     animation: none;
+  }
+}
+
+/* Between the landing page and the auth screens (owner decision, auth pages round six;
+   design §8.5 entry 33): React Router's view transition, styled as one calm cross-fade —
+   the old page fades out as the new one fades in and rises 6px. Both directions, and
+   browser Back and Forward, look the same. Under reduced motion the switch is instant. */
+@keyframes wv-vt-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes wv-vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+/* The same length and curve both ways, so with the browser's plus-lighter blend the two
+   pages always add up to one: a dissolve, never a washed-out middle. */
+::view-transition-old(root) {
+  animation: wv-vt-out 300ms var(--ease-soft) both;
+}
+::view-transition-new(root) {
+  animation: wv-vt-in 300ms var(--ease-soft) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

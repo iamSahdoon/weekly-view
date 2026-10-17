@@ -263,6 +263,20 @@ sit pending for up to a minute: boot (`A4`) and the landing page's `A1`.
 
 ## 4. Routing
 
+> **Owner decision (auth pages round six, 2026-10-17): view transitions between `/` and the auth
+> screens.** The landing page's links to `/signin` and `/signup`, "← Back to home", and the links between
+> the auth screens are `TransitionLink`s (`routes/TransitionLink.jsx`): React Router links with
+> `viewTransition`. A click first loads the target page's chunk (`lazyPage.preload()`), then navigates
+> with `{ viewTransition: true }`, so the transition never captures a fallback or the boot splash; a
+> modified click is left to the browser. On the landing page the two auth chunks are preloaded when the
+> browser is idle (`prefetchAuthPages`, from `IndexRoute`); the landing chunk is loaded only when "Back
+> to home" is clicked or `/` is shown, never preloaded by the auth screens. Browser Back and Forward
+> reuse the transition (React Router replays it for a POP). The bootstrap result fetched by the landing
+> page is reused from the query cache, so the auth screen renders at once. A page that mounts inside a
+> transition (`useArrivedInTransition`, `:active-view-transition`) lets its entrance only rise, since
+> the cross-fade already fades it. The cross-fade is styled in `base.css`
+> (`product_design_system.md` §8.5 entry 33). `/demo` stays a full page load (§3.1).
+
 ### 4.1 The route table
 
 `routes/index.jsx` exports `buildRoutes()`. Routes that make no sense in the demo carry
@@ -1290,7 +1304,10 @@ signup link** — the common deployed case — and swaps to "Create your account
 never sees a button that leads to a closed door. *(Call, FA14.)* Only when `available: false`
 arrives does the hero add "Already on a team? Sign in" (`brand_design_strategy.md` §6.0 rule 13;
 owner decision, auth pages 2026-10-17). "See the live demo" is
-`<a href="/demo">`. All marketing content is static.
+`<a href="/demo">`. All marketing content is static. *(Owner decision, auth pages round six: its links to
+`/signin` and `/signup` are client-side `TransitionLink`s, through `components/marketing/AppLink.jsx`; see
+§4. Leaving, the page undoes everything it set on `<html>` and `<head>` and reverts GSAP's `matchMedia`;
+returning re-creates it. `brand_design_strategy.md` §6.0 rule 14.)*
 
 **The landing page is a different look from the app** (`brand_design_strategy.md` §6.0), and
 the code keeps it that way:

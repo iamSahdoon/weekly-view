@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import MarketingLayout from "../../../layouts/MarketingLayout.jsx";
 import { DemoSection } from "../DemoSection.jsx";
@@ -17,18 +18,21 @@ import { WeekSection } from "../WeekSection.jsx";
 // the brief makes a rule: the call to action follows the bootstrap check, the copy keeps the
 // honesty rules, and the components carry no colour of their own.
 
+// Sign in and sign up are React Router links (round six), so the page renders in a router.
 const page = (signupOpen) =>
   renderToStaticMarkup(
-    <MarketingLayout signupOpen={signupOpen}>
-      <HeroSection signupOpen={signupOpen} />
-      <ProblemSection />
-      <WeekSection />
-      <DeskSection />
-      <PrivacySection />
-      <DemoSection />
-      <QuestionsSection signupOpen={signupOpen} />
-      <FinalSection signupOpen={signupOpen} />
-    </MarketingLayout>,
+    <MemoryRouter>
+      <MarketingLayout signupOpen={signupOpen}>
+        <HeroSection signupOpen={signupOpen} />
+        <ProblemSection />
+        <WeekSection />
+        <DeskSection />
+        <PrivacySection />
+        <DemoSection />
+        <QuestionsSection signupOpen={signupOpen} />
+        <FinalSection signupOpen={signupOpen} />
+      </MarketingLayout>
+    </MemoryRouter>,
   );
 const text = (html) =>
   html
@@ -74,13 +78,18 @@ describe("the call to action follows what the instance can do", () => {
 // is closed, the hero offers people already on a team a way to sign in. Pending or failed,
 // it stays as before: the demo only.
 describe("the hero's sign-in line", () => {
-  const hero = (props) => renderToStaticMarkup(<HeroSection {...props} />);
+  const hero = (props) =>
+    renderToStaticMarkup(
+      <MemoryRouter>
+        <HeroSection {...props} />
+      </MemoryRouter>,
+    );
 
   it("closed: 'Already on a team? Sign in', linking to /signin, under the demo", () => {
     const html = hero({ signupOpen: false, signupClosed: true });
     expect(text(html)).toContain("Already on a team? Sign in");
     expect(html).toMatch(
-      /<p class="hsign">[^]*<a href="\/signin">Sign in<\/a>/,
+      /<p class="hsign">[^]*<a href="\/signin"[^>]*>Sign in<\/a>/,
     );
     expect(html.indexOf('href="/demo"')).toBeLessThan(html.indexOf("hsign"));
     expect(hrefs(html)).not.toContain("/signup");
@@ -104,6 +113,42 @@ describe("the hero's sign-in line", () => {
     const words = text(hero({ signupOpen: false, signupClosed: true }));
     expect(words).toContain("No account needed. Nothing is saved.");
     expect(words).not.toContain("Everything works, nothing is saved.");
+  });
+});
+
+// Owner decision (auth pages round six, brand §6.0 rule 14): sign in and sign up open
+// client-side in a view transition; the demo stays a different page load.
+describe("the ways into the app", () => {
+  const html = page(true);
+  const links = (href) =>
+    [...html.matchAll(new RegExp(`<a [^>]*href="${href}"[^>]*>`, "g"))].map(
+      (m) => m[0],
+    );
+
+  it("opens sign in and sign up client-side (React Router links)", () => {
+    for (const href of ["/signin", "/signup"]) {
+      expect(links(href).length, href).toBeGreaterThan(0);
+      for (const a of links(href))
+        expect(a, href).toContain('data-discover="true"');
+    }
+  });
+
+  it("keeps every demo link a plain page load", () => {
+    expect(links("/demo").length).toBeGreaterThan(0);
+    for (const a of links("/demo")) expect(a).not.toContain("data-discover");
+  });
+
+  it("routes them through the view-transition link, which loads the screen first", () => {
+    const source = (f) => readFileSync(new URL(f, import.meta.url), "utf8");
+    expect(source("../AppLink.jsx")).toMatch(
+      /href === "\/signin" \|\| href === "\/signup"[^]*<TransitionLink/,
+    );
+    const link = source("../../../routes/TransitionLink.jsx");
+    expect(link).toContain("viewTransition");
+    expect(link).toMatch(
+      /\.preload\(\)[^]*navigate\(to, \{ viewTransition: true \}\)/,
+    );
+    expect(link).toMatch(/event\.metaKey/);
   });
 });
 

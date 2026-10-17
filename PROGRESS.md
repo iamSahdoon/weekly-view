@@ -2196,6 +2196,80 @@ entry 34, and `docs/USER_MANUAL.md` §4.
    grid is still and no square lights. Turn it back on.
 9. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
 
+### Auth pages, round six: smooth landing transitions, staggered entrance (owner decision on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. **Owner decision:** the landing page and the auth screens move between each other
+client-side, replacing "the landing page's links are full page loads". Recorded in `brand_design_strategy.md` §6.0
+rule 14, `frontend_architecture.md` §4 and §9.16, `product_design_system.md` §8.4 and §8.5 entries 33 and 35,
+`project_structure.md` and `docs/USER_MANUAL.md` §48.
+1. **Client-side moves with a cross-fade.** Every landing link to `/signin` and `/signup` (hero, nav "Sign in" and
+   pill, "Already on a team? Sign in", closing band, footer), "← Back to home" and the links between the auth screens
+   are `TransitionLink`s: a click loads the target page's chunk, then navigates with React Router's `viewTransition`.
+   The two auth chunks are also preloaded when the landing page is idle. The cross-fade (`base.css`) is 300 ms, old
+   and new on one curve, the new page rising 6 px. Browser Back and Forward replay it. `/demo` stays a plain page
+   load. The bootstrap result comes from the query cache, so the auth screen renders at once.
+2. **Staggered entrance** (`.wv-stagger`). Brand side: wordmark, intro card, sample card, caption. Form side, 40 ms
+   behind: back link, heading, line, panel, links. Each part rises 10 px with a fade, 50 ms apart, 380 ms each,
+   `--ease-out`; done at about 600 ms. Inside a view transition the parts only rise: the cross-fade already fades
+   them, and fading twice washed the middle frames out (found in the first frame capture). Opacity and transform
+   only: the email field takes focus during the entrance.
+3. **Isolation.** The landing chunk (with GSAP and Bricolage) still loads only for `/`. A direct `/signin` requests
+   no landing file until "Back to home" is clicked, and the production build has GSAP and Bricolage in the
+   `LandingPage` chunk only. Leaving `/`, `html.landing-active` and the font link are gone. Returning, the
+   landing's motion is rebuilt from scratch. Without view transitions it fades in on its own (`l-page-in`).
+4. **Tests.**
+   - Landing tests render in a router now. They check that sign in and sign up are client-side links, that demo
+     links stay plain, and that the link loads the page before navigating.
+   - Auth tests check: the stagger order and timing; one cross-fade length and curve both ways; no animation
+     under reduced motion; rise-only inside a transition; the entrance never touching `pointer-events`,
+     `visibility` or `display`; home and the auth links being `TransitionLink`s.
+   - **The requested computed-style test can't run in `npm test`:** the client tests have no DOM, and adding jsdom
+     or a browser runner (e.g. `@playwright/test`) is a new dependency (see *Open questions*). The same check was
+     run in Chromium, below.
+
+**Checks.** `npm run lint` clean. `npm test`: server 389, client 631 (landing isolation green). Chromium, in-memory
+MongoDB only, on the dev server and a production build:
+- **Client-side only:** landing → sign up, Back to home, landing → sign in, browser Back, browser Forward, then a
+  refresh: exactly two full page loads (the first visit and the refresh). No boot splash; 0 page errors.
+- **Frames:** each transition was filmed with Chrome's screencast at 1440 and 360, light and dark (5 transitions × 4
+  = 20 films, 24–54 frames each). No blank frame: the lowest frame contrast was 10–27, up from 5 before the
+  rise-only fix. No flash in dark: the brightest frame in every dark film is the landing's own green, and the auth
+  page arrives dark. Contact sheets looked at.
+- **Timing (production build, this container):** the transition starts within 6–14 ms of the click. The dissolve
+  begins 170–230 ms later: about 65 ms for the browser to capture the old page, plus 100–175 ms for React to
+  swap the landing page in or out (auth → auth: 7 ms). This container has no GPU and a slow CPU, so real
+  machines should be quicker; not measured on one.
+- **Computed styles after landing → `/signin` client-side** (then `/signup`), light and dark: 0 elements with a
+  landing colour, Bricolage or a border radius. Headings Chivo, body Instrument Sans.
+- **Returning to `/`:** the scroll stories match a fresh load pixel for pixel (mean difference 0.00–0.01, at the
+  week story's 4th step and the dashboard's 6th). The hero plays again. "Back to home" starts at the top; browser
+  Back restores the scroll position.
+- **Refresh on `/signin`:** a full load; the stagger plays (sampled per frame: all parts at 0, partly in by
+  200 ms, all at 1 at the end).
+- **Reduced motion:** the switch is one cut (no in-between frame); the stagger and the cross-fade are `none`.
+- **Not verified:** Firefox and Safari (whether and how they run view transitions; the fallback is coded but
+  only reasoned about); real-device timing; screen readers.
+
+**Owner: how to check round six by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, `git pull`; `npm --prefix server install`,
+   `npm --prefix client install`.
+2. `npm run db:empty`; start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+3. Open http://localhost:5173/ in Chrome (private window). Click **Create your account**: the green page dissolves
+   into the sign-up screen (about a third of a second), with no white flash and no loading screen; then the
+   parts settle in, left side first.
+4. Click **← Back to home**: the landing page dissolves back in, at the top, and its hero animation plays. Scroll
+   down: the "Follow one person's week" and manager stories still hold and step as before.
+5. Click **Sign in** in the top bar, then press the browser's **Back** and **Forward** buttons: each switch is the
+   same dissolve.
+6. On `/signin`, press **F5**: a normal reload, and the parts settle in one after another. Click into Email at once:
+   you can type straight away.
+7. Dark mode: sign in once, your name → **Appearance** → Dark, sign out, then repeat steps 3–5: no light flash.
+8. F12 → Ctrl+Shift+M → **360** wide: repeat steps 3–4.
+9. Reduced motion (Windows Settings → Accessibility → Visual effects → Animation effects off): repeat step 3 — the
+   switch is instant and nothing settles in. Turn it back on.
+10. Optional, in Firefox or Safari: steps 3–5 still work (with or without the dissolve), and nothing green appears
+    on the sign-in screens.
+11. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -2830,6 +2904,10 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- **Auth pages round six — a committed browser test?** The client suite has no DOM, so the "landing → `/signin`
+  client-side, computed styles use app tokens only" check runs in Chromium by script, not in `npm test`. Making it a
+  committed test needs a new dev dependency (`@playwright/test`, or jsdom, which cannot compute real styles).
+  Say if you want it added (`tech_stack.md` §8 deferred E2E).
 - **Auth pages, to confirm or change** (see *Owner decision: redesigned sign-in pages…*): `Go to that week`
   appears only once the first week has begun. Small and reversible. ~~(1) the brand panel's fill-in, (2) A1 on
   `/signin`, (3) "Forgot your password?" as a panel~~ **Resolved (owner, PR #27 review, 2026-10-17):** all three
