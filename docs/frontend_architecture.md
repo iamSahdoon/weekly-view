@@ -1252,7 +1252,10 @@ current session survives while every other one ends.
 
 ### 9.15 Sign in, sign up, accept invite, reset password
 
-Under `AuthLayout`, no shell.
+Under `AuthLayout`, no shell. *(Owner decisions, auth pages 2026-10-17: the brand panel on the
+left and the form on the right from 1024px, the form first in the DOM; the panel's sample week
+loops on one timer, paused while the tab is hidden or the panel is out of view, and not at all
+under reduced motion — `product_design_system.md` §3.12, §8.5 entry 32.)*
 
 | Screen | Data |
 | --- | --- |

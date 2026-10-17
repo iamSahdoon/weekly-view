@@ -464,7 +464,7 @@ client/
 │   ├── layouts/
 │   │   ├── RootLayout.jsx             # router root: SkipLink, Outlet, Toaster, ReAuthModal, ScrollRestoration — C2: OfflineStrip is mounted by AppShell, under the top bar (design §3.13)
 │   │   ├── AppShell.jsx               # sidebar + top bar frame; renders <Outlet/>
-│   │   ├── AuthLayout.jsx             # no shell (§3.12); since the auth-pages change (2026-10-17) the split: form side with "Back to home", brand panel; a slim header below 1024px
+│   │   ├── AuthLayout.jsx             # no shell (§3.12); since the auth-pages change (2026-10-17) the split: brand panel left, form right, on shared rows; a slim header below 1024px
 │   │   └── MarketingLayout.jsx        # sticky nav + footer for the landing page, in the landing theme (brand §6.0)
 │   ├── pages/
 │   │   ├── LandingPage.jsx            # /  when signed out — brand §6–7, requirements §13
@@ -632,7 +632,8 @@ client/
 │   │   │   ├── FormStrip.jsx          # added in C1: the --st-corr-bg failure strip
 │   │   │   ├── LinkPreviewGate.jsx    # added in C1: A7 before the invite / reset form
 │   │   │   ├── LinkExpired.jsx        # added in C1: the one expired-link state
-│   │   │   ├── AuthBrandPanel.jsx     # added for the auth pages (owner, 2026-10-17): wordmark, a sample week in the app's style, one line
+│   │   │   ├── AuthBrandPanel.jsx     # added for the auth pages (owner, 2026-10-17): wordmark, a looping sample week in the app's style, one line
+│   │   │   ├── previewSteps.js        # added for the auth pages (round three): the sample week's loop, step by step
 │   │   │   ├── ResponseLost.jsx       # added for the auth pages: "Your account may already have been created", when an answer was lost
 │   │   │   └── __tests__/AuthScreens.test.jsx  # added for the auth pages: the split frame, the way home, the bootstrap-led links
 │   │   └── marketing/                 # the landing page's sections, ported from landing-reference/index.html (brand §6.0)

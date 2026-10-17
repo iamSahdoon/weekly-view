@@ -8,6 +8,7 @@ import AuthLayout from "../../../layouts/AuthLayout.jsx";
 import { qk } from "../../../lib/queryKeys.js";
 import SignInPage from "../../../pages/SignInPage.jsx";
 import SignUpPage from "../../../pages/SignUpPage.jsx";
+import { FINAL_STEP, PREVIEW_STEPS, previewLayer } from "../previewSteps.js";
 import { ResponseLost } from "../ResponseLost.jsx";
 
 // The auth screens as one set (owner decision, auth pages 2026-10-17; design §3.12): the
@@ -67,18 +68,41 @@ describe("the frame", () => {
 
   it("draws the brand panel's sample week in the product's real Updates states, hidden from screen readers", () => {
     const panel = html.slice(html.indexOf('aria-label="About WeeklyView"'));
-    const states = [...panel.matchAll(/data-state="([a-z_]+)"/g)]
-      .map((m) => m[1])
-      .filter((s) => s !== "future"); // the outline each square fills from
-    expect(states).toEqual(["posted", "posted", "posted", "today", "holiday"]);
+    const states = [...panel.matchAll(/data-state="([a-z_]+)"/g)].map(
+      (m) => m[1],
+    );
+    // Mon–Wed posted, Thursday today (with the posted square that fills in over it), Friday a holiday.
+    expect(states).toEqual([
+      "posted",
+      "posted",
+      "posted",
+      "today",
+      "posted",
+      "holiday",
+    ]);
     expect(panel).toContain("SAMPLE DATA");
-    expect(panel).toMatch(/<div aria-hidden="true" class="mt-32">/);
+    expect(panel).toMatch(/<div aria-hidden="true" class="row-start-3 flex">/);
     expect(text(panel)).toContain("One short update a day.");
   });
 
-  it("puts the form on the left and the panel on the right, 55 / 45", () => {
-    expect(html).toContain("lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]");
+  it("puts the brand panel on the left and the form on the right, two equal halves (owner, round three)", () => {
+    expect(html).toContain("lg:grid-cols-2");
+    expect(html).toMatch(/<main[^>]*class="[^"]*lg:col-start-2/);
+    expect(html).toMatch(/<aside[^>]*class="[^"]*lg:col-start-1/);
+    // The form stays first in the DOM: focus, screen readers and the phone layout.
     expect(html.indexOf("<main")).toBeLessThan(html.indexOf("<aside"));
+  });
+
+  it("lays the two blocks on shared rows, so their edges line up, and never clips", () => {
+    expect(html).toContain(
+      "lg:grid-rows-[minmax(52px,1fr)_auto_auto_auto_auto_minmax(52px,1fr)]",
+    );
+    for (const block of ["form", "brand"]) {
+      expect(html).toMatch(
+        new RegExp(`data-auth-block="${block}" class="[^"]*grid-rows-subgrid`),
+      );
+    }
+    expect(html).not.toMatch(/(?<!min-)h-\[100dvh\]|overflow-hidden/);
   });
 });
 
@@ -145,6 +169,52 @@ describe("an answer that never arrived", () => {
         }),
       ),
     ).toContain("Your new password may already have been saved.");
+  });
+});
+
+// Owner decision (auth pages, round three): the sample week loops, lightly.
+describe("the brand panel's loop", () => {
+  const source = readFileSync(
+    new URL("../AuthBrandPanel.jsx", import.meta.url),
+    "utf8",
+  );
+
+  it("walks Monday to Thursday, posts Thursday, and takes 12–16 s a cycle", () => {
+    expect(PREVIEW_STEPS.map((s) => s.day)).toEqual([
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "thu",
+    ]);
+    expect(PREVIEW_STEPS.map((s) => s.thuPosted)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      true,
+    ]);
+    const total = PREVIEW_STEPS.reduce((n, s) => n + s.ms, 0);
+    expect(total).toBeGreaterThanOrEqual(12000);
+    expect(total).toBeLessThanOrEqual(16000);
+    expect(previewLayer(FINAL_STEP)).toBe("thu-posted");
+    expect(previewLayer(3)).toBe("thu-empty");
+  });
+
+  it("moves only opacity and transform, on one timer, and waits while hidden", () => {
+    const transitions = source.match(/transition-(?:\[[a-z,]+\]|[a-z-]+)/g) ?? [];
+    expect(new Set(transitions)).toEqual(
+      new Set([
+        "transition-opacity",
+        "transition-transform",
+        "transition-[opacity,scale]",
+      ]),
+    );
+    expect(source.match(/setTimeout\(/g)).toHaveLength(1);
+    expect(source).not.toMatch(/setInterval|requestAnimationFrame/);
+    expect(source).toContain('"visibilitychange"');
+    expect(source).toContain("IntersectionObserver");
+    expect(source).toContain("useReducedMotion");
   });
 });
 

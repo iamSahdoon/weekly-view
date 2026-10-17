@@ -83,6 +83,7 @@ function SignUpClosed() {
   return (
     <AuthScreen
       heading="This team is invite-only."
+      compact
       line="Ask an admin for an invite link. You can look around the demo in the meantime."
       footer={
         <AuthLink to="/signin">Already have an account? Sign in</AuthLink>

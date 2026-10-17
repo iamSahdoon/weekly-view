@@ -6,7 +6,7 @@ import { Button } from "../ui/Button.jsx";
 
 export function LinkExpired() {
   return (
-    <div className="bg-tint p-32 max-xs:p-20">
+    <div className="bg-tint p-32 max-xs:p-20 lg:h-full">
       <p className="text-base font-medium text-ink">
         This link has expired or has already been used.
       </p>

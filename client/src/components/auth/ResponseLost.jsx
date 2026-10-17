@@ -13,7 +13,7 @@ export function ResponseLost({
   line = "Sign in with the email you just used.",
 }) {
   return (
-    <div role="status" className="bg-tint p-32 max-xs:p-20">
+    <div role="status" className="bg-tint p-32 max-xs:p-20 lg:h-full">
       <p className="text-base font-medium text-ink">{title}</p>
       <p className="mt-4 text-base text-body">{line}</p>
       <Button asChild className="mt-20">

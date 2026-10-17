@@ -1047,6 +1047,31 @@ Product screens outside the shell: no sidebar, no top bar.
 >   in. Sign-up re-checks by itself right after the failure; the link screens show it when
 >   the next try finds the link used.
 
+> **Owner decisions (auth pages, round three after the second test, 2026-10-17)** — these
+> replace the round-two composition where they differ (the copy, links and the response-lost
+> state stand):
+>
+> - **The brand panel is on the left and the form on the right**, on every auth screen (sign
+>   in, create account open and closed, accept invite, reset password, the expired-link and
+>   response-lost states). This reverses round two's "form on the left". The form stays first
+>   in the DOM, so focus, screen readers and the phone layout (slim header, form first) are
+>   unchanged.
+> - **A matched pair.** Two equal halves from 1024px, each holding one 420px block centred in
+>   it, so the outer margins mirror (1440: 150px each side). The blocks share one grid (CSS
+>   subgrid) with four rows: "Back to home" level with the wordmark; the heading's row; the
+>   form's panel level with the sample card, which stretches to the panel's height (the
+>   expired-link and response-lost blocks stretch the same way); the form's links level with
+>   the caption. So the two blocks' top and bottom edges line up exactly, and the sample card
+>   and the form card are one size. The sign-up-closed screen, whose body is one button,
+>   keeps its link under the button.
+> - **Never clipped.** The rows above and below the pair are at least 52px and share the rest
+>   of the height, so the pair sits on the screen's centre line; when the content is taller
+>   than the screen (sign up at 768px high) the page scrolls with 52px kept top and bottom.
+>   Checked at 1920×1080, 1440×900, 1366×768, 1280×800/768, 1024×768 and 360, light and dark.
+> - **The sample card** gains a footer, "Friday's weekly report" with a `Draft` chip, and its
+>   days loop (§8.5 entry 32): Monday to Wednesday posted, Thursday today then posted, Friday a
+>   holiday that is never chosen.
+
 **Shared layout** *(before the owner decision above)*. Full-viewport `--paper`. A centred `420px` column. *(Owner decision,
 polish 2026-10-10: the column starts `18vh` down, never less than `52px` (`32px` below
 480px), so it sits in the upper middle of the screen rather than hugging the top; a fixed
@@ -2159,10 +2184,13 @@ than merely shortened.
 - Confetti or any celebratory motion on approval, beyond entry 14.
 - Page-load entrance staggering of any kind.
 
-*Owner-approved exception (auth pages, accepted in the PR #27 review, 2026-10-17):* the auth
-screens' brand panel fills in its five Updates squares once when the screen opens (§8.5, entry
-32). It plays once, is subtle, never loops, and is skipped under reduced motion. Nothing else in
-the product is excused from the list above.
+*Owner-approved exception (auth pages, PR #27; round three, 2026-10-17):* the auth screens'
+brand panel runs a **continuous decorative loop** — its sample week walks Monday to Thursday and
+posts Thursday, every 15 s (§8.5, entry 32). It replaces the one-time fill-in accepted earlier.
+It is on the signed-out auth screens only and never inside the app; it moves only `opacity` and
+`transform` on one timer, waits while the tab is hidden or the panel is out of view, and under
+reduced motion does not run at all (the posted Thursday is shown). Nothing else in the product
+is excused from the list above: no other loop, no page-load entrance anywhere else.
 
 ### 8.5 Owner decision — whole-app polish (2026-10-10)
 
@@ -2187,11 +2215,14 @@ the product is excused from the list above.
 | 29  | Autosave state change               | the words fade in; the 6px square fills | 120 / 160ms | `--ease-out` / linear | CSS                  | save              |
 | 30  | Light ↔ dark switch                 | background, border and text colours cross-fade | 200ms | `ease`     | CSS (`.wv-theme-easing`, 260ms)  | Appearance switch |
 | 31  | Demo chooser: a choice under the pointer | 2px `--acc` bar fades in; the chevron moves 2px | 120 / 160ms | linear / `--ease-out` | CSS | hover |
-| 32  | Auth screens' brand panel: the week fills in *(owner decision, auth pages 2026-10-17)* | the sample week's five Updates squares (posted ×3, today, holiday), each from a hollow outline: opacity 0→1 and `scale(.6→1)`, one after another | 200ms each, 120ms apart, from 300ms | `--ease-out` | **Motion** | the screen opens (once) |
+| 32  | Auth screens' brand panel: the sample week loops *(owner decision, auth pages 2026-10-17, round three)* | the chosen day's 2px `--ink` bar slides (`transform`) Mon → Tue → Wed → Thu; the day's content cross-fades (`opacity`); on Thursday its square fills (`opacity`, `scale(.5→1)`) and the posted lines rise 4px into place; then back to Monday | 400ms per change; steps 3 / 3 / 3 / 2.2 / 3.8 s — a 15 s cycle | `--ease-out` | CSS transitions, one `setTimeout` (`previewSteps.js`) | continuous while visible |
 
-- **Entry 32 is the one exception to §8.4's "no page-load entrance"** — an owner decision,
-  accepted in the PR #27 review (2026-10-17): it is on the signed-out auth screens only, decorative, plays once and never loops. Under
-  reduced motion the squares are drawn filled, with no animation.
+- **Entry 32 is the one exception to §8.4** — an owner decision (PR #27, round three,
+  2026-10-17) that replaces the one-time fill-in: a continuous, decorative loop on the
+  signed-out auth screens only, never in the app. It never moves the form or takes focus; it
+  pauses on `visibilitychange` (tab hidden) and when an `IntersectionObserver` says the panel
+  is out of view (the phone layout hides it); under reduced motion it does not start and the
+  posted Thursday is shown. The card is `aria-hidden`; the caption is the real text.
 - **Reduced motion:** 23–25 jump; 26 is a fade with no travel (`useReducedMotion`); 27–29 and
   31 are cut to 1ms by §8.3; 30 stays — it is colour only, and a gentle cross-fade is kinder
   than a full-screen brightness jump (Apple's guidance, the owner's reference).

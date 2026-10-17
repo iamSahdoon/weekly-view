@@ -1898,7 +1898,8 @@ Not a stage; **C11 is still next.** Branch `claude/auth-pages` from `main`. Reco
   on a frozen Tuesday); Firefox and Safari; Windows font rendering; widths other than those listed; screen readers.
 
 **Auth pages: owner decisions accepted (PR #27 review, 2026-10-17).** All three accepted as built; no code changed.
-1. **The brand panel's squares fill in on open** — an owner-approved exception to design §8.4 (no page-load
+1. ~~**The brand panel's squares fill in on open**~~ *(replaced in round three by a light looping preview — see
+   below)* — an owner-approved exception to design §8.4 (no page-load
    entrance): it plays once, it is subtle, and it is skipped under reduced motion. Recorded in design §8.4 and
    §8.5 (entry 32).
 2. **`/signin` asks the bootstrap check (A1)** — the same check the landing page uses, only to show or hide "No
@@ -2011,6 +2012,67 @@ Same branch, `claude/auth-pages`. Recorded in `product_design_system.md` §3.12 
 9. Open http://localhost:5173/ again: under **See the live demo** ("No account needed. Nothing is saved.") is
    "Already on a team? **Sign in**". `/signup` says "This team is invite-only." with the same split layout.
 10. Dark mode: your name → **Appearance** → Dark, then sign out: both halves dark, the grid faint.
+11. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
+
+### Auth pages, round three: form on the right, matched pair, looping preview (owner feedback on PR #27, 2026-10-17)
+Same branch, `claude/auth-pages`. Recorded in `product_design_system.md` §3.12 (round-three block), §8.4 (the exception)
+and §8.5 entry 32, `frontend_architecture.md` §9.15, `project_structure.md` and `docs/USER_MANUAL.md` §4.
+1. **Sides swapped** on every auth screen: brand panel left, form right (reverses round two). The form stays first in
+   the DOM, so keyboard focus, screen readers and the phone layout (slim header, form first) are unchanged.
+2. **A matched pair.** Equal halves; each holds one 420px block centred in it, so the outer margins mirror. Both blocks
+   sit on one grid with four shared rows (CSS subgrid): "Back to home" ↔ wordmark, the heading row, form panel ↔
+   sample card (the card stretches to the panel's height), links ↔ caption. Measured in the browser: the two blocks'
+   tops and bottoms are equal to the pixel at every size checked, and so are the two cards'. The sign-up-closed
+   screen (one button) keeps its link under the button.
+   **The clipping bug:** the old frame centred the form in a sticky full-height layout and dropped its bottom padding
+   when the form was taller than the screen. Now the rows above and below the pair are at least 52px, so when content
+   is taller than the screen (sign up at 1366×768 or 1280×800) the page scrolls normally with 52px kept above and
+   below. Nothing scrolls sideways at any size.
+3. **Looping preview** (replaces the one-time fill-in; design §8.5 entry 32). Every 3 s the chosen day's bar slides
+   Mon → Tue → Wed → Thu and the day's lines cross-fade; on Thursday ("today, not posted yet") the square then fills
+   and two posted lines rise into place; after 3.8 s it returns calmly to Monday. Friday stays a holiday. Cycle 15 s.
+   It uses `opacity` and `transform`/`scale` transitions only, and every day's content is stacked in one cell, so
+   nothing reflows. It runs on one `setTimeout` and stops on `visibilitychange` (tab hidden) and when an
+   `IntersectionObserver` reports the panel out of view (it is hidden on phones). Under reduced motion it does not
+   start, and the posted Thursday is shown. The card is `aria-hidden`; the caption is real text; nothing on the form
+   side moves or takes focus. No new dependency. The card gains a footer: "Friday's weekly report" with a Draft chip.
+- **Files.** New: `components/auth/previewSteps.js`. Changed: `AuthLayout`, `AuthBrandPanel`, `AuthScreen` (its three
+  parts are now three elements; `compact`; `AuthPanel` fills its row from 1024px), `LinkExpired`, `ResponseLost`
+  (fill their row), `SignUpPage` (`compact` on the closed state), the auth-screen tests.
+- **Checks.** `npm run lint` clean. `npm test`: server 389, client 613. Tests added: the sides and the shared rows; the
+  sample week's states; the loop's timeline (12–16 s, Mon→Thu, Thursday posted last); a source check that the panel
+  transitions only opacity/transform/scale, sets one timer, and listens for `visibilitychange` and visibility.
+  **Headless Chromium** (in-memory MongoDB only): sign in, sign up open and closed, a real invite link, an expired
+  reset link and the response-lost screen at 1920×1080, 1440×900, 1366×768, 1280×800, 1280×768, 1024×768 and 360,
+  light and dark; block edges measured (e.g. 1440×900 sign in: both blocks 188–712, both cards 319–618; margins 150 /
+  150). **The loop, measured in the browser:** bar at 0 / 100 / 200 / 300 / 300% at 0.8 / 3.8 / 6.8 / 9.8 / 12.4 s,
+  Thursday posted at 12.4 s, back to Monday at 15.8 s; no step during 7 s with the tab hidden, resumed when visible;
+  **no loop timer** at 360px or under reduced motion (the only 3 s timers there are the boot splash's). A real
+  bug found on the way: two transition classes on Thursday's square merged into one, dropping its fade; it now uses
+  one `transition-[opacity,scale]`. The response-lost flows (sign-up and invite) were re-run and still work.
+- **Not verified:** Firefox and Safari (subgrid needs Firefox 71+, Safari 16+, Chrome 117+); Windows font rendering;
+  CPU use measured on a real laptop (by construction: one timer every 2–4 s, compositor-only changes); screen readers.
+
+**Owner: how to check round three by hand** (Windows; a database you can wipe)
+1. `git fetch origin`, `git checkout claude/auth-pages`, `git pull`.
+2. `npm --prefix server install` and `npm --prefix client install`.
+3. `npm run db:empty`; start `npm --prefix server run dev` and, in a second terminal, `npm --prefix client run dev`.
+4. Open http://localhost:5173/signin in a private Chrome window, full screen. The WeeklyView panel with the grid is on
+   the **left**, the form on the **right**. Check: "Back to home" and "WeeklyView" are on one line; the sample card
+   and the sign-in box start and end at the same height; the caption and the links below start on one line; the gap
+   from the sample card to the left edge equals the gap from the form to the right edge.
+5. Watch the sample card for 15 seconds: the dark bar above the days moves Mon → Tue → Wed → Thu every few seconds
+   and the lines change softly; on Thursday the outlined square fills and two lines appear; then it goes back to
+   Monday. Nothing on the form side moves; click into Email while it runs — the cursor stays there.
+6. Switch to another tab for a while and come back: it carries on from where it was (it paused).
+7. F12 → Ctrl+Shift+M → Responsive. Try **1366 × 768**, **1280 × 800**, **1024 × 768**: nothing touches an edge; on
+   `/signup` the page scrolls a little and the "Already have an account? Sign in" link is reachable with space below
+   it. Try **360 × 780**: the slim bar, then the form; the sample card isn't shown.
+8. Reduced motion: Windows Settings → Accessibility → Visual effects → Animation effects **off**; reload `/signin`:
+   the card shows Thursday posted and never moves. Turn animation effects back on.
+9. Create the owner account, sign out, and open `/signup`: "This team is invite-only." with **Open the demo** and the
+   sign-in link right under it, beside the sample card.
+10. Dark mode: sign in → your name → **Appearance** → Dark → sign out; check `/signin` again, both halves dark.
 11. `npm run db:sample`, restart the API, sign in as a sample person (password `weekly-view-dev`): This week as before.
 
 ## Decisions made while building
