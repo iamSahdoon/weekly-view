@@ -2937,6 +2937,22 @@ Follow `docs/DEPLOYMENT.md`, **Option A** (owner decision, 2026-10-18):
 6. Set the API's `CLIENT_URL` to the website's address and redeploy the API (§2.3).
 7. Run the checks in §4. Once real people use it, move the live site to its own database (§1.3).
 
+### Live
+Deployed and checked by the owner on 2026-10-18, on Vercel (Option A):
+
+| What | Address |
+| --- | --- |
+| Website | `https://weeklyview.vercel.app` |
+| Demo | `https://weeklyview.vercel.app/demo` |
+| API | `https://weekly-view.vercel.app` (health: `/api/health`) |
+
+- The API's Function Region is Mumbai (`bom1`), next to Atlas `ap-south-1`.
+- **Sample data is currently loaded** in the live database (`npm run db:sample`). Move the live site to its
+  own database before real people use it (`docs/DEPLOYMENT.md` §1.3).
+- Post-launch tidy: `server/vercel.json` now sets `"framework": null`, so Vercel always builds the API as
+  "Other" and runs `api/index.js`, even if someone picks "Express" (`docs/DEPLOYMENT.md` §2.1 step 5,
+  `docs/tech_stack.md` §7.5). `DEPLOYMENT.md` uses the real project names (`weekly-view`, `weeklyview`).
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds

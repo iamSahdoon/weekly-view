@@ -929,7 +929,9 @@ Render may ask for a payment card, so the owner chose **Option A**: the client a
 **Vercel**, the API as a serverless function, one shared Atlas database with sample data for now
 (switched with `db:empty` / `db:sample` from the owner's PC). Render (§7.3) stays the documented
 alternative. `server/api/index.js` connects to MongoDB once per warm instance and passes
-each request to the unchanged `app.js`; `server/vercel.json` rewrites every path to it. The client
+each request to the unchanged `app.js`; `server/vercel.json` rewrites every path to it and sets
+`"framework": null`, which pins the project's preset to "Other" so Vercel always runs `api/index.js`
+as the function, even if someone picks "Express" in the dashboard. The client
 stays on Vercel either way. Step-by-step instructions for both options: `docs/DEPLOYMENT.md`.
 
 ---

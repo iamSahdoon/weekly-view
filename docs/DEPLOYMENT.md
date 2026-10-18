@@ -97,10 +97,13 @@ address.
 ### 2.1 Deploy the API (backend)
 1. On Vercel: **Add New… → Project**.
 2. Find **weekly-view** in the list and click **Import**.
-3. **Project Name:** `weeklyview-api` (any name; it becomes part of the address).
+3. **Project Name:** `weekly-view` (any name; it becomes part of the address,
+   `https://weekly-view.vercel.app`).
 4. **Root Directory:** click **Edit**, choose **`server`**, then **Continue**.
 5. **Framework Preset:** **Other**. If Vercel picks a different preset after you choose the folder,
-   change it back to **Other**: the API is the function in `server/api/index.js`.
+   change it back to **Other**: the API is the function in `server/api/index.js`. As a safeguard,
+   `server/vercel.json` sets `"framework": null`, so Vercel uses "Other" even if "Express" is picked.
+   Leave that line in place.
 6. **Build and Output Settings:** leave everything empty or default. There's no build step;
    Vercel uses `server/api/index.js` and `server/vercel.json` automatically.
 7. **Environment Variables:** add these one by one (Name → Value → **Add**):
@@ -114,8 +117,8 @@ address.
    | `CLIENT_URL` | `https://example.com` for now. You'll replace it in step 2.3 once you know the website's address. |
 
 8. Click **Deploy** and wait for "Congratulations".
-9. Copy the API's address from the project page, e.g. `https://weeklyview-api.vercel.app`.
-10. **Test it:** open `https://weeklyview-api.vercel.app/api/health` in your browser. You should
+9. Copy the API's address from the project page, e.g. `https://weekly-view.vercel.app`.
+10. **Test it:** open `https://weekly-view.vercel.app/api/health` in your browser. You should
     see `{"success":true,"data":{"status":"ok"},…}`.
 11. **Put the API next to the database.** Find your Atlas region: Atlas → **Database** (Clusters) →
     the region shown on your cluster's card, e.g. *AWS / Mumbai (ap-south-1)*. Then on Vercel: API
@@ -134,14 +137,14 @@ address.
 
    | Name | Value |
    | --- | --- |
-   | `VITE_API_BASE_URL` | your API address **plus `/api`**, e.g. `https://weeklyview-api.vercel.app/api` |
+   | `VITE_API_BASE_URL` | your API address **plus `/api`**, e.g. `https://weekly-view.vercel.app/api` |
 
 7. Click **Deploy**.
 8. Copy the website's address, e.g. `https://weeklyview.vercel.app`.
 
 ### 2.3 Connect the two (CORS)
 The API only accepts requests from the website's exact address, which is set by `CLIENT_URL`.
-1. Open the **API project** (`weeklyview-api`) → **Settings → Environment Variables**.
+1. Open the **API project** (`weekly-view`) → **Settings → Environment Variables**.
 2. Edit `CLIENT_URL` and set it to the website's address, **with no slash at the end**, e.g.
    `https://weeklyview.vercel.app`. Save.
 3. **Redeploy the API**: go to **Deployments**, open the **⋯** menu on the newest deployment,
