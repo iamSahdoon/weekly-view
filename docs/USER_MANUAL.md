@@ -911,6 +911,10 @@ shapes), separate from the app's look. It tells the story in order:
   waking up), only the demo button shows.
 - **Phones and "reduce motion":** nothing pins, types or draws. Captions become a numbered list
   above each picture, and every picture shows its final state.
+  On a phone the manager's dashboard picture keeps each person's Mon–Fri squares: its table
+  shows **Person**, **Updates** and **Status**, and a blocker appears as a small chip under the
+  name (for example "Blocker · Tue"). The squares' key sits under the table whenever the squares
+  do.
 - ***Sign in*** and ***Create your account*** open their screens without reloading, with a short
   cross-fade; ***← Back to home*** (and the browser's Back button) returns the same way. The demo
   still opens as a separate page. With "reduce motion" on, the switch is instant.

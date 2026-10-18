@@ -2861,6 +2861,32 @@ New, found while verifying; nothing was changed for them:
     applies the same rule). A tab left open across a deploy may then fail to load a page it hasn't opened yet until
     it is reloaded. Not tested; noted only.
 
+### Landing: Updates squares on phones (owner report, 2026-10-18)
+Branch `claude/landing-phone-squares`. Not a stage. **The report was about the landing page, not the app:** the
+first reading (the app's Team dashboard) was checked on `origin/main` and does not have the problem — there the
+Updates squares and the legend show together at 360, 390 and 1440 px, light and dark. The bug is the manager's
+dashboard mock-up on the landing page: below 520px `landing.css` hid its Updates column and left the legend.
+- **Fix (owner decision, `brand_design_strategy.md` §6.0 rule 15):** below 520px the mock-up's table is Person,
+  Updates, Status. The Blocker column is hidden and a "Blocker · Tue" chip (`nm-blk`, the existing `c-corr` chip)
+  sits under the name of the three people with a blocker; padding shrinks before the squares (still 10px).
+  Rule: the legend is shown only where the Updates column is. The app, its tokens and the demo are untouched.
+- **Checked** the other mock-ups: the hero laptop is one scaled picture (squares and legend scale together, nothing
+  hidden); the week section has day cards and no squares column. No other rule hides squares.
+- **Tests:** `LandingPage.test.jsx` gains two — the blocker chip exists exactly when the Blocker column has a day,
+  and names the same day; and no block of `landing.css` hides an Updates column (`.mtbl` / `.ltbl`) without hiding
+  its legend, with the 520px block keeping Updates. The legend test fails against the old CSS (checked).
+  One existing row regex was widened for the chip.
+- **Docs:** `brand_design_strategy.md` §6.0 rule 15; `USER_MANUAL.md` §48 (phone line). `product_design_system.md`
+  is not changed (the app has no change).
+- **Checks (Chromium, scripted):** landing at 360, 390, 430 and 1440 px with motion on and off — table shows
+  Person|Updates|Status below 520 and all six columns at 1440; no page or table sideways scroll (0 px); no clipped
+  cell; three blocker chips narrow, none at 1440; legend visible whenever Updates is; hero laptop and week section
+  looked at. Screenshots were looked at (before and after). The pinned scroll-story at 1440 was only seen at its
+  first step. The demo and the tour were not touched.
+- **Owner checks:** on a real phone, open `/` signed out and scroll to "The manager's side": each row shows five
+  squares, a red "Blocker · Tue" chip under Ruwan, Imali and Ayesha, and the status at the right; the key sits under the
+  table; nothing scrolls sideways. Press **Has blocker** and **Not started** and see the rows still fit.
+
 ### C11 owner review fixes (PR #30 review, 2026-10-18)
 Same branch and pull request ([iamSahdoon/weekly-view#30](https://github.com/iamSahdoon/weekly-view/pull/30)). All five
 review items are **resolved (owner, 2026-10-18)**:

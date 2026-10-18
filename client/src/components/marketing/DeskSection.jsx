@@ -7,6 +7,9 @@ import { DESK_STEPS } from "./storySteps.js";
 // visitor scrolls. Stacked (phones, reduced motion), the captions are a list above the
 // dashboard and the buttons are there to press. `data-t` marks what step N points at
 // (`data-t-end` closes a target that spans a column); `f` is the filter a step shows.
+// Narrow, the table keeps Person, Updates and Status: the Blocker column gives way to a
+// `nm-blk` chip under the name, and the squares' legend only ever stands under a table that
+// shows the squares (landing.css, the 520px block; guarded in LandingPage.test.jsx).
 
 export function DeskSection() {
   return (
@@ -221,6 +224,9 @@ export function DeskSection() {
                                 RP
                               </span>
                               Ruwan P.
+                              <span className="chip c-corr nm-blk">
+                                Blocker · Tue
+                              </span>
                             </td>
                             <td>
                               <span
@@ -252,6 +258,9 @@ export function DeskSection() {
                                 IJ
                               </span>
                               Imali J.
+                              <span className="chip c-corr nm-blk">
+                                Blocker · Tue
+                              </span>
                             </td>
                             <td>
                               <span
@@ -310,6 +319,9 @@ export function DeskSection() {
                                 AC
                               </span>
                               Ayesha C.
+                              <span className="chip c-corr nm-blk">
+                                Blocker · Mon
+                              </span>
                             </td>
                             <td>
                               <span

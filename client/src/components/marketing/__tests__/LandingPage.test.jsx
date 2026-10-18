@@ -440,7 +440,7 @@ describe("the mock-ups show the app as it is now (owner decision, C10)", () => {
     const rows = Object.fromEntries(
       [
         ...monitor.matchAll(
-          /<tr data-f="[^"]*"><td class="nm">.*?<\/span>([^<]+)<\/td><td>(.*?)<\/td>/g,
+          /<tr data-f="[^"]*"><td class="nm">.*?<\/span>([^<]+)(?:<span class="chip c-corr nm-blk">[^<]*<\/span>)?<\/td><td>(.*?)<\/td>/g,
         ),
       ].map((m) => [m[1], squares(m[2])]),
     );
@@ -461,6 +461,75 @@ describe("the mock-ups show the app as it is now (owner decision, C10)", () => {
       expect(legend).toContain(word);
     }
     expect(squares(legend)).toEqual(["p", "m", "d", "l", "h", "f"]);
+  });
+
+  it("keeps each blocker on narrow screens: a chip under the name that says the same as the Blocker column", () => {
+    const monitor = between('id="monwrap"', 'class="mside"');
+    const rows = [...monitor.matchAll(/<tr data-f="[^"]*">(.*?)<\/tr>/g)].map(
+      (m) => m[1],
+    );
+    expect(rows).toHaveLength(8);
+    let withBlocker = 0;
+    for (const row of rows) {
+      const column = row.match(/<span class="chip c-corr">([^<]+)<\/span>/);
+      const chip = row.match(
+        /<span class="chip c-corr nm-blk">\s*Blocker · ([^<]+?)\s*<\/span>/,
+      );
+      // The chip is there exactly when the column has a day, and names the same day.
+      expect(chip?.[1]).toEqual(column?.[1]);
+      if (chip) withBlocker += 1;
+    }
+    expect(withBlocker).toBe(3);
+  });
+
+  it("shows the squares' legend only where the squares are (owner decision, landing phone fix)", () => {
+    const css = readFileSync(
+      new URL("../../../styles/landing.css", import.meta.url),
+      "utf8",
+    );
+    // Every block of rules: the media queries, and what is left of the sheet without them.
+    const blocks = [];
+    let rest = css;
+    for (
+      let at = rest.indexOf("@media");
+      at !== -1;
+      at = rest.indexOf("@media")
+    ) {
+      const open = rest.indexOf("{", at);
+      let depth = 1;
+      let end = open + 1;
+      while (depth > 0) {
+        depth += rest[end] === "{" ? 1 : rest[end] === "}" ? -1 : 0;
+        end += 1;
+      }
+      blocks.push(rest.slice(open + 1, end - 1));
+      rest = rest.slice(0, at) + rest.slice(end);
+    }
+    blocks.push(rest);
+    const hides = (block) =>
+      [...block.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+        .filter(([, , declarations]) => /display:\s*none/.test(declarations))
+        .map(([, selectors]) => selectors);
+    for (const [table, legend] of [
+      ["mtbl", "mleg"],
+      ["ltbl", "lleg"],
+    ]) {
+      const updatesColumn = new RegExp(
+        `\\.${table}[^,{]*(?::nth-child\\(2\\)|\\.c-u)`,
+      );
+      for (const block of blocks) {
+        const selectors = hides(block);
+        if (selectors.some((s) => updatesColumn.test(s))) {
+          expect(selectors.some((s) => s.includes(`.${legend}`))).toBe(true);
+        }
+      }
+    }
+    // As built: the dashboard keeps Updates at every width, and its Blocker column is the
+    // one that gives way, to a chip under the name.
+    const narrow = blocks.find((b) => b.includes(".nm-blk{display:flex"));
+    expect(narrow).toBeTruthy();
+    expect(hides(narrow).join(" ")).toContain(".mtbl td:nth-child(5)");
+    expect(hides(narrow).join(" ")).not.toContain("nth-child(2)");
   });
 
   it("shows the hero dashboard's Tuesday: today outlined, Dinesh's Monday missing, and a legend", () => {
