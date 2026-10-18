@@ -1666,6 +1666,8 @@ section order are rule 10's, unchanged (the footer's links and line are new).
 13. **With the real font** (Bricolage loads on your machine), look at the headlines, captions and the footer's
     wordmark: it should run edge to edge of the content column without being cut off.
 
+**Owner decision (2026-10-18):** the CSS `position: sticky` pin is accepted as built — ScrollTrigger keeps the scrub and snap; no GSAP pin.
+
 ### Polish: whole-app UI/UX pass (owner request, 2026-10-10)
 Not a stage; **C11 is still next.** The planned "visual polish after C10" (see *C7 owner feedback*, item 6),
 on branch `claude/app-polish`, **for the owner to review before merging**. Inside the product design system
@@ -1771,6 +1773,8 @@ the week panel. `USER_MANUAL.md` §14 and §37 mention the squares in the strip 
     repeat 3 and 6: the bar and highlight jump, the day just fades.
 16. Narrow the window to about 360 px (or the device toolbar) and repeat 3, 4 and 7: nothing runs off the side,
     "My projects" stays on one line, and all five day tabs fit.
+
+**Owner decision (2026-10-18):** accepted as built — the owner tested [iamSahdoon/weekly-view#24](https://github.com/iamSahdoon/weekly-view/pull/24) and merged it; every change stays as recorded in `product_design_system.md` §8.5.
 
 ### Landing: text-only wordmark in header and footer (owner request, 2026-10-10)
 Not a stage; **C11 is still next.** Branch `claude/landing-wordmark` from `main`. Recorded as an owner decision in
@@ -3290,15 +3294,17 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   first week has begun is accepted as built — see *Auth pages: `Go to that week` accepted*. ~~(1) the brand
   panel's fill-in, (2) A1 on `/signin`, (3) "Forgot your password?" as a panel~~ **Resolved (owner, PR #27
   review, 2026-10-17):** all three accepted as built — see *Auth pages: owner decisions accepted*.
-- **Landing polish, to confirm or change:** the stories' panels are pinned with CSS `position: sticky` (ScrollTrigger
-  does the scrub and snap) instead of ScrollTrigger's own `pin`, because the GSAP pin scored a layout shift of 7.78
-  in Chrome against 0.0008 for sticky (see *Landing polish*). Say if you want the GSAP pin anyway; it is a small,
-  reversible change.
+- ~~Landing polish, to confirm or change~~ **Resolved (owner, 2026-10-18):** accepted as built — the stories' panels
+  stay pinned with CSS `position: sticky`, ScrollTrigger does the scrub and snap, and there is no GSAP pin (see
+  *Landing polish*). (Was: sticky instead of ScrollTrigger's own `pin`, because the GSAP pin scored a layout shift
+  of 7.78 in Chrome against 0.0008 for sticky.)
 - ~~C10, to confirm or change~~ **Resolved (owner, 2026-10-10):** all twelve C10 decisions accepted as built — see *C10 decisions*; the weekend look of the team table was fixed (see *C10 owner answers*). (Was: the twelve decisions, especially 3 (the demo bar's surface is `--d-panel`, not `--ink`), 4 (its way out is always `Sign in`), 6 (the pill on panels only) and 10 (the open-sign-up wording of the landing page's FAQ).) The landing page and the demo were checked in a browser with fallback fonts only; see *C10 checks*.
 - ~~C8, to confirm or change~~ **Resolved (owner, 2026-10-09):** all twelve C8 decisions accepted as built — see *C8 decisions*. (Was: the twelve decisions, especially 1 (the new `leaveHistory` field on U2), 3–4 (the profile's This week strip; no day cards in C8's pages), 6 (Users lists every status by default) and 9 (overdue colour).)
-- **Whole-app polish, to review:** built on `claude/app-polish` (see *Polish: whole-app UI/UX pass*); every rule
-  and motion change is an owner-decision note in `product_design_system.md` (§8.5 lists the new motion). Say what
-  to keep, change or drop before it is merged. (Was: "After C10: one whole-app *visual polish* session".)
+- ~~Whole-app polish, to review~~ **Resolved (owner, 2026-10-18):** accepted as built — the owner tested
+  [iamSahdoon/weekly-view#24](https://github.com/iamSahdoon/weekly-view/pull/24) and merged it; every change stays as
+  recorded in `product_design_system.md` (§8.5 lists the motion). See *Polish: whole-app UI/UX pass*. (Was: built
+  on `claude/app-polish`, to keep, change or drop before merging; before that, "After C10: one whole-app *visual
+  polish* session".)
 - ~~C7, to confirm or change~~ **Resolved (owner, 2026-10-07):** all twelve C7 decisions accepted as built — see *C7 decisions*. (Was: the twelve decisions, especially 1 (`Extend plan` waits for C8) and 2 (the tooltip's surface).) C8 wires `onExtend` to `PlanModal`.
 - ~~C6, to confirm or change~~ **Resolved (owner, 2026-10-05):** all ten decisions accepted; `blockersOnly` now means open blockers and the review panel is pinned — see *C6 owner answers*. (Was: the ten decisions above, especially 1 (People is C8) and 4 (the
   feed's optimistic toggles); and the `blockersOnly` gap.)

@@ -481,7 +481,8 @@ sees the real thing.
       section as tall as the story; GSAP's ScrollTrigger reads the progress, smooths it (scrub) and brings the
       scroll to rest on a step, in either direction. (ScrollTrigger's own pin was tried and dropped: it moves
       the panel between the page and `position: fixed`, which Chrome scores as a layout shift — about 7.8 for
-      one pass through both stories — while sticky scores 0.) Each step's line is drawn along its path and
+      one pass through both stories — while sticky scores 0. Sticky is accepted as built: owner, 2026-10-18.)
+      Each step's line is drawn along its path and
       drawn back as the step ends; its arrowhead arrives last and its ring settles onto the target (scale
       1.12 → 1 with a fade); on the dashboard the dim's spotlight glides from one target to the next. Captions
       are still typed when their step arrives. Section headings (eyebrow, heading, lede), cards, the line icons
