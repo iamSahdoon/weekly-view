@@ -80,7 +80,12 @@ export function InviteModal({ open, onOpenChange }) {
             >
               Cancel
             </Button>
-            <Button type="submit" form="invite-form" loading={invite.isPending}>
+            <Button
+              type="submit"
+              form="invite-form"
+              data-tour="invite-create"
+              loading={invite.isPending}
+            >
               Create invite link
             </Button>
           </>

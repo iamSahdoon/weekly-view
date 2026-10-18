@@ -77,7 +77,7 @@ export function ReportDocument({ week, revision = null }) {
   const total = TASK_TYPES.reduce((sum, t) => sum + model.hoursByType[t], 0);
 
   return (
-    <div className="flex flex-col gap-44">
+    <div data-tour="report-document" className="flex flex-col gap-44">
       <Section number="01" title="Tasks">
         {model.tasks.length === 0 ? (
           NONE

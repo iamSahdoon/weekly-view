@@ -7,6 +7,7 @@ export function FormSection({ id, number, title, optional = false, children }) {
     <section
       id={id}
       aria-labelledby={`${id}-title`}
+      data-tour={id}
       className="scroll-mt-[140px]"
     >
       <div className="flex items-baseline justify-between gap-11 border-b border-hair pb-11">

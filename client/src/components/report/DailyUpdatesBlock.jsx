@@ -58,13 +58,15 @@ function Controls({ day, canToggle, toggleTeam }) {
           : "No comments"}
       </span>
       {canToggle ? (
-        <Switch
-          checked={day.openToTeam}
-          onCheckedChange={(open) =>
-            toggleTeam.mutate({ weekday: day.weekday, open })
-          }
-          label="Open to team comments"
-        />
+        <span data-tour="team-switch" className="inline-flex">
+          <Switch
+            checked={day.openToTeam}
+            onCheckedChange={(open) =>
+              toggleTeam.mutate({ weekday: day.weekday, open })
+            }
+            label="Open to team comments"
+          />
+        </span>
       ) : (
         day.openToTeam && (
           <span className="text-dense text-mut">Open to team comments</span>
@@ -203,6 +205,7 @@ function DayBody({ week, day, canResolve, resolve }) {
       )}
 
       <div
+        data-tour="day-comments"
         className={cn(
           SECTION,
           "flex flex-col gap-14",
@@ -327,7 +330,11 @@ function PostedDayCard({
   toggleTeam,
 }) {
   return (
-    <div className="break-inside-avoid border border-hair bg-card">
+    <div
+      data-tour="day-card"
+      data-tour-id={day.weekday}
+      className="break-inside-avoid border border-hair bg-card"
+    >
       <header className="flex flex-wrap items-center justify-between gap-x-20 gap-y-8 border-b border-hair px-20 py-11">
         <div className="flex flex-wrap items-baseline gap-x-14 gap-y-2">
           <DayTitle
@@ -361,7 +368,11 @@ export function DailyUpdatesBlock({ week }) {
   const monday = weekStartOf(week.weekKey);
 
   return (
-    <section aria-labelledby="daily-updates" className="flex flex-col gap-16">
+    <section
+      aria-labelledby="daily-updates"
+      data-tour="daily-updates"
+      className="flex flex-col gap-16"
+    >
       <div className="flex items-center gap-8">
         <h2
           id="daily-updates"

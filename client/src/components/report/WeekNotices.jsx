@@ -7,7 +7,10 @@ import { formatDate } from "../../lib/format.js";
 /** "Weekly reports are shared with managers only." — a teammate's view. */
 export function TeammateNote() {
   return (
-    <div className="bg-tint px-20 py-14 text-dense text-body">
+    <div
+      data-tour="teammate-note"
+      className="bg-tint px-20 py-14 text-dense text-body"
+    >
       Weekly reports are shared with managers only.
     </div>
   );

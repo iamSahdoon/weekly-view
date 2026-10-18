@@ -463,7 +463,7 @@ client/
 │   │   ├── TransitionLink.jsx         # added for the auth pages (round six): a client-side link between "/" and the auth screens, in a view transition, loading the target page first
 │   │   └── __tests__/routeGuards.test.jsx  # added in C2: ProtectedRoute's 403, ParamGuard, and the Sidebar's DOM per role (static render); C8 adds routeFallbacks.test.jsx (lazyPage, a fallback on every route, no `fallback={null}` in the source)
 │   ├── layouts/
-│   │   ├── RootLayout.jsx             # router root: SkipLink, Outlet, Toaster, ReAuthModal, ScrollRestoration — C2: OfflineStrip is mounted by AppShell, under the top bar (design §3.13)
+│   │   ├── RootLayout.jsx             # router root: SkipLink, Outlet, Toaster, ReAuthModal, ScrollRestoration — C2: OfflineStrip is mounted by AppShell, under the top bar (design §3.13); guided tour (2026-10-17): under /demo only, loads demo/tour/TourLayer.jsx by a dynamic import (frontend_architecture.md §11.6)
 │   │   ├── AppShell.jsx               # sidebar + top bar frame; renders <Outlet/>
 │   │   ├── AuthLayout.jsx             # no shell (§3.12); since the auth-pages change (2026-10-17) the split: brand panel left, form right, on shared rows; a slim header below 1024px
 │   │   └── MarketingLayout.jsx        # sticky nav + footer for the landing page, in the landing theme (brand §6.0)
@@ -487,7 +487,7 @@ client/
 │   │   ├── SignUpPage.jsx             # /signup — first-run bootstrap; closed state after (§3.12)
 │   │   ├── AcceptInvitePage.jsx       # /invite/:token
 │   │   ├── ResetPasswordPage.jsx      # /reset/:token — an admin-issued reset link
-│   │   ├── DemoEntryPage.jsx          # /demo — the perspective chooser (§3.14)
+│   │   ├── DemoEntryPage.jsx          # /demo — the perspective chooser (§3.14); guided tour (2026-10-17): first offers the tour (and a jump to any part), then "Explore on your own"
 │   │   ├── NotFoundPage.jsx           # §3.13
 │   │   ├── ForbiddenPage.jsx          # §3.13
 │   │   └── DesignPage.jsx             # /design, dev-only style guide
@@ -552,7 +552,7 @@ client/
 │   │   │   ├── SkipLink.jsx
 │   │   │   ├── PageContainer.jsx      # added in C2: a page names its width — doc 860 · page 1240 · wide 1560 (frontend_architecture §7.3)
 │   │   │   ├── __tests__/navItems.test.js  # added in C2: which groups each role gets, and in what order
-│   │   │   └── DemoBar.jsx            # the 36px --ink bar: SAMPLE DATA, Switch, Start over (§3.14)
+│   │   │   └── DemoBar.jsx            # the 36px --ink bar: SAMPLE DATA, Switch, Start over (§3.14); guided tour: `Tour`, which sends a DOM event the tour layer listens for
 │   │   ├── report/                    # §3.1–3.4, §4
 │   │   │   ├── WeekStrip.jsx          # the five-day strip — the daily-update control (§3.1)
 │   │   │   ├── DayPanel.jsx           # compose / read one day: lines, blockers, comments (§4.11)
@@ -660,7 +660,17 @@ client/
 │   │   ├── demoDashboardRoutes.js     # added in C7: D1–D6 and D8 for the demo, by the server's rules; C8 adds D7
 │   │   ├── demoUserRoutes.js          # added in C6: U1 (the people list) for the demo; C8 adds U2–U7 and U11–U13
 │   │   ├── demoStore.js               # builds the in-memory store; rebuilt on refresh or Start over
-│   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates; C10 completes the brand §10 cast of eight; `buildFixtures(now, { team: false })` leaves only the three perspectives, which the unit tests of the rules use
+│   │   ├── fixtures.js                # hard-coded people, projects, tasks, weeks — relative dates; C10 completes the brand §10 cast of eight; `buildFixtures(now, { team: false })` leaves only the three perspectives, which the unit tests of the rules use; the guided tour adds the `CAST` and `SAMPLE_PROJECTS` ids it names
+│   │   ├── tour/                      # added for the guided tour (owner request, 2026-10-17; frontend_architecture.md §11.6) — loaded under /demo only, its own chunk
+│   │   │   ├── TourLayer.jsx          # the overlay: runs each step (setup, person, route, target), the dimmed cutout and outline, Esc, focus, the live region
+│   │   │   ├── TourTooltip.jsx        # the step card — floating beside the target, a sheet on a phone (design §3.14 "Guided tour")
+│   │   │   ├── TourPanel.jsx          # the jump panel: every step grouped by Everyone / Managers and admins / Admins only; resume, start again, end
+│   │   │   ├── tourSteps.js           # the script: chapters, steps, NOT_IN_TOUR, CAPABILITIES, tourMinutes()
+│   │   │   ├── tourSetup.js           # demo-store setup helpers (`prepare`) and what the steps wait for — through the demo's own handlers
+│   │   │   ├── tourRobot.js           # "Do it for me": drives the real controls visibly (typed, paced; at once under reduced motion); closes the page's dialogs between steps
+│   │   │   ├── tourState.js           # added on the PR #28 feedback (2026-10-18): the pure reducer — step, phase, an action's outcome; only Back, Next, a jump and Exit move the tour
+│   │   │   ├── tourPlacement.js       # pure geometry: tooltip side, room below, the phone sheet, the clipped highlight
+│   │   │   └── tourBus.js             # the chooser's start / panel requests, kept until the layer has loaded
 │   │   └── __tests__/
 │   │       ├── demoCoverage.test.js   # every services/ function answered by the adapter
 │   │       ├── demoWeeks.test.js      # added in C3: the demo's layers, comment rules, ten-minute window and "new" markers
@@ -669,7 +679,8 @@ client/
 │   │       ├── demoReview.test.js     # added in C6: the desk never lists your own report, the pinned revision, the 10-character send-back, R12's filters, U1
 │   │       ├── demoDashboard.test.js  # added in C7: D1–D6 and D8 — people-first rows, `status` on D2 only, I11, I13, the eight-event feed
 │   │       ├── demoCast.test.js       # added in C10: the full fixtures — eight people, a review desk with something in it, every square of the team table, on every day of the week
-│   │       └── demoEntry.test.jsx     # added in C10: the chooser, the demo bar, the SAMPLE DATA pill, switching keeps the store and a fresh boot resets it
+│   │       ├── demoEntry.test.jsx     # added in C10: the chooser, the demo bar, the SAMPLE DATA pill, switching keeps the store and a fresh boot resets it; the tour's two options
+│   │       └── demoTour.test.js       # added for the guided tour: every manual feature and role capability has a step (or a reason), every target exists, the setup helpers on three days, placement, bundle isolation
 │   ├── hooks/
 │   │   ├── useAuth.js                 # reads AuthContext
 │   │   ├── useAuthQueries.js          # bootstrap status, link preview, login, signup, accept
@@ -899,6 +910,15 @@ about it.
 `demoRoutes.js` mirrors `api_specification.md`, not the server's route files — the
 client never imports across roots (§8). `demoCoverage.test.js` is what keeps the two in
 step.
+
+**`demo/tour/` — the guided tour** *(owner request, 2026-10-17)*. An overlay layer, not a
+page: `RootLayout.jsx` loads it under `/demo` only, by a dynamic import, so it is a chunk the
+real app never downloads; `DemoEntryPage.jsx` (already a demo chunk) talks to it through
+`tourBus.js`, and the demo bar sends it a DOM event. Components carry inert `data-tour`
+attributes for it — the one thing the tour asks of them — and three shared ones pass such an
+attribute through: `Table` (a `tour` prop), `Tabs` and `DropdownMenu` (rest props on their root
+or trigger; menu items take a `tour` key). Its PascalCase files are components, the camelCase
+ones plain modules, as everywhere in `client/src`. Specified in `frontend_architecture.md` §11.6.
 
 ---
 

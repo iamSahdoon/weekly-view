@@ -12,6 +12,7 @@ import { Skeleton } from "./Skeleton.jsx";
 //   linkState  router state passed along when a row is opened (the review desk
 //            hands its filters to the review page this way)
 //   dense    36px rows for read-only report tables
+//   tour     a `data-tour` name for the guided demo tour (an inert attribute)
 //   emptyState / keepHeader  what stands in for the rows of an empty list; with
 //            `keepHeader` the header row stays above it (a filtered-out list, design
 //            §3.3), without it the state replaces the table (a list that is new)
@@ -40,6 +41,7 @@ export function Table({
   keepHeader = false,
   caption,
   className,
+  tour,
 }) {
   const isStacked = useMediaQuery("(max-width: 767px)");
   const keyOf = typeof rowKey === "function" ? rowKey : (row) => row[rowKey];
@@ -58,7 +60,10 @@ export function Table({
 
   if (!isLoading && !hasRows && emptyState && !(keepHeader && !isStacked)) {
     return (
-      <div className={cn("border border-hair bg-card", className)}>
+      <div
+        data-tour={tour}
+        className={cn("border border-hair bg-card", className)}
+      >
         {emptyState}
       </div>
     );
@@ -75,6 +80,7 @@ export function Table({
 
   return (
     <div
+      data-tour={tour}
       aria-busy={isLoading || isFetching || undefined}
       className={cn(
         "transition-opacity duration-[120ms] ease-linear",

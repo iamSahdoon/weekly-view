@@ -19,4 +19,8 @@ export const demo = {
   setPerspective(perspective) {
     store.session.userId = PERSPECTIVES[perspective];
   },
+  /** The in-memory store, for the guided tour's setup helpers (demo/tour/). */
+  get store() {
+    return store;
+  },
 };

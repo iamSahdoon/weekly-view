@@ -7,7 +7,14 @@ import { cn } from "../../lib/cn.js";
 // user-triggered, and it shows what changed. Roving tabindex, role="tablist".
 // Used for profile sub-views, never as a substitute for navigation.
 
-export function Tabs({ value, onChange, items, ariaLabel, className }) {
+export function Tabs({
+  value,
+  onChange,
+  items,
+  ariaLabel,
+  className,
+  ...props
+}) {
   const group = useId();
   const refs = useRef([]);
 
@@ -34,6 +41,7 @@ export function Tabs({ value, onChange, items, ariaLabel, className }) {
       role="tablist"
       aria-label={ariaLabel}
       className={cn("flex h-44 items-stretch border-b border-hair", className)}
+      {...props}
     >
       {items.map((item, index) => {
         const active = item.value === value;

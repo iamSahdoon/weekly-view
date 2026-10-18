@@ -66,7 +66,10 @@ export function SectionRail({
         })}
       </ol>
 
-      <div className="flex flex-col gap-8 border-t border-hair pt-14">
+      <div
+        data-tour="submit-checklist"
+        className="flex flex-col gap-8 border-t border-hair pt-14"
+      >
         <p className="text-micro font-medium text-mut">Before you submit</p>
         <ul className="flex flex-col gap-6">
           {checklist.items.map((item) => {

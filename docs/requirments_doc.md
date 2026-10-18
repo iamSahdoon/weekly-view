@@ -566,7 +566,64 @@ A hands-on tour of the product, reachable from the landing page without signing 
 Because the demo never touches the server or the database, it cannot go stale, cannot be
 damaged by a visitor, and needs no special accounts or permissions on the server.
 
-Full specification: `product_design_system.md` §3.14 and `tech_stack.md` §6.9.
+### 14.1 The guided tour *(owner decision, 2026-10-17; its nine choices below accepted as built on the PR #28 review, 2026-10-18)*
+
+The demo's first screen offers two ways in: **take the guided tour** (with an honest length,
+"about 15 minutes, or jump to any part") or **explore on your own** (the three perspectives,
+unchanged).
+
+- **One team's week as a story.** Sanduni (the owner) sets the team up; Imali (a member)
+  posts days and files a week; Nadia (a manager) reviews it and sends it back; Imali fixes and
+  resubmits; Nadia approves; then Account and appearance, and where to go next. The roles are
+  cumulative (§1), so each feature is explained **once**, in the chapter of the lowest role
+  that has it, and each step says who can use it: *Everyone*, *Managers and admins* or
+  *Admins only*. The tour switches person by itself, and the store keeps what the visitor
+  did, so a week Imali submits really appears on Nadia's review desk.
+- **Every feature, for every role.** Every entry of `docs/USER_MANUAL.md`'s feature index and
+  every capability in §1 has at least one step, or is listed as left out with its reason (the
+  landing page, sign-up, session expiry, the "Starting up" screen, the offline strip, the error
+  toast and the stale-version banner — none can happen honestly in a browser-only demo). A
+  client test fails when a feature gains no step.
+- **Steps point at the real screens.** A step highlights a real element and explains it in one
+  or two sentences; where an action makes sense the tour waits for the visitor to do it (post
+  a day, submit, send back…) and offers **Do it for me**, which does it visibly on the real
+  screen: the fields filled one after another, then the real button pressed. Either way, the
+  step then says what changed and **waits for Next** — the tour never moves on by itself
+  *(owner feedback on PR #28, 2026-10-18; kept by the owner on review)*.
+- **Jump to any part.** A **Tour** button in the demo bar opens a panel listing every step,
+  grouped by who can use it; choosing one switches to the right person, prepares the data that
+  step needs (a submitted report waiting to be sent back, a sent-back report to fix…) and starts
+  there. The panel also resumes, restarts or ends the tour.
+- **Nothing is stored.** Like the rest of the demo, a refresh returns to the first screen and
+  ends the tour.
+
+**Owner decisions, accepted as built** *(PR #28 review, 2026-10-18: 1–5 in the first round,
+6–9 in the second)*:
+
+1. **No library.** The tour is built on what is already in the stack; no dependency was added
+   (`tech_stack.md` §10).
+2. **The Tour button lives in the demo bar** (an icon only on phones), not floating over the
+   page.
+3. **The story week replaces Imali's sample history.** The tour turns Imali's last week back
+   into a Draft, replacing its sample sent-back history, and the visitor recreates that
+   history themselves.
+4. **A refresh ends the tour**, and the demo data resets too.
+5. **"Overall comment"** means the managers' comments on a submitted week (§4, "Overall
+   comments on the week"), not a field on the weekly form; the tour covers it as week comments.
+6. **Steps re-prepare their data on Back and jumps.** Going Back, or jumping to a step, puts the
+   demo data in the state that step needs (going Back to "Post the update" takes the posted day
+   off again; a jump can reset the story week).
+7. **The dim doesn't block the page.** The visitor can use the highlighted part and the rest of the
+   page; if the highlighted part closes, the card says so and offers **Show it again**.
+8. **Seven features are left out**, because none can happen honestly in a browser-only demo: the
+   landing page, sign-up, the session-expiry window, the "Starting up" screen, the offline
+   strip, the error toast with Retry and the stale-version banner.
+9. **The first screen's lead line** reads "Take the guided tour, or look around on your own."; the
+   original line stays under **Explore on your own**, with the three choices unchanged.
+
+Full specification: `product_design_system.md` §3.14 and `tech_stack.md` §6.9; the tour's
+components in `product_design_system.md` §3.14 "Guided tour", its architecture in
+`frontend_architecture.md` §11.6.
 
 ---
 

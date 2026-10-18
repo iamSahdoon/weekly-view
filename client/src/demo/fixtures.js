@@ -28,6 +28,18 @@ const AYESHA = "000000000000000000000a06";
 const DINESH = "000000000000000000000a07";
 const MALITH = "000000000000000000000a08";
 
+// Everyone's id, for the guided tour's steps and setup helpers (demo/tour/).
+export const CAST = Object.freeze({
+  imali: IMALI,
+  nadia: NADIA,
+  sanduni: SANDUNI,
+  ruwan: RUWAN,
+  tharindu: THARINDU,
+  ayesha: AYESHA,
+  dinesh: DINESH,
+  malith: MALITH,
+});
+
 // Ids are 24 hex digits like the API's: two for the kind, the rest a counter.
 const id = (kind, n) => `${kind}${String(n).padStart(22, "0")}`;
 const PROJECT = {
@@ -36,6 +48,7 @@ const PROJECT = {
   internal: id("0b", 3),
   marketing: id("0b", 4),
 };
+export const SAMPLE_PROJECTS = PROJECT;
 const TASK = {
   checkout: id("0c", 1),
   payments: id("0c", 2),

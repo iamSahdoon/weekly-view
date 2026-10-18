@@ -13,6 +13,7 @@ export function PersonalStrip({ summary }) {
   return (
     <section
       aria-label="Your numbers"
+      data-tour="your-numbers"
       className="grid grid-cols-3 divide-x divide-hair border border-hair bg-card"
     >
       {cells.map(([label, value]) => (

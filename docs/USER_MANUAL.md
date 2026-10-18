@@ -85,7 +85,7 @@ Stage C11 (deployment) and the whole-app polish may change some screens' look, n
 
 **Part 8 — Outside the app**
 48. The landing page
-49. The demo
+49. The demo (and the guided tour)
 
 **Part 9 — Reference**
 50. Permission tables
@@ -115,6 +115,7 @@ Stage C11 (deployment) and the whole-app polish may change some screens' look, n
 | Dark theme | §8 | Sidebar → your name → **Appearance** |
 | Day cards | §26 | Week page, This week, Team updates |
 | Demo (three perspectives) | §49 | Landing page → **See the live demo** (`/demo`) |
+| Guided tour (demo) | §49 | `/demo` → **Take the guided tour**; in the demo, **Tour** in the demo bar |
 | Drafts (unposted text kept until sign-out) | §18 | This week |
 | Edit email (admin) | §41 | **Users** → **⋯** → **Edit email** |
 | Edit / delete a comment (10 minutes) | §19 | On your comment |
@@ -876,15 +877,17 @@ shapes), separate from the app's look. It tells the story in order:
 - If your browser remembers a sign-in, `/` takes you into the app instead. Use a private window
   to see the landing page.
 
-## 49. The demo
+## 49. The demo (and the guided tour)
 
 Landing page → ***See the live demo***, or go to `/demo`. **No sign-up, no server, no database.**
 
-1. **The chooser** ("Try WeeklyView"): pick ***Team member***, ***Manager*** or ***Admin***.
+1. **The first screen** ("Try WeeklyView") offers two ways in: ***Take the guided tour*** (see
+   below), or ***Explore on your own***: pick ***Team member***, ***Manager*** or ***Admin***.
 2. **The real app** opens with **sample data** (a fictional team of eight: Nadia, Ruwan, Imali,
    Tharindu, Ayesha, Dinesh, Malith, Sanduni). A dark **demo bar** across the top shows
-   ***SAMPLE DATA***, who you are, ***Switch***, ***Start over*** and ***Sign in***. Data panels
-   carry a dashed ***SAMPLE DATA*** tag.
+   ***SAMPLE DATA***, who you are, ***Switch***, ***Tour***, ***Start over*** and ***Sign in***
+   (on a phone, ***Tour*** is a small route icon). Data panels carry a dashed ***SAMPLE DATA***
+   tag.
 3. **Everything works** for your role: post and edit days, comment, submit, approve, send back,
    add projects and holidays, change roles, mark leave. Two reports are waiting on the review
    desk, so the manager view isn't empty.
@@ -896,6 +899,50 @@ Landing page → ***See the live demo***, or go to `/demo`. **No sign-up, no ser
 
 The demo's dates are always relative to today, so it never looks stale. At weekends, Friday is
 shown as posted so the team doesn't look behind.
+
+### The guided tour
+
+A walk through every feature, for every role, on the real screens: about 15 minutes, or jump to
+any part.
+
+- **The story.** One team's week, in six parts: ***01 Setting up the team*** (as Sanduni, the
+  owner), ***02 A member's week*** (as Imali), ***03 Reviewing and running the team*** (as
+  Nadia), ***04 Fixing a sent-back report*** (Imali), ***05 Approving it*** (Nadia) and ***06
+  For everyone*** (Account, appearance, where to go next). The tour switches person by itself.
+  The week Imali files is **last week** (all its days are posted, so it can be submitted on any
+  day); what Imali submits really lands on Nadia's review desk.
+- **Each step** highlights part of the screen (the rest is dimmed) and shows a short card: the
+  part of the story, who the feature is for — ***Everyone***, ***Managers and admins*** or
+  ***Admins only*** — what it is, and ***Step 12 of 72 · Team member***. Each feature is
+  explained once, in the part for the lowest role that has it: a manager can do everything a
+  member can, so posting a day is shown once, as Imali.
+- **Controls:** ***Back***, ***Next***, ***Exit***, and ***Do it for me*** where a step needs an
+  action (post a day, submit, send back…). You can do it yourself, or press ***Do it for me***
+  and watch: the tour fills the fields one after another, then presses the real button, with
+  the outline on the part it is changing (about 1–3 seconds; with reduced motion turned on,
+  everything is filled at once). While it works, ***Back***, ***Next*** and ***Do it for me***
+  wait; ***Exit*** still works. Either way, once the result is on screen the card says what
+  changed — for example "Done. Imali's Friday update is posted, and its square on the strip is
+  now filled." — the outline moves to that result, and the tour waits for ***Next***. It never
+  moves on by itself. You can always use the highlighted part of the screen.
+- **Keyboard:** ← and → move between steps; Tab from the card's last button reaches the
+  highlighted part; Esc ends the tour (when a window of the app is open, the first Esc closes
+  that window). Focus goes back to where it was, or to ***Tour***.
+- **Jump to any part:** ***Tour*** in the demo bar (or ***Jump to a part*** on the first
+  screen) opens a panel listing every step, grouped under ***Everyone***, ***Managers and
+  admins*** and ***Admins only***. Choosing one switches to the right person, prepares the
+  sample data that step needs (for example, a submitted report waiting for ***Send back***)
+  and starts there. The panel also offers ***Resume at step N***, ***Start again*** and
+  ***End the tour***.
+- **On a phone** the card is a sheet across the bottom of the screen (across the top, below the
+  demo bar, when the highlighted part is at the bottom), and the panel fills the screen.
+- **If a part of the screen doesn't appear** within a few seconds, the card says so in the
+  middle of the screen and offers ***Try again*** and ***Skip this step***.
+- **Switch** pauses the tour; **refreshing the page** or ***Start over*** ends it, like
+  everything else in the demo.
+- **Not in the tour** (they can't happen in a browser-only demo): the landing page, signing up,
+  the session-expiry window, the "Starting up" screen, the offline strip, the error toast with
+  ***Retry***, and the stale-version banner.
 
 ---
 

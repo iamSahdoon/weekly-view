@@ -79,6 +79,7 @@ export function DayPanel({ week, weekday, isOwn }) {
   return (
     <section
       aria-labelledby={`day-${weekday}`}
+      data-tour="day-panel"
       className={cn(
         "border border-hair",
         !day && (state === "holiday" || state === "leave")
@@ -101,6 +102,7 @@ export function DayPanel({ week, weekday, isOwn }) {
                 <Button
                   size="sm"
                   variant="ghost"
+                  data-tour="day-edit"
                   onClick={() => setEditing(true)}
                 >
                   Edit
@@ -321,6 +323,7 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
   return (
     <section
       aria-labelledby={`day-${weekday}`}
+      data-tour="day-panel"
       className="border border-hair bg-card"
     >
       <DayHeader
@@ -425,6 +428,7 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
             )}
             {blockers.fields.length < MAX_BLOCKERS && (
               <DashedButton
+                data-tour="add-blocker"
                 onClick={() => {
                   addedBlocker.mark(blockers.fields.length);
                   blockers.append({ text: "" });
@@ -442,20 +446,26 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-x-20 gap-y-11">
-            <Checkbox
-              label="Open to team comments"
-              {...form.register("openToTeam")}
-            />
+            <span data-tour="team-comments-checkbox" className="inline-flex">
+              <Checkbox
+                label="Open to team comments"
+                {...form.register("openToTeam")}
+              />
+            </span>
             <div className="flex flex-wrap items-center gap-8">
               {day && (
                 <Button variant="ghost" onClick={onCancel}>
                   Cancel
                 </Button>
               )}
-              <Button variant="secondary" onClick={onSave}>
+              <Button variant="secondary" data-tour="day-save" onClick={onSave}>
                 Save
               </Button>
-              <Button type="submit" loading={putDay.isPending}>
+              <Button
+                type="submit"
+                data-tour="day-post"
+                loading={putDay.isPending}
+              >
                 Post update
               </Button>
             </div>
@@ -467,11 +477,12 @@ function DayComposer({ week, weekday, date, day, missing, onDone }) {
 }
 
 // The §4.3 dashed add button, 38px.
-function DashedButton({ onClick, children }) {
+function DashedButton({ onClick, children, ...props }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      {...props}
       className="focus-halo flex h-[var(--ctrl-h)] w-full items-center justify-center gap-6 border border-dashed border-rule text-dense text-body transition-colors duration-[120ms] ease-linear hover:border-hair2 hover:bg-tint hover:text-ink max-md:h-[var(--ctrl-h-lg)]"
     >
       <Plus aria-hidden="true" className="size-[12px]" />

@@ -34,7 +34,7 @@ export function StickyActionBar({
   // Framed like the buttons beside it, and --acc-l once ticked, so it can't be missed.
   // The hint sits outside the label, so the checkbox's name stays "Ask for approval".
   const approval = (
-    <div className="group relative">
+    <div data-tour="ask-approval" className="group relative">
       <label
         className={cn(
           "relative inline-flex h-[var(--ctrl-h)] cursor-pointer items-center gap-8 border px-11 text-dense font-medium text-ink select-none max-md:h-[var(--ctrl-h-lg)]",
@@ -79,6 +79,7 @@ export function StickyActionBar({
     <Tooltip content={blocked ? checklist.reason : null}>
       <Button
         aria-disabled={blocked || undefined}
+        data-tour="submit"
         loading={submitting}
         onClick={() => onSubmit({ requestApproval })}
       >
@@ -88,7 +89,10 @@ export function StickyActionBar({
   );
 
   return (
-    <div className="sticky bottom-0 z-20 mt-52 max-md:-mx-20">
+    <div
+      data-tour="sticky-bar"
+      className="sticky bottom-0 z-20 mt-52 max-md:-mx-20"
+    >
       {error && (
         <p
           role="alert"
@@ -103,7 +107,7 @@ export function StickyActionBar({
         </p>
       )}
       <div className="flex h-[62px] items-center gap-11 border-t border-hair bg-card px-16 max-md:grid max-md:h-auto max-md:min-h-[88px] max-md:grid-cols-2 max-md:gap-8 max-md:px-20 max-md:py-11">
-        <div className="mr-auto">
+        <div data-tour="autosave" className="mr-auto">
           <AutosaveIndicator
             state={autosave.state}
             savedAt={autosave.savedAt}

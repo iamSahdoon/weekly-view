@@ -140,6 +140,7 @@ function Profile({ person, me }) {
                 {active && (
                   <Button
                     variant="secondary"
+                    data-tour="profile-leave"
                     loading={pending}
                     onClick={() => request(person)}
                   >
@@ -308,6 +309,7 @@ function ThisWeek({ person, meId }) {
   return (
     <section
       aria-label="This week"
+      data-tour="profile-this-week"
       className="flex flex-wrap items-center justify-between gap-x-20 gap-y-8 border border-hair bg-card px-24 py-14"
     >
       <div className="flex flex-wrap items-center gap-x-14 gap-y-6">

@@ -107,9 +107,12 @@ export function VersionsList({ revisions, selected, onSelect }) {
 }
 
 /** A labelled block of a week page's right rail. */
-export function RailBlock({ label, children }) {
+export function RailBlock({ label, tour, children }) {
   return (
-    <section className="flex flex-col gap-8 border-t border-hair pt-14 first:border-t-0 first:pt-0">
+    <section
+      data-tour={tour}
+      className="flex flex-col gap-8 border-t border-hair pt-14 first:border-t-0 first:pt-0"
+    >
       <h3 className="text-caption font-medium text-mut">{label}</h3>
       {children}
     </section>

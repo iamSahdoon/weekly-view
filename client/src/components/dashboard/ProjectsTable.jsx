@@ -149,7 +149,11 @@ function ProjectsSkeleton() {
 
 export function ProjectsTable({ query, unit, onUnitChange, onExtend }) {
   return (
-    <section aria-label="Projects" className="border border-hair bg-card">
+    <section
+      aria-label="Projects"
+      data-tour="dashboard-projects"
+      className="border border-hair bg-card"
+    >
       <header className="flex min-h-[44px] flex-wrap items-center justify-between gap-11 border-b border-hair px-20 py-6">
         <div className="flex min-w-0 items-center gap-8">
           <h2 className="font-display text-panel-sm font-bold text-ink">

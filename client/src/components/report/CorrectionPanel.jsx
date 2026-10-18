@@ -21,6 +21,7 @@ export function CorrectionPanel({ week, inForm = false }) {
   return (
     <section
       aria-label="Needs correction"
+      data-tour="correction-panel"
       className="relative flex flex-col gap-11 border border-st-corr-bd bg-st-corr-bg px-24 py-20 before:absolute before:inset-y-[-1px] before:left-[-1px] before:w-2 before:bg-st-corr-fg"
     >
       <p className="text-caption text-mut">

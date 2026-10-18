@@ -25,7 +25,7 @@ export function LinkBlock({ url, children }) {
   };
 
   return (
-    <div className="flex flex-col gap-14">
+    <div data-tour="link-block" className="flex flex-col gap-14">
       <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
         <p
           data-testid="issued-link"

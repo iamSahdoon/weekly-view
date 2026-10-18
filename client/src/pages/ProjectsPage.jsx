@@ -57,7 +57,10 @@ export default function ProjectsPage() {
       <PageHeader
         title="Projects"
         primary={
-          <Button onClick={() => setDialog({ kind: "form" })}>
+          <Button
+            data-tour="new-project"
+            onClick={() => setDialog({ kind: "form" })}
+          >
             New project
           </Button>
         }

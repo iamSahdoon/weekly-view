@@ -27,6 +27,7 @@ export function SidebarNavItem({
       to={to}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
+      data-tour={`nav:${to}`}
       aria-label={rail ? label : undefined}
       className={cn(
         "focus-inset relative flex h-[38px] items-center gap-11 text-base no-underline",
