@@ -181,7 +181,10 @@ const linkTokenExpiresAt = new Date(Date.now() + ttl * 60 * 60 * 1000);
   hash, single use, 24 hours, previous link overwritten — and **prints the link once to the
   terminal**, as the operator's equivalent of the single response an admin sees. It is
   never written to a file or log, never stored in plain form, and not reachable over HTTP.
-  `--url` replaces `CLIENT_URL` in the link only.
+  The site address (one bare argument, `--url <address>`, or npm's `url` config) replaces
+  `CLIENT_URL` in the link only. The documented form is `npm run owner:reset-link <address>`
+  with no `--`, because PowerShell's `npm.ps1` drops the first `--` and npm would take `--url`
+  for its own config.
 
 ### 2.2 Bootstrap signup, and the race it would otherwise have
 

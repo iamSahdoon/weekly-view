@@ -2663,6 +2663,26 @@ who forgot their password was locked out for good. Owner decision: a command for
   works with `NODE_ENV=production`; unknown flag and unreachable database (10 s) exit 1 with the plain message and no
   connection string; no owner exits 1. Not run on Windows or against Atlas.
 
+### Owner bug fix: `owner:reset-link` from Windows PowerShell (2026-10-18)
+Not a stage. On PowerShell, `npm run owner:reset-link -- --url https://weeklyview.vercel.app` failed with
+`Unknown option "https://weeklyview.vercel.app"`: `npm.ps1` drops the first `--`, so npm took `--url` as its own
+config and forwarded only the bare address.
+- `server/src/scripts/ownerResetLink.js`: `parseArgs(argv, env)` now takes the site address as `--url <a>`,
+  `--url=<a>`, **one bare argument**, or (fallback, no argument given) npm's own `url` config
+  (`process.env.npm_config_url`). All go through `parseSiteUrl` (http(s), no login/query/`#`, trailing slashes
+  stripped). More than one address or any other flag is refused with a plain message. Error text no longer says
+  `--url` for an address that may have come from elsewhere. No new dependency.
+- **Documented form (same in PowerShell, cmd, bash):** `npm run owner:reset-link https://<site>` — no `--url`, no
+  `--`. Alternative: inside `server/`, `node src/scripts/ownerResetLink.js --url https://<site>`. Updated
+  `README.md`, `CLAUDE.md`, `docs/DEPLOYMENT.md`, `docs/USER_MANUAL.md`, `docs/tech_stack.md`.
+- **Tests** (`server/tests/scripts/ownerResetLink.test.js`): bare argument; npm-config fallback (argument wins,
+  empty ignored, `true` and bad schemes refused); several addresses and unknown flags refused; the spawned command
+  refuses a bad address from `--url`, a bare argument and `npm_config_url` before connecting. In-memory Mongo only.
+- **By hand** (real `npm run`, unreachable dummy `MONGODB_URI`, so nothing connected): bare address, `-- --url`, and
+  `--url` without `--` (npm swallows it, the fallback catches it) all reach the address check; `-- a b` and
+  `-- --force` are refused. **Not run on Windows PowerShell**; the owner confirms it there.
+- Lint clean; server 415 and client 690 tests pass.
+
 ### Your next steps (owner recovery)
 See the PR description from `claude/owner-recovery`; the Windows steps are in the session's closing message and in
 `README.md` ("If the owner forgets their password").

@@ -4,11 +4,16 @@ import { User } from "../models/userModel.js";
 import { issueResetLink } from "../services/userService.js";
 import { AppError } from "../utils/appError.js";
 
-// npm run owner:reset-link [-- --url <site address>] — the way back in for an owner who
+// npm run owner:reset-link -- https://your-site.vercel.app — the way back in for an owner who
 // forgot their password (requirments_doc.md §11.3). Whoever holds MONGODB_URI runs it; it
 // issues the owner a normal 24-hour reset link through the same service function an admin's
 // U13 uses, so the token rules are not repeated here. It sets and prints no password and
 // touches no other user.
+//
+// The site address is optional and can arrive three ways, because Windows PowerShell's
+// npm.ps1 drops the first `--`, so npm takes `--url` for its own config and forwards only the
+// bare address: `--url <address>`, a bare `<address>`, or npm's own `url` config
+// (npm_config_url) when npm swallowed `--url`.
 //
 // The link is printed once, to the terminal, and nowhere else: not to a file, not to a log.
 // That is the one deliberate exception to "never log a link token" (tech_stack.md §2.1) —
@@ -17,7 +22,7 @@ import { AppError } from "../utils/appError.js";
 /** A refusal with a message the operator can act on. */
 export class RecoveryError extends Error {}
 
-/** Checks a `--url` value: an http(s) address, no credentials, query or fragment. */
+/** Checks a site address: an http(s) URL, no credentials, query or fragment. */
 export function parseSiteUrl(value) {
   let url;
   try {
@@ -28,34 +33,46 @@ export function parseSiteUrl(value) {
     );
   }
   if (url.protocol !== "http:" && url.protocol !== "https:")
-    throw new RecoveryError("--url must start with http:// or https://");
+    throw new RecoveryError(
+      "The site address must start with http:// or https://",
+    );
   if (url.username || url.password || url.search || url.hash)
     throw new RecoveryError(
-      "--url must be the plain site address, with no login, query or # part.",
+      "The site address must be the plain address, with no login, query or # part.",
     );
   return `${url.origin}${url.pathname}`.replace(/\/+$/, "");
 }
 
-/** `--url <address>` or `--url=<address>`; anything else is refused. */
-export function parseArgs(argv) {
-  let url;
+/**
+ * The site address from `--url <address>`, `--url=<address>` or one bare `<address>`, else
+ * from npm's `url` config in `env` (npm_config_url). More than one address and any other
+ * flag are refused.
+ */
+export function parseArgs(argv, env = {}) {
+  const found = [];
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    let value;
     if (arg === "--url") {
-      value = argv[(i += 1)];
+      const value = argv[(i += 1)];
       if (value === undefined)
         throw new RecoveryError("--url needs a site address after it.");
+      found.push(value);
     } else if (arg.startsWith("--url=")) {
-      value = arg.slice("--url=".length);
-    } else {
+      found.push(arg.slice("--url=".length));
+    } else if (arg.startsWith("-")) {
       throw new RecoveryError(
-        `Unknown option "${arg}". The only option is --url <site address>.`,
+        `Unknown option "${arg}". The only option is --url <site address>, or give the address on its own.`,
       );
+    } else {
+      found.push(arg);
     }
-    url = parseSiteUrl(value);
   }
-  return { url };
+  if (found.length > 1)
+    throw new RecoveryError("Give the site address once, not several times.");
+  if (found.length === 1) return { url: parseSiteUrl(found[0]) };
+  const fromNpm = env.npm_config_url;
+  if (fromNpm) return { url: parseSiteUrl(fromNpm) };
+  return { url: undefined };
 }
 
 /**
@@ -90,7 +107,7 @@ export async function issueOwnerResetLink({ url } = {}) {
 }
 
 async function main() {
-  const { url } = parseArgs(process.argv.slice(2));
+  const { url } = parseArgs(process.argv.slice(2), process.env);
   const { connectDb } = await import("../config/db.js");
   try {
     await connectDb();

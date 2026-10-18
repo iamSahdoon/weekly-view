@@ -122,14 +122,20 @@ The owner is protected, so no admin can reset their password, and nothing is ema
 holds the database string (`MONGODB_URI` in `server/.env`) can print the owner a one-time reset
 link from their own PC:
 
-```powershell
-npm run owner:reset-link
-npm run owner:reset-link -- --url https://your-site.vercel.app    # a link for the live site
+```bash
+npm run owner:reset-link                                    # a link for localhost
+npm run owner:reset-link https://your-site.vercel.app       # a link for the live site
 ```
 
-- It uses the database `server/.env` points at, and works whatever `NODE_ENV` is. Without `--url`
-  the link starts with `CLIENT_URL`, which on your PC is `localhost`; for the live site pass
-  `--url`. The `--` before it is required.
+- Give the site address on its own, **without `--url` and without `--`**. That one form works the
+  same in Windows PowerShell, cmd and bash. (PowerShell's `npm.ps1` drops the first `--`, so
+  `npm run owner:reset-link -- --url …` fails there with `Unknown option`. The script also
+  accepts `--url <address>` and npm's own `url` setting, but don't rely on them in PowerShell.)
+  Alternatively, from inside `server/`:
+  `node src/scripts/ownerResetLink.js --url https://your-site.vercel.app`
+- It uses the database `server/.env` points at, and works whatever `NODE_ENV` is. Without an
+  address the link starts with `CLIENT_URL`, which on your PC is `localhost`; for the live site
+  give the address. It must be a plain `http(s)` address, with no login, query or `#` part.
 - It prints the owner's name, email, the expiry and the link, **once**. The link works once,
   expires in 24 hours, and replaces any earlier reset link. It changes no password by itself and
   touches nobody else. Treat the output like a password and don't paste it anywhere shared.
