@@ -158,6 +158,17 @@ Follow [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). **Option A is recommended and
 choice:** the website and the API as two Vercel projects from this repository, no payment card.
 Option B (the API on Render) stays documented as the alternative.
 
+### Live
+
+Deployed on Vercel (Option A) and checked by the owner on 2026-10-18:
+
+- Website: <https://weeklyview.vercel.app>
+- Demo: <https://weeklyview.vercel.app/demo>
+- API: <https://weekly-view.vercel.app> (health check: `/api/health`)
+
+The API's Function Region is Mumbai (`bom1`), next to the Atlas cluster in `ap-south-1`. Sample data
+is currently loaded.
+
 ### Atlas network access is `0.0.0.0/0`, on purpose
 
 Vercel's functions (and Render's free instances) have no fixed outbound IP address, so there is
