@@ -823,7 +823,7 @@ weekly-report-generator/
 │   │   └── styles/
 │   ├── .env.example
 │   └── vercel.json
-├── server/                 # Render root directory
+├── server/                 # root directory of the Vercel API project (or of Render, Option B)
 │   ├── src/
 │   │   ├── config/         # env.js, db.js
 │   │   ├── models/
@@ -846,7 +846,7 @@ weekly-report-generator/
 ### 7.2 Vercel (client)
 
 - Root directory: `client`. Build: `npm run build`. Output: `dist`.
-- Env: `VITE_API_BASE_URL=https://<service>.onrender.com/api`
+- Env: `VITE_API_BASE_URL=https://<api-project>.vercel.app/api` (Option B: `https://<service>.onrender.com/api`)
 - **`client/vercel.json`** — without this, a refresh on `/review` 404s:
 
 ```json
@@ -862,7 +862,10 @@ being sent as a `Referer` to the one third party the client loads (Google Fonts)
 Vite env vars are inlined at build time, so changing `VITE_API_BASE_URL`
 requires a redeploy, not just a settings save.
 
-### 7.3 Render (API)
+### 7.3 Render (API) — the documented alternative
+
+The original plan, kept as Option B in `docs/DEPLOYMENT.md`; the API runs on Vercel instead (§7.5).
+
 
 - Root directory: `server`. Build: `npm install`. Start: `node src/server.js`.
 - Env: `NODE_ENV=production`, `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`,
@@ -876,13 +879,13 @@ requires a redeploy, not just a settings save.
 
 ### 7.4 Atlas
 
-- **M0**, one cluster, one database (`weeklyview`), region closest to the Render
-  region.
-- **Network access must be `0.0.0.0/0`** — Render free instances have no static
-  outbound IP, so there is nothing to allowlist. This is a deliberate tradeoff,
+- **M0**, one cluster, one database (`weeklyview`); the API runs in the region closest to it
+  (Vercel: the API project's Function Region; Render: the service's region).
+- **Network access must be `0.0.0.0/0`** — Vercel functions (and Render free instances) have no
+  static outbound IP, so there is nothing to allowlist. This is a deliberate tradeoff,
   not an oversight: compensate with a long unique database password, a
-  least-privilege database user, and the credentials living only in Render's env
-  settings. Document it in the README rather than leaving a reviewer to assume
+  least-privilege database user, and the credentials living only in the host's environment
+  settings (Vercel, or Render). Document it in the README rather than leaving a reviewer to assume
   carelessness.
 - **No automated backups on M0.** Since `db:sample` can rebuild the entire
   demo dataset, that's acceptable for now and stops being acceptable the day a
@@ -890,10 +893,12 @@ requires a redeploy, not just a settings save.
 
 ---
 
-### 7.5 Alternative: the API on Vercel (owner decision)
+### 7.5 The API on Vercel — the chosen host (owner decision, 2026-10-18)
 
-Render may ask for a payment card. As an alternative the API can run on **Vercel** as a
-serverless function: `server/api/index.js` connects to MongoDB once per warm instance and passes
+Render may ask for a payment card, so the owner chose **Option A**: the client and the API both on
+**Vercel**, the API as a serverless function, one shared Atlas database with sample data for now
+(switched with `db:empty` / `db:sample` from the owner's PC). Render (§7.3) stays the documented
+alternative. `server/api/index.js` connects to MongoDB once per warm instance and passes
 each request to the unchanged `app.js`; `server/vercel.json` rewrites every path to it. The client
 stays on Vercel either way. Step-by-step instructions for both options: `docs/DEPLOYMENT.md`.
 
@@ -910,7 +915,7 @@ Not omissions — decisions, to be revisited if WeeklyView takes real users.
 | Refresh tokens + httpOnly cookies     | When a custom domain makes client and API same-site   | The `tokenVersion` field already anticipates a revocation story                                        |
 | `compression`                         | If payloads grow                                      | Dashboard JSON is small; platform edge compression covers most of it                                   |
 | CI (GitHub Actions)                   | When someone else commits                             | Would run lint + the RBAC tests                                                                        |
-| Error monitoring (Sentry)             | First real users                                      | Render logs are enough for one developer                                                               |
+| Error monitoring (Sentry)             | First real users                                      | Vercel (or Render) logs are enough for one developer                                                   |
 | Component and E2E tests               | If the project outlives the portfolio                 | Manual verification per `development_approach_doc.md` covers the build. **Owner decision (2026-10-18): a committed browser test (`@playwright/test`) for the landing → `/signin` computed-style check is declined for now;** that check stays the scripted Chromium run documented in `brand_design_strategy.md` §6.0 rule 14 |
 | Atlas backups (paid tier)             | The day real reports are filed                        | M0 has none                                                                                            |
 

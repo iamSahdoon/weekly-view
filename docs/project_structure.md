@@ -53,7 +53,7 @@ consistency:
 
 | Fixed                                                                        | What breaks otherwise                                                                       |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `client/` and `server/` as self-contained deployables, no cross-root imports | Render cannot see files outside its root directory; the API fails at build or runtime (§8)  |
+| `client/` and `server/` as self-contained deployables, no cross-root imports | Vercel and Render cannot see files outside a root directory; the API fails at build or runtime (§8) |
 | `app.js` exports the app; `server.js` connects and listens                   | The RBAC suite can no longer import the app without opening a port or reaching Atlas (§2.3) |
 | One rule set behind `buildReportScope` and `canReadContent`                  | A list and a single week start disagreeing about who may read a report's content, silently (§2.6) |
 | Services take an `actor` and never `req`                                     | Authorization logic leaks back into the Express layer, in two places instead of one (§2.6)  |
@@ -138,7 +138,7 @@ and the demo (§14) stopped being undeclared scope.
 ```
 weekly-report-generator/
 ├── client/                      # Vercel root directory
-├── server/                      # Render root directory
+├── server/                      # root directory of the Vercel API project (Render: Option B)
 ├── docs/                        # the planning documents, in the order they were written
 │   ├── requirments_doc.md
 │   ├── development_approach_doc.md
@@ -1133,10 +1133,14 @@ this file is invisible to both.
 
 ## 8. Deployment fit
 
-| Platform   | Root directory | Build           | Start / output       |
-| ---------- | -------------- | --------------- | -------------------- |
-| **Vercel** | `client`       | `npm run build` | output `dist`        |
-| **Render** | `server`       | `npm install`   | `node src/server.js` |
+Owner decision (2026-10-18): **client and API on Vercel**, the API as a serverless function
+(`server/api/index.js`); Render remains the documented alternative (`docs/DEPLOYMENT.md` Option B).
+
+| Platform                        | Root directory | Build           | Start / output                                      |
+| ------------------------------- | -------------- | --------------- | --------------------------------------------------- |
+| **Vercel** (website)            | `client`       | `npm run build` | output `dist`                                       |
+| **Vercel** (API)                | `server`       | none            | `api/index.js` as a function; `vercel.json` rewrites every path to it |
+| **Render** (API, alternative)   | `server`       | `npm install`   | `node src/server.js`                                |
 
 The structure satisfies both settings because **no runtime or build-time import ever
 crosses between `client/` and `server/`**. The only cross-root read in the repo is the
@@ -1144,14 +1148,16 @@ client parity test, which runs locally and ships to neither platform.
 
 - `server.js` sits at `src/server.js`, matching the start command already recorded in
   `tech_stack.md` §7.3 and the `start` script in §9 of that document.
-- `/api/health` is mounted in `routes/index.js` and is Render's health check path.
+- `/api/health` is mounted in `routes/index.js`: the first check after a deploy, and Render's
+  health check path.
 - `client/vercel.json` holds the SPA rewrite; without it a refresh on `/review` 404s.
-- The server binds `process.env.PORT` through `env.PORT` — Render supplies it.
+- The server binds `process.env.PORT` through `env.PORT` — Render supplies it. On Vercel
+  `server.js` is not used; the function never listens.
 - Vite env vars are inlined at build time, so changing `VITE_API_BASE_URL` requires a
   redeploy, not just a settings save.
 - Both platforms redeploy only on changes inside their own root directory, which is
   why the shared vocabulary is duplicated rather than centralized (§7.1).
-- **The demo is served by Vercel alone.** It works while the Render API is asleep, which
+- **The demo is served by the website alone.** It works while the API is cold or asleep, which
   is when a visitor from the landing page is most likely to arrive.
 
 **One amendment this structure implied**, now applied: the client needs `vitest` in its

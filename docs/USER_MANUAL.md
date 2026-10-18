@@ -271,7 +271,8 @@ admin can **re-issue** it, and the old link stops working.
 ## 7. Forgotten passwords and changing your details
 
 There's no self-service "forgot password", because WeeklyView doesn't send email. Someone hands
-you a link instead. Who that is depends on who you are:
+you a link instead. On the sign-in page, ***Forgot your password?*** says so in two lines: "Ask an
+admin to send you a reset link. Admins: ask the owner." Who that is depends on who you are:
 
 | Your situation | What to do |
 | --- | --- |
@@ -366,9 +367,11 @@ Opening the item clears its marker; reopening it later shows no marker.
 - **A failed save** (e.g. a switch or a blocker toggle) **undoes itself** and shows an **error
   message with *Retry*** at the bottom-right. WeeklyView never shows "success" pop-ups; a
   change simply appears.
-- **"Starting up. The server sleeps when idle; this can take up to a minute."** The live
-  server goes to sleep when nobody has used it for a while. The first visit wakes it, which
-  takes up to a minute. If it doesn't answer after about a minute, you get ***Try again***.
+- **"Starting up. The server sleeps when idle; this can take up to a minute."** Shown when the
+  server hasn't answered after 3 seconds. On the live site the server is on Vercel and usually
+  starts in a second or two, so you will rarely see it; on a host that sleeps (Render, the
+  documented alternative) the first visit after a quiet spell can take up to a minute. If it
+  doesn't answer after about a minute, you get ***Try again***.
 - **Something went wrong.** If a page crashes, the sidebar stays usable and the page offers
   ***Try again***.
 - **Not found / no access.** A wrong address shows a "not found" page. A page your role can't use
@@ -1033,8 +1036,10 @@ any part.
 ## 52. Running WeeklyView yourself (for the owner / developer)
 
 **Parts:** `client/` (React app, landing page and demo; hosted on **Vercel**), `server/` (API;
-hosted on **Render**), database on **MongoDB Atlas**. Planning documents are in `docs/`,
-progress in `PROGRESS.md`. (Deployment steps are written in stage C11.)
+also on **Vercel**, as a serverless function; Render is the documented alternative), database on
+**MongoDB Atlas**. Planning documents are in `docs/`, progress in `PROGRESS.md`. Going live:
+`docs/DEPLOYMENT.md` (Option A). For now the live site shares your `weeklyview` database, so the
+database commands below change the live site too (`docs/DEPLOYMENT.md` §1.3).
 
 **On your Windows PC** (PowerShell, in the project folder):
 ```
@@ -1086,6 +1091,7 @@ Sample accounts, all with the password `weekly-view-dev`:
 
 **Tips:**
 - To see the landing page, use a **private window** (a remembered sign-in skips it).
-- The live server sleeps when idle; the first visit shows "Starting up" for up to a minute.
+- On Vercel the API starts within a second or two after a quiet spell. (On Render it sleeps, and
+  the first visit shows "Starting up" for up to a minute.)
 - Known, harmless warnings: `npm audit` advisories in the dev-only test tool (vitest) and
   "ESLint 9 no longer supported". A tool upgrade is planned after C11.

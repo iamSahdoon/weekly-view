@@ -8,10 +8,11 @@ Two ways to put WeeklyView online. Both use **Vercel** for the frontend and **Mo
 | Payment card | Not needed (Vercel Hobby) | Render may ask for one |
 | Backend runs as | Serverless function (starts per request when idle, 1–3 s) | Always-on server that **sleeps after 15 min idle** (30–60 s to wake) |
 | Code needed | `server/api/index.js` + `server/vercel.json` (already in the repo) | Nothing extra |
-| Original plan in the docs | No (owner decision, `tech_stack.md` §7.5) | Yes (`tech_stack.md` §7) |
+| In the docs | **The owner's choice** (2026-10-18; `tech_stack.md` §7.5) | The original plan, kept as the alternative (`tech_stack.md` §7.3) |
 | Good for | A portfolio project and small teams; no card | Same; matches the original design |
 
-**Recommended for you: Option A.** No card, and visitors don't wait a minute for a sleeping server.
+**Your choice: Option A** (owner decision, 2026-10-18). No card, and visitors don't wait a minute for
+a sleeping server. Option B stays documented as the alternative.
 
 > Vercel's **Hobby** plan is free and meant for personal, non-commercial projects. If a company
 > starts using WeeklyView for real work, move to Vercel Pro, or use Option B.
@@ -32,29 +33,42 @@ Two ways to put WeeklyView online. Both use **Vercel** for the frontend and **Mo
 ## 1. Before you start (both options)
 
 **1.1 Merge everything into `main`.** Vercel and Render deploy from GitHub's `main` branch, so make
-sure every PR you want live is merged (including the one that adds this file and
-`server/api/index.js`).
+sure every PR you want live is merged.
 
 **1.2 Atlas: allow connections from anywhere.** Vercel and Render have no fixed IP address.
 1. Go to https://cloud.mongodb.com → your **WeeklyView** project.
 2. **Security → Network Access**. `0.0.0.0/0` must be listed (you added it earlier). If not:
    **Add IP Address → Allow access from anywhere → Confirm**.
 
-**1.3 Decide on the database.** Use your `weeklyview` database on Atlas, but **don't seed it** if
-real people will use the site: `db:sample` **wipes** the database. On a fresh database, the first
-person to sign up becomes the owner (step 4).
-- To start a database from blank (for example after testing), run `npm run db:empty` from the
-  project folder on your PC. It wipes everything and inserts nothing, so the first person to sign
-  up becomes the owner.
-- If you only want the live site as a demo-with-data portfolio, you can load sample data from your
-  PC with `npm run db:sample` *before* going live, then sign in with the sample accounts. Don't do
-  this once real data exists.
-- **Both commands wipe whatever database `server\.env` points at.** Check `MONGODB_URI` in that
-  file first. They run on your PC only and refuse when `NODE_ENV` is `production`.
-- The sample accounts share the **public** password `weekly-view-dev`. Anyone who reads this
-  repository knows it.
-- After either command, a browser that was already signed in still holds an old sign-in. Sign
-  out, or use a private window.
+**1.3 The database: one shared `weeklyview` database (your choice for now).** The live site uses
+the **same** `weeklyview` database on Atlas as the `MONGODB_URI` in your PC's `server\.env`. So what
+you load from your PC is what the live site shows, and you switch it from your PC:
+- **Sample data:** in the project folder on your PC, run `npm run db:sample`. It wipes the database
+  and loads the fictional sample team, so the live site has something to show.
+- **A fresh start:** run `npm run db:empty`. It wipes the database and loads nothing; the first
+  person to sign up on the live site becomes the owner (section 4).
+- **Both commands wipe the live site's data**, because the database is shared. Check `MONGODB_URI` in
+  `server\.env` first. They only run from your PC, and refuse when `NODE_ENV` is `production` (keep
+  `NODE_ENV=development` in your local `server\.env`).
+- **Sample data shouldn't stay on a widely shared site.** Every sample account signs in with the
+  password `weekly-view-dev`, and that password is written in this repository, so anyone who reads it
+  can sign in as any sample person, the admin included. Share the address only with people you trust
+  while sample data is loaded, or run `npm run db:empty`.
+- **Once real people use it, give the live site its own database** (recommended). Then nothing you run
+  on your PC can wipe their work:
+  1. Atlas → **Security → Database Access** → your database user → **Edit** → add the privilege
+     **readWrite** on a new database name, e.g. `weeklyview-live` → **Update User**.
+  2. Vercel → API project → **Settings → Environment Variables** → edit `MONGODB_URI`: change
+     `/weeklyview?` in the middle of the string to `/weeklyview-live?` → **Save** → redeploy the API
+     (section 5). Leave your PC's `server\.env` on `weeklyview`.
+  3. The new database starts empty, so the first sign-up becomes its owner.
+- **If you forget the owner's password**, run `npm run owner:reset-link -- --url https://<your site>`
+  from your PC (the `--` is required). It prints a one-time link for the owner, once. It uses the
+  database in `server\.env`, which is the live one while the database is shared; once the live site
+  has its own database, put that string in `server\.env` for the run and change it back afterwards.
+  See the README.
+- After `db:empty` or `db:sample`, a browser that was already signed in still holds an old sign-in.
+  Sign out, or use a private window.
 
 **1.4 Make a production JWT secret.** In PowerShell:
 ```
@@ -83,8 +97,9 @@ address.
 1. On Vercel: **Add New… → Project**.
 2. Find **weekly-view** in the list and click **Import**.
 3. **Project Name:** `weeklyview-api` (any name; it becomes part of the address).
-4. **Framework Preset:** **Other**.
-5. **Root Directory:** click **Edit**, choose **`server`**, then **Continue**.
+4. **Root Directory:** click **Edit**, choose **`server`**, then **Continue**.
+5. **Framework Preset:** **Other**. If Vercel picks a different preset after you choose the folder,
+   change it back to **Other**: the API is the function in `server/api/index.js`.
 6. **Build and Output Settings:** leave everything empty or default. There's no build step;
    Vercel uses `server/api/index.js` and `server/vercel.json` automatically.
 7. **Environment Variables:** add these one by one (Name → Value → **Add**):
@@ -101,6 +116,11 @@ address.
 9. Copy the API's address from the project page, e.g. `https://weeklyview-api.vercel.app`.
 10. **Test it:** open `https://weeklyview-api.vercel.app/api/health` in your browser. You should
     see `{"success":true,"data":{"status":"ok"},…}`.
+11. **Put the API next to the database.** Find your Atlas region: Atlas → **Database** (Clusters) →
+    the region shown on your cluster's card, e.g. *AWS / Mumbai (ap-south-1)*. Then on Vercel: API
+    project → **Settings → Functions** → **Function Region** → choose the region closest to it (for
+    Mumbai, *Mumbai, India (bom1)*) → **Save**. Redeploy the API (**Deployments → ⋯ → Redeploy**)
+    so the change takes effect. Every request talks to the database, so this keeps each one fast.
 
 ### 2.2 Deploy the website (frontend)
 1. On Vercel: **Add New… → Project** → **weekly-view** → **Import** again (same repo, second project).
@@ -134,8 +154,8 @@ Continue with section 4.
   the production site.
 - When nobody has used the API for a while, the first request takes **1–3 seconds** while the
   function starts. The app's "Starting up" message covers this.
-- Vercel limits how long one request may run (10–60 s on Hobby). WeeklyView's requests take well
-  under a second, so this is fine.
+- Vercel limits how long one request may run. WeeklyView's requests take well under a second, so
+  this is fine.
 
 ---
 
@@ -200,8 +220,9 @@ spirit. The **demo** never needs the server, so it's always instant.
 3. **Create the owner account:** click ***Create your account***, and enter your name, email and a
    strong password. You're now the owner and an admin. Sign-up closes after this; everyone else
    joins by invite.
-   - (If you loaded the sample data instead, sign in with `sanduni@example.com` / `weekly-view-dev`,
-     and **change that password** in Account straight away.)
+   - (If you loaded the sample data instead, sign-up is closed: sign in with `sanduni@example.com` /
+     `weekly-view-dev`. Every other sample account keeps that public password, so see step 1.3
+     before sharing the address.)
 4. **Check these:**
    - [ ] `…/api/health` on the API address shows `success: true`.
    - [ ] You can sign out and sign in again.
@@ -231,9 +252,10 @@ spirit. The **demo** never needs the server, so it's always instant.
 
 | What you see | Likely cause | Fix |
 | --- | --- | --- |
-| Website loads, but sign-in says it can't reach the server; the browser console mentions **CORS** | `CLIENT_URL` on the API doesn't exactly match the website address | Set it to the exact address (https, no trailing slash) and **redeploy the API** |
-| API `/api/health` shows `"The service could not reach its database"` | Wrong `MONGODB_URI`, password with special characters, or Atlas network access | Check the string (step 1.5), and Atlas **Network Access → 0.0.0.0/0** |
-| API deployment fails with "Invalid environment configuration" | A variable is missing, or `JWT_SECRET` is shorter than 32 characters, or `CLIENT_URL` isn't a full URL | Add or fix it in Environment Variables, then redeploy |
+| Website loads, but sign-in says it can't reach the server; the browser console mentions **CORS** | `CLIENT_URL` on the API doesn't exactly match the website address. (Option A: a database error also shows up as a CORS error, so open `…/api/health` directly to tell them apart) | Set it to the exact address (https, no trailing slash) and **redeploy the API** |
+| API `/api/health` shows `"The service could not reach its database"` (Option A) | Wrong `MONGODB_URI`, password with special characters, or Atlas network access | Check the string (step 1.5), and Atlas **Network Access → 0.0.0.0/0** |
+| Option A: `/api/health` shows Vercel's **500** page (`FUNCTION_INVOCATION_FAILED`), and the API's **Logs** say "Invalid environment configuration". Option B: the Render deploy fails with that message | A variable is missing, `JWT_SECRET` is shorter than 32 characters, `CLIENT_URL` isn't a full URL, or `NODE_ENV` isn't one of `development`, `production`, `test` | Add or fix it in Environment Variables, then redeploy. (On Vercel the deployment itself still says "Ready": the API checks its settings when the first request arrives) |
+| Option B: the Render deploy fails with "Could not connect to MongoDB" | Wrong `MONGODB_URI`, or Atlas network access | Check the string (step 1.5), and Atlas **Network Access → 0.0.0.0/0** |
 | Refreshing a page like `/review` gives Vercel's **404** | The website project's Root Directory isn't `client` (so `vercel.json` isn't used) | Settings → General → Root Directory → `client`, then redeploy |
 | "Starting up" for a minute (Option B) | The Render server was asleep | Normal on the free plan; it wakes by itself |
 | Website calls `http://localhost:5000` | `VITE_API_BASE_URL` wasn't set when the site was built | Set it on the website project, then **redeploy** |

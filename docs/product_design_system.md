@@ -1124,9 +1124,11 @@ copy, no illustration.
 | **Accept invite**  | `/invite/:token` | "Join the team"         | name, password (email and role shown read-only) | `Join the team` | —                          |
 | **Reset password** | `/reset/:token`  | "Choose a new password" | new password, confirm (email shown read-only) | `Save password` | —                             |
 
-**"Forgot your password?"** opens a small panel, not a form: "Ask an admin to create a
-password reset link for you. WeeklyView doesn't send emails, so the link comes from them."
-Honest about the mechanism, and it collects nothing it cannot use.
+**"Forgot your password?"** opens a small panel, not a form: "Ask an admin to send you a
+reset link. Admins: ask the owner." Honest about the mechanism, and it collects nothing it
+cannot use. An admin's link comes from the owner (`requirments_doc.md` §11.3); the panel
+never mentions the command line *(owner copy, C11, 2026-10-18; was "Ask an admin to create a
+password reset link for you. WeeklyView doesn't send emails, so the link comes from them.")*.
 
 **`/signup` has two states, and the second is the usual one.** Registration is first-run
 bootstrap (`requirments_doc.md` §1). **Open**: the form, with the line "You're the first

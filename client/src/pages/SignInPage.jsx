@@ -40,8 +40,7 @@ export default function SignInPage() {
             </button>
             {forgotOpen && (
               <p className="mt-11 border border-hair bg-tint px-16 py-14 text-dense text-body">
-                Ask an admin to create a password reset link for you. WeeklyView
-                doesn't send emails, so the link comes from them.
+                Ask an admin to send you a reset link. Admins: ask the owner.
               </p>
             )}
           </div>
