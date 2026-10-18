@@ -302,9 +302,11 @@ person who holds the database address (`MONGODB_URI`) in `server/.env`, normally
 
 1. On the PC that has the project and `server/.env` pointing at the live database, open a
    terminal in the project folder.
-2. For the live site run (the `--` and the address are both needed, or the link points at
-   `http://localhost:5173`):
-   `npm run owner:reset-link -- --url https://your-site-address`
+2. For the live site run this, with the address on its own (without it the link points at
+   `http://localhost:5173`). It works the same in Windows PowerShell, cmd and bash:
+   `npm run owner:reset-link https://your-site-address`
+   Alternatively, from inside the `server` folder:
+   `node src/scripts/ownerResetLink.js --url https://your-site-address`
 3. It prints the owner's name and email, when the link expires and the link, once. Open it in a
    browser and choose a new password.
 
@@ -1067,7 +1069,7 @@ Use `cd` then `npm install`, **not** `npm --prefix client install` (on this PC t
 | --- | --- |
 | `npm run db:empty` | Wipes the database and inserts nothing. The first person to sign up becomes the owner. |
 | `npm run db:sample` | Wipes the database, then loads the sample team and six weeks of reports, relative to the current week. |
-| `npm run owner:reset-link -- --url <site address>` | Prints the owner a one-time password-reset link, once (§7). Changes no password; the `--` is needed before `--url`. |
+| `npm run owner:reset-link <site address>` | Prints the owner a one-time password-reset link, once (§7). Changes no password. Give the address on its own; the same in PowerShell, cmd and bash. |
 
 - **Both wipe whatever database `server\.env` points at.** Check `MONGODB_URI` before you run
   either. Neither runs when `NODE_ENV` is `production`.

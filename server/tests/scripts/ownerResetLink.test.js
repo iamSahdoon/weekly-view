@@ -170,7 +170,7 @@ describe("issuing the link", () => {
   });
 });
 
-describe("--url", () => {
+describe("the site address", () => {
   it("accepts http(s) addresses and strips trailing slashes", () => {
     expect(parseSiteUrl("https://weekly.example.com")).toBe(
       "https://weekly.example.com",
@@ -198,7 +198,7 @@ describe("--url", () => {
     expect(() => parseSiteUrl(value)).toThrow(RecoveryError);
   });
 
-  it("reads --url <address> and --url=<address>, and nothing else", () => {
+  it("reads --url <address> and --url=<address>", () => {
     expect(parseArgs([])).toEqual({ url: undefined });
     expect(parseArgs(["--url", "https://a.example.com/"])).toEqual({
       url: "https://a.example.com",
@@ -207,25 +207,88 @@ describe("--url", () => {
       url: "https://a.example.com",
     });
     expect(() => parseArgs(["--url"])).toThrow(/needs a site address/);
-    expect(() => parseArgs(["--password", "x"])).toThrow(/Unknown option/);
-    expect(() => parseArgs(["https://a.example.com"])).toThrow(
-      /Unknown option/,
+  });
+
+  it("reads the address as a single bare argument (PowerShell drops the first --)", () => {
+    expect(parseArgs(["https://a.example.com/"])).toEqual({
+      url: "https://a.example.com",
+    });
+    expect(parseArgs(["http://localhost:5173///"])).toEqual({
+      url: "http://localhost:5173",
+    });
+    expect(() => parseArgs(["a.example.com"])).toThrow(/isn't a web address/);
+    expect(() => parseArgs(["https://a.example.com/?x=1"])).toThrow(
+      /no login, query or #/,
+    );
+    expect(() => parseArgs(["https://u:p@a.example.com"])).toThrow(
+      /no login, query or #/,
     );
   });
 
-  it("the command refuses a bad --url before it connects to anything", () => {
-    const run = spawnSync(
-      process.execPath,
-      ["src/scripts/ownerResetLink.js", "--url", "not-a-url"],
-      {
-        cwd: fileURLToPath(new URL("../..", import.meta.url)),
-        env: { ...process.env, MONGODB_URI: "mongodb://127.0.0.1:1/never" },
-        encoding: "utf8",
-        timeout: 8000,
-      },
+  it("falls back to npm's own url config when npm swallowed --url", () => {
+    const env = { npm_config_url: "https://a.example.com/" };
+    expect(parseArgs([], env)).toEqual({ url: "https://a.example.com" });
+    // An address on the command line wins over the environment.
+    expect(parseArgs(["https://b.example.com"], env)).toEqual({
+      url: "https://b.example.com",
+    });
+    expect(parseArgs([], { npm_config_url: "" })).toEqual({ url: undefined });
+    // Validated like any other: npm sets "true" for a bare `--url`.
+    expect(() => parseArgs([], { npm_config_url: "true" })).toThrow(
+      RecoveryError,
     );
-    expect(run.status).toBe(1);
-    expect(run.stderr).toMatch(/isn't a web address/);
-    expect(run.stdout).toBe("");
+    expect(() =>
+      parseArgs([], { npm_config_url: "ftp://a.example.com" }),
+    ).toThrow(/http:\/\/ or https:\/\//);
   });
+
+  it("refuses more than one address and any other flag", () => {
+    expect(() =>
+      parseArgs(["https://a.example.com", "https://b.example.com"]),
+    ).toThrow(/once/);
+    expect(() =>
+      parseArgs(["--url", "https://a.example.com", "https://b.example.com"]),
+    ).toThrow(/once/);
+    expect(() =>
+      parseArgs([
+        "--url=https://a.example.com",
+        "--url",
+        "https://a.example.com",
+      ]),
+    ).toThrow(/once/);
+    expect(() => parseArgs(["--password", "x"])).toThrow(/Unknown option/);
+    expect(() => parseArgs(["-u", "https://a.example.com"])).toThrow(
+      /Unknown option "-u"/,
+    );
+    expect(() => parseArgs(["https://a.example.com", "--force"])).toThrow(
+      /Unknown option "--force"/,
+    );
+  });
+
+  it.each([
+    ["--url", ["--url", "not-a-url"], {}],
+    ["a bare address", ["not-a-url"], {}],
+    ["npm's url config", [], { npm_config_url: "not-a-url" }],
+  ])(
+    "the command refuses a bad address (%s) before it connects to anything",
+    (_, args, extraEnv) => {
+      const run = spawnSync(
+        process.execPath,
+        ["src/scripts/ownerResetLink.js", ...args],
+        {
+          cwd: fileURLToPath(new URL("../..", import.meta.url)),
+          env: {
+            ...process.env,
+            MONGODB_URI: "mongodb://127.0.0.1:1/never",
+            ...extraEnv,
+          },
+          encoding: "utf8",
+          timeout: 8000,
+        },
+      );
+      expect(run.status).toBe(1);
+      expect(run.stderr).toMatch(/isn't a web address/);
+      expect(run.stdout).toBe("");
+    },
+  );
 });

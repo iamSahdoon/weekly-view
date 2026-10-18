@@ -115,7 +115,7 @@ npm --prefix server run dev        # API on :5000
 npm --prefix client run dev        # Vite on :5173
 npm run db:sample                  # wipe the database, load the development dataset (server)
 npm run db:empty                   # wipe the database, load nothing (first sign-up becomes owner)
-npm run owner:reset-link           # print the owner a one-time reset link (server/.env's database); add `-- --url <site>`
+npm run owner:reset-link           # print the owner a one-time reset link (server/.env's database); add the site address as a bare argument: `npm run owner:reset-link https://<site>`
 npm test                           # server RBAC/policy tests + client parity/demo tests
 npm run lint
 ```

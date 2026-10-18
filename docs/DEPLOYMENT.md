@@ -62,8 +62,9 @@ you load from your PC is what the live site shows, and you switch it from your P
      `/weeklyview?` in the middle of the string to `/weeklyview-live?` → **Save** → redeploy the API
      (section 5). Leave your PC's `server\.env` on `weeklyview`.
   3. The new database starts empty, so the first sign-up becomes its owner.
-- **If you forget the owner's password**, run `npm run owner:reset-link -- --url https://<your site>`
-  from your PC (the `--` is required). It prints a one-time link for the owner, once. It uses the
+- **If you forget the owner's password**, run `npm run owner:reset-link https://<your site>`
+  from your PC (the address on its own, no `--url`; this works the same in PowerShell, cmd and
+  bash; or, inside `server\`, `node src/scripts/ownerResetLink.js --url https://<your site>`). It prints a one-time link for the owner, once. It uses the
   database in `server\.env`, which is the live one while the database is shared; once the live site
   has its own database, put that string in `server\.env` for the run and change it back afterwards.
   See the README.
@@ -260,7 +261,7 @@ spirit. The **demo** never needs the server, so it's always instant.
 | "Starting up" for a minute (Option B) | The Render server was asleep | Normal on the free plan; it wakes by itself |
 | Website calls `http://localhost:5000` | `VITE_API_BASE_URL` wasn't set when the site was built | Set it on the website project, then **redeploy** |
 | You can't sign up ("sign-up is closed") | An account already exists in that database | Sign in, or ask the owner for an invite |
-| The owner forgot their password | The owner is protected, so no admin can reset it, and WeeklyView sends no email | On the PC that holds `server/.env` with the live `MONGODB_URI`, run `npm run owner:reset-link -- --url https://your-site-address` (the `--` is required). It prints a one-time link for the owner, once. Send it to the owner or open it yourself. See the README |
+| The owner forgot their password | The owner is protected, so no admin can reset it, and WeeklyView sends no email | On the PC that holds `server/.env` with the live `MONGODB_URI`, run `npm run owner:reset-link https://your-site-address` (the address on its own, no `--url`; or inside `server/`, `node src/scripts/ownerResetLink.js --url https://your-site-address`). It prints a one-time link for the owner, once. Send it to the owner or open it yourself. See the README |
 | Another member or admin forgot theirs | — | An admin issues a reset link from **Users** (the owner, for an admin) |
 
 **Where to look:** Vercel → project → **Logs** (or **Deployments → a deployment → Functions /
