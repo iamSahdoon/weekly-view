@@ -904,7 +904,7 @@ Not omissions — decisions, to be revisited if WeeklyView takes real users.
 | `compression`                         | If payloads grow                                      | Dashboard JSON is small; platform edge compression covers most of it                                   |
 | CI (GitHub Actions)                   | When someone else commits                             | Would run lint + the RBAC tests                                                                        |
 | Error monitoring (Sentry)             | First real users                                      | Render logs are enough for one developer                                                               |
-| Component and E2E tests               | If the project outlives the portfolio                 | Manual verification per `development_approach_doc.md` covers the build                                 |
+| Component and E2E tests               | If the project outlives the portfolio                 | Manual verification per `development_approach_doc.md` covers the build. **Owner decision (2026-10-18): a committed browser test (`@playwright/test`) for the landing → `/signin` computed-style check is declined for now;** that check stays the scripted Chromium run documented in `brand_design_strategy.md` §6.0 rule 14 |
 | Atlas backups (paid tier)             | The day real reports are filed                        | M0 has none                                                                                            |
 
 ---

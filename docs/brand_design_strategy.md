@@ -531,7 +531,9 @@ sees the real thing.
     removes `html.landing-active`, the Bricolage Grotesque link, its title and description when it unmounts; the
     landing chunk (and GSAP) loads only when `/` is shown. Measured in Chromium after landing → `/signin`
     client-side, light and dark: no element on the auth screens has a landing colour, the landing typeface or a
-    rounded corner. Returning, the page re-creates its motion from scratch (GSAP's `matchMedia` was reverted on
+    rounded corner. This is a scripted Chromium check, run by hand, not part of `npm test`: a committed browser
+    test (`@playwright/test`) was declined by the owner for now (2026-10-18; `tech_stack.md` §8). Returning,
+    the page re-creates its motion from scratch (GSAP's `matchMedia` was reverted on
     leaving): the hero plays, the stories pin, and "Back to home" starts at the top (browser Back restores the
     scroll). Without view transitions the landing page fades in on its own (`l-page-in`, 260ms); under reduced
     motion nothing animates.

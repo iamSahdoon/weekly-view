@@ -1906,6 +1906,10 @@ Not a stage; **C11 is still next.** Branch `claude/auth-pages` from `main`. Reco
    team here yet? Create the owner account". Recorded in `frontend_architecture.md` §9.15.
 3. **"Forgot your password?" stays a panel on the sign-in page** — no new route. Recorded in design §3.12.
 
+**Auth pages: `Go to that week` accepted (owner, 2026-10-18).** The first-week message offers `Go to that week`
+only once that week has begun, as built. Recorded in design §3.1 (the empty state); `docs/USER_MANUAL.md` §13
+already says the same. No code changed.
+
 **Owner: how to check by hand** (Windows; a local database only)
 1. In a terminal at the repo root: `git fetch origin` then `git checkout claude/auth-pages`.
 2. Run `npm --prefix server install` and `npm --prefix client install` (once for this branch).
@@ -2223,8 +2227,9 @@ rule 14, `frontend_architecture.md` §4 and §9.16, `product_design_system.md` �
      under reduced motion; rise-only inside a transition; the entrance never touching `pointer-events`,
      `visibility` or `display`; home and the auth links being `TransitionLink`s.
    - **The requested computed-style test can't run in `npm test`:** the client tests have no DOM, and adding jsdom
-     or a browser runner (e.g. `@playwright/test`) is a new dependency (see *Open questions*). The same check was
-     run in Chromium, below.
+     or a browser runner (e.g. `@playwright/test`) is a new dependency. **Declined by the owner for now
+     (2026-10-18):** no dependency is added; the check stays the scripted Chromium run below, as recorded in
+     `brand_design_strategy.md` §6.0 rule 14 and `tech_stack.md` §8.
 
 **Checks.** `npm run lint` clean. `npm test`: server 389, client 631 (landing isolation green). Chromium, in-memory
 MongoDB only, on the dev server and a production build:
@@ -2428,16 +2433,19 @@ tour"; the first also in `tech_stack.md` §10. No code changed for them.
    comments on the week"), not a field on the weekly form; the tour covers it as week comments (step 38 for
    Imali, step 49 for Nadia).
 
-**Still to confirm or change** (smaller and reversible; not part of the PR #28 review):
-1. **Moving through the tour prepares each step's data.** Going **Back** from "Edit a posted day" to "Post the
-   update" takes the posted day off again, and a jump can reset the story week; the step needs that state.
-2. **The dim doesn't block the page.** The visitor can use the highlighted element and anything else; if a
-   step's target goes away, the card says "This part of the screen has closed." with **Show it again**.
-3. **Seven features are left out**, each because it can't happen honestly in a browser-only demo: the landing
-   page, sign-up, the session-expiry window, the "Starting up" screen, the offline strip, the error toast with
-   Retry, the stale-version banner (`NOT_IN_TOUR`).
-4. **The first screen's lead line** is now "Take the guided tour, or look around on your own."; the original
-   line sits under "Explore on your own" with the three choices, unchanged.
+**Owner decisions, accepted as built — round 2** *(owner, PR #28 review, 2026-10-18)*. Numbered 6–9 after the
+first five, and stated the same way in `requirments_doc.md` §14.1, `frontend_architecture.md` §11.6 and
+`product_design_system.md` §3.14 "Guided tour". No code changed for them.
+6. **Steps re-prepare their data on Back and jumps.** Going Back, or jumping to a step, puts the demo data in the
+   state that step needs (going Back to "Post the update" takes the posted day off again; a jump can reset the
+   story week).
+7. **The dim doesn't block the page.** The visitor can use the highlighted part and the rest of the page; if the
+   highlighted part closes, the card says so and offers **Show it again**.
+8. **Seven features are left out**, because none can happen honestly in a browser-only demo: the landing page,
+   sign-up, the session-expiry window, the "Starting up" screen, the offline strip, the error toast with Retry
+   and the stale-version banner (`NOT_IN_TOUR`).
+9. **The first screen's lead line** reads "Take the guided tour, or look around on your own."; the original line
+   stays under **Explore on your own**, with the three choices unchanged.
 
 **Checks.** `npm run lint` clean; Prettier clean on every changed file. `npm test`: server 389, client 670
 (39 new: 38 in `demoTour.test.js`, 1 in `demoEntry.test.jsx`, which now counts the role picker's three buttons
@@ -2570,7 +2578,7 @@ Exit stopped the robot one render late (three more characters typed) — it now 
 accessibility; the note under motion entries 36–37), `frontend_architecture.md` §11.6 (the robot, the new
 state row, "Running a step"), `docs/USER_MANUAL.md` "The guided tour" (Controls), `requirments_doc.md` §14.1
 (one sentence: the step says what changed and waits for Next — the owner's rule, so the requirement and the
-build agree) and `project_structure.md` (the tree).
+build agree; **kept by the owner, PR #28 review, 2026-10-18**) and `project_structure.md` (the tree).
 
 **Checks.** `npm run lint` clean; Prettier clean on every changed client file. `npm test`: server 389, client
 677 (7 new in `demoTour.test.js`: every action step has a "Done." card and a result target; the step stays
@@ -2628,8 +2636,8 @@ still `/favicon.ico` 404, which `main` has too.
 ### Your next steps
 1. Run the checks just above, then review and merge
    [iamSahdoon/weekly-view#28](https://github.com/iamSahdoon/weekly-view/pull/28) (from `claude/demo-tour` into
-   `main`). The five decisions are accepted (PR #28 review, 2026-10-18); say if any of the four still to confirm
-   should change.
+   `main`). All nine tour decisions are accepted (PR #28 review, 2026-10-18); nothing on the tour is left to
+   confirm.
 2. Next session prompt, unchanged by this work: "Read `CLAUDE.md` and `PROGRESS.md`, then do stage C11
    (verification, deployment, README) from `MASTER_PROMPT.md`."
 
@@ -3267,20 +3275,21 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
-- **Guided demo tour, to confirm or change** (see *Owner request: guided demo tour*): four smaller decisions —
-  steps re-preparing their data on Back and jumps; a dim that doesn't block the page; seven features left
-  out; the first screen's new lead line. ~~No library; the Tour button in the demo bar; Imali's last week
-  reset to a Draft; the tour ending on refresh; "overall comment" read as the week's comments~~ **Resolved
-  (owner, PR #28 review, 2026-10-18):** all five accepted as built; recorded as owner decisions in
-  `requirments_doc.md` §14.1, `frontend_architecture.md` §11.6 and `product_design_system.md` §3.14.
-- **Auth pages round six — a committed browser test?** The client suite has no DOM, so the "landing → `/signin`
-  client-side, computed styles use app tokens only" check runs in Chromium by script, not in `npm test`. Making it a
-  committed test needs a new dev dependency (`@playwright/test`, or jsdom, which cannot compute real styles).
-  Say if you want it added (`tech_stack.md` §8 deferred E2E).
-- **Auth pages, to confirm or change** (see *Owner decision: redesigned sign-in pages…*): `Go to that week`
-  appears only once the first week has begun. Small and reversible. ~~(1) the brand panel's fill-in, (2) A1 on
-  `/signin`, (3) "Forgot your password?" as a panel~~ **Resolved (owner, PR #27 review, 2026-10-17):** all three
-  accepted as built — see *Auth pages: owner decisions accepted*.
+- ~~Guided demo tour, to confirm or change~~ **Resolved (owner, 2026-10-18):** all nine decisions accepted as
+  built on the PR #28 review — the first five (no library; the Tour button in the demo bar; Imali's last week
+  reset to a Draft; the tour ending on refresh; "overall comment" read as the week's comments) and, in round 2,
+  the other four (steps re-preparing their data on Back and jumps; a dim that doesn't block the page; seven
+  features left out; the first screen's new lead line). The sentence added to `requirments_doc.md` §14.1 ("waits
+  for Next") is kept. Recorded as owner decisions 1–9 in `requirments_doc.md` §14.1, `frontend_architecture.md`
+  §11.6 and `product_design_system.md` §3.14.
+- ~~Auth pages round six — a committed browser test?~~ **Resolved (owner, 2026-10-18): declined for now.** No
+  dependency is added (`@playwright/test` or jsdom); the "landing → `/signin` client-side, computed styles use
+  app tokens only" check stays the scripted Chromium run, as documented in *Auth pages, round six*,
+  `brand_design_strategy.md` §6.0 rule 14 and `tech_stack.md` §8 (component and E2E tests stay deferred).
+- ~~Auth pages, to confirm or change~~ **Resolved (owner, 2026-10-18):** `Go to that week` appearing only once the
+  first week has begun is accepted as built — see *Auth pages: `Go to that week` accepted*. ~~(1) the brand
+  panel's fill-in, (2) A1 on `/signin`, (3) "Forgot your password?" as a panel~~ **Resolved (owner, PR #27
+  review, 2026-10-17):** all three accepted as built — see *Auth pages: owner decisions accepted*.
 - **Landing polish, to confirm or change:** the stories' panels are pinned with CSS `position: sticky` (ScrollTrigger
   does the scrub and snap) instead of ScrollTrigger's own `pin`, because the GSAP pin scored a layout shift of 7.78
   in Chrome against 0.0008 for sticky (see *Landing polish*). Say if you want the GSAP pin anyway; it is a small,
@@ -3313,7 +3322,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
-- The guided demo tour added `demo/tour/` (`TourLayer.jsx`, `TourTooltip.jsx`, `TourPanel.jsx`, `tourSteps.js`, `tourSetup.js`, `tourRobot.js`, `tourPlacement.js`, `tourBus.js`) and `demo/__tests__/demoTour.test.js`; `Table` takes a `tour` prop, `Tabs` and `DropdownMenu` pass rest props through (menu items take a `tour` key); `fixtures.js` exports `CAST` and `SAMPLE_PROJECTS`, `bootDemo.js` exposes the store. `project_structure.md` (tree and §3.4) is updated.
+- The guided demo tour added `demo/tour/` (`TourLayer.jsx`, `TourTooltip.jsx`, `TourPanel.jsx`, `tourSteps.js`, `tourSetup.js`, `tourRobot.js`, `tourPlacement.js`, `tourBus.js`, and `tourState.js` on the PR #28 feedback) and `demo/__tests__/demoTour.test.js`; `Table` takes a `tour` prop, `Tabs` and `DropdownMenu` pass rest props through (menu items take a `tour` key); `fixtures.js` exports `CAST` and `SAMPLE_PROJECTS`, `bootDemo.js` exposes the store. `project_structure.md` (tree and §3.4) is updated.
 - The landing revamp added `components/marketing/{PrivacySection,DemoSection,StoryCaptions}.jsx` and `storySteps.js`, and removed `SidesSection.jsx` and `LimitsSection.jsx` (`LimitsSection` became `PrivacySection`); `project_structure.md` §3.1 is updated.
 - C10 added `components/ui/SampleDataPill.jsx`, `hooks/useIsDemo.js`, eight section components, `CtaPill.jsx` and `Words.jsx` in `components/marketing/`, `client/.prettierignore` and four test files (`demo/__tests__/{demoCast.test.js,demoEntry.test.jsx}`, `components/marketing/__tests__/LandingPage.test.jsx`, `styles/__tests__/landingIsolation.test.js`); `AuthPanel` takes `padding="none"`; `project_structure.md` §3.1 and §6 are updated. `DemoEntryPage`, `DemoBar`, `MarketingLayout`, `LandingPage`, `useLandingMotion` and `landing.css` were in the tree. `pages.js` names `LandingPage` and `DemoEntryPage`.
 - C9 added `components/shell/{ErrorBoundary,ErrorStates}.jsx`, `components/report/PrintFooter.jsx`, `hooks/{useNewMarks,useRouteFocus,usePrintTheme}.js`, `lib/clearMarkers.js`, `services/markerService.js` (in the tree), `styles/print.css` and four test files (`demo/__tests__/demoMarkers.test.js`, `lib/__tests__/clearMarkers.test.js`, `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`); `project_structure.md` §3.1 and §6 are updated. The page-level error boundary is in `AppShell` as well as `RootLayout` (see C9 decisions).

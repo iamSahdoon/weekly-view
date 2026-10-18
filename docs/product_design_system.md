@@ -470,7 +470,7 @@ a first impression, and a returning user should never be shown it again.
 
 | State                       | Treatment                                                                                                                                                                     |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Empty** (nothing ever)    | Week strip renders. A single panel: Chivo 17px "Your first week starts here.", body "Post what you did today. Your weekly report builds itself from your daily updates.", primary `Post today's update`. Other panels not rendered — no zero-filled cells. *(Owner decision, auth pages 2026-10-17 — **joined after the week**: when none of the shown week's days can be posted because the person joined after its Friday (e.g. the owner signs up on a Saturday, so every day reads "Not on the team", or a holiday), the panel says instead: Chivo 17px "Your first week starts Mon 19 Oct.", body "You joined on Sat 17 Oct, after this week's working days. Your daily updates start that Monday, and your weekly report builds itself from them.", and a secondary `Go to that week` once that week has begun (before then it can't be opened). No `Post today's update`. The server rule is unchanged: updates are expected from the join date.)* |
+| **Empty** (nothing ever)    | Week strip renders. A single panel: Chivo 17px "Your first week starts here.", body "Post what you did today. Your weekly report builds itself from your daily updates.", primary `Post today's update`. Other panels not rendered — no zero-filled cells. *(Owner decision, auth pages 2026-10-17 — **joined after the week**: when none of the shown week's days can be posted because the person joined after its Friday (e.g. the owner signs up on a Saturday, so every day reads "Not on the team", or a holiday), the panel says instead: Chivo 17px "Your first week starts Mon 19 Oct.", body "You joined on Sat 17 Oct, after this week's working days. Your daily updates start that Monday, and your weekly report builds itself from them.", and a secondary `Go to that week` once that week has begun (before then it can't be opened) — accepted as built by the owner, 2026-10-18. No `Post today's update`. The server rule is unchanged: updates are expected from the join date.)* |
 | **Loading**                 | Skeletons: H1 `220×28`, week strip live, day panel at real height, the 8/4 pairs at real heights.                                                                             |
 | **Error**                   | Inline error panel replaces the affected panel; H1 and week strip still render.                                                                                               |
 
@@ -1197,21 +1197,32 @@ hard-coded sample data in the browser (`requirments_doc.md` §14, `tech_stack.md
 
 #### Guided tour *(owner decision, 2026-10-17; `requirments_doc.md` §14.1)*
 
-> **Owner decisions, accepted as built** *(PR #28 review, 2026-10-18)*: (1) **no library** —
+> **Owner decisions, accepted as built** *(PR #28 review, 2026-10-18; (1)–(5) in the first round,
+> (6)–(9) in the second)*: (1) **no library** —
 > the tour is built on what is already in the stack, no dependency added; (2) **the Tour button
 > lives in the demo bar** (an icon only on phones), not floating over the page; (3) **the story
 > week replaces Imali's sample history** — the tour turns Imali's last week back into a Draft,
 > replacing its sample sent-back history, and the visitor recreates that history themselves;
 > (4) **a refresh ends the tour**, and the demo data resets too; (5) **"overall comment"** means
-> the managers' comments on a submitted week (`requirments_doc.md` §4), not a field on the
-> weekly form, and the tour covers it as week comments.
+> the managers' comments on a submitted week (`requirments_doc.md` §4), not a field on the weekly
+> form, and the tour covers it as week comments; (6) **steps re-prepare their data on Back and
+> jumps.** Going Back, or jumping to a step, puts the demo data in the state that step needs
+> (going Back to "Post the update" takes the posted day off again; a jump can reset the story
+> week); (7) **the dim doesn't block the page.** The visitor can use the highlighted part and the
+> rest of the page; if the highlighted part closes, the card says so and offers **Show it again**;
+> (8) **seven features are left out**, because none can happen honestly in a browser-only demo:
+> the landing page, sign-up, the session-expiry window, the "Starting up" screen, the offline
+> strip, the error toast with Retry and the stale-version banner; (9) **the first screen's lead
+> line** reads "Take the guided tour, or look around on your own."; the original line stays under
+> **Explore on your own**, with the three choices unchanged.
 
 An overlay on the real demo pages, never a change to them. Everything is cobalt on cool
 neutrals in the app's fonts, square, hairline, tokens only; the tooltip and the panel are
 floating layers, so they — and only they — carry `--shadow-pop`. Both themes are designed: every
 colour below is a token that changes with `[data-theme="dark"]`.
 
-- **The first screen.** `/demo` keeps the auth screens' single centred column (420px) and offers
+- **The first screen** *(owner decision 9 for its lead line)*. `/demo` keeps the auth screens'
+  single centred column (420px) and offers
   two ways in. Under "Try WeeklyView" / "Take the guided tour, or look around on your own.": a
   panel whose first row is **Take the guided tour** — "One team's week, from setting up to
   approving: every feature, for every role." and, in `--mut`, "About 15 minutes, or jump to any
@@ -1225,7 +1236,8 @@ colour below is a token that changes with `[data-theme="dark"]`.
   It lives in the bar so it never covers a page's actions; below 480px it is the icon alone
   (its name stays for screen readers) so the bar still fits "Sanduni B." at 360px.
 - **The highlight.** The page is dimmed with `--backdrop` everywhere except a cutout around the
-  target, grown by 6px, with a 2px `--acc` outline. Both are `pointer-events: none`: the visitor
+  target, grown by 6px, with a 2px `--acc` outline. Both are `pointer-events: none` (owner
+  decision 7): the visitor
   can always use the highlighted element (and the rest of the page). The cutout follows the
   target as the page scrolls; it never animates between steps. A target that scrolls with the
   page is outlined only below the sticky bars at the top, never across them.

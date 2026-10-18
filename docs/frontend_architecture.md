@@ -1469,14 +1469,24 @@ service gains an endpoint the demo doesn't answer — which is what keeps the de
 `requirments_doc.md` §14.1 is the experience and design §3.14 "Guided tour" the look; this is
 the mechanism. **No page knows the tour exists.**
 
-**Owner decisions, accepted as built** *(PR #28 review, 2026-10-18; `requirments_doc.md` §14.1)*:
+**Owner decisions, accepted as built** *(PR #28 review, 2026-10-18 — (1)–(5) in the first round,
+(6)–(9) in the second; `requirments_doc.md` §14.1)*:
 (1) **no library** — the tour is built on what is already in the stack, no dependency added;
 (2) **the Tour button lives in the demo bar** (an icon only on phones), not floating over the
 page; (3) **the story week replaces Imali's sample history** — the tour turns Imali's last week
 back into a Draft, replacing its sample sent-back history, and the visitor recreates that history
 themselves; (4) **a refresh ends the tour**, and the demo data resets too; (5) **"overall
 comment"** means the managers' comments on a submitted week (`requirments_doc.md` §4), not a
-field on the weekly form, and the tour covers it as week comments. How each is built is below.
+field on the weekly form, and the tour covers it as week comments; (6) **steps re-prepare their
+data on Back and jumps.** Going Back, or jumping to a step, puts the demo data in the state that
+step needs (going Back to "Post the update" takes the posted day off again; a jump can reset the
+story week); (7) **the dim doesn't block the page.** The visitor can use the highlighted part
+and the rest of the page; if the highlighted part closes, the card says so and offers **Show it
+again**; (8) **seven features are left out**, because none can happen honestly in a browser-only
+demo: the landing page, sign-up, the session-expiry window, the "Starting up" screen, the
+offline strip, the error toast with Retry and the stale-version banner; (9) **the first screen's
+lead line** reads "Take the guided tour, or look around on your own."; the original line stays
+under **Explore on your own**, with the three choices unchanged. How each is built is below.
 
 | Part | Where | What it does |
 | --- | --- | --- |
@@ -1491,7 +1501,8 @@ field on the weekly form, and the tour covers it as week comments. How each is b
 
 **Running a step** (the layer's one effect, restarted by a `run` counter on every step,
 retry or jump): close the page's open dialogs and menus (unless the step's target is in
-one) → `prepare()` the store and, if it changed, `invalidateQueries()` → become the step's
+one) → `prepare()` the store (on Back and jumps too: owner decision 6) and, if it changed,
+`invalidateQueries()` → become the step's
 person through the chooser's own `useDemoSignIn` (`signIn` clears the cache on a change of
 person) → `navigate(route)` → wait for the router to arrive and the target to be on screen
 (up to 6 s, polled every 100 ms: data loads first) → show. A target is a `[data-tour="…"]`
@@ -1514,7 +1525,8 @@ nothing but Back and Next dispatches a move.
 attributes (and `data-tour-id` where a row is meant), nothing else; `demoTour.test.js` checks
 that every target named by a step exists in the source, and that only `RootLayout` (by a
 dynamic import) and the demo chunk refer to `demo/tour/`. It adds no endpoint, so
-`demoCoverage.test.js` is unchanged. The overlay is `pointer-events: none` except the
+`demoCoverage.test.js` is unchanged. The overlay is `pointer-events: none` (owner decision 7)
+except the
 tooltip, which stops `pointerdown` and `focusin` at itself (a page's Radix dialog or menu
 would otherwise close or pull focus back) and is kept free of the `aria-hidden` a page dialog
 puts on the rest of `<body>`. Reduced motion: scrolling is instant, the fade is cut by §8.3.
