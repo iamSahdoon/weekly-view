@@ -2,7 +2,7 @@
 
 > Updated by the agent at the end of every stage. `MASTER_PROMPT.md` defines the stages.
 
-**Next stage: C11**
+**Next stage: none — all stages are done (C11 finished 2026-10-18).** Going live: see *Going live* below.
 
 | Stage | What | Status |
 | --- | --- | --- |
@@ -23,7 +23,7 @@
 | C8 | Projects, users, holidays, people, profile, account | done |
 | C9 | "New" markers, system states, print | done |
 | C10 | Demo chooser and bar, landing page | done |
-| C11 | Verification, deployment, README | not started |
+| C11 | Verification, deployment, README | done |
 
 ### S0 checks (2026-10-03)
 - `npm install` in `server/` and `client/`: OK (lockfiles committed).
@@ -2675,6 +2675,222 @@ See the PR description from `claude/owner-recovery`; the Windows steps are in th
 2. Next session prompt, unchanged by this work: "Read `CLAUDE.md` and `PROGRESS.md`, then do stage C11
    (verification, deployment, README) from `MASTER_PROMPT.md`."
 
+### C11 checks (2026-10-18)
+Branch `claude/c11-verification-deploy` from `main`. Everything ran in this container against **local in-memory
+MongoDB only** (a `mongodb-memory-server` replica set): no Atlas or `MONGODB_URI` database was connected to, no
+`.env` was created or committed, no secret was printed. The container's clock was **Sunday 18 Oct 2026**, so the
+current week was W42 (12–16 Oct), all of it in the past.
+
+- `npm run lint` clean. `npm test`: server 405, client 677, all green (before and after the changes).
+  `npm --prefix client run build` with `VITE_API_BASE_URL` set: OK, the address is baked into the bundle.
+
+**Database commands** (in-memory database, real CLI): `db:empty` → "Database emptied…", bootstrap reports sign-up
+open; `db:sample` and the `seed` alias → the sample team; both exit 1 under `NODE_ENV=production` and touch nothing.
+`owner:reset-link` prints the block once with a `CLIENT_URL` link; `-- --url https://weeklyview.vercel.app/` gives a
+`https://weeklyview.vercel.app/reset/…` link (slash stripped); the first run's link then answers `404 LINK_INVALID`
+(replaced), the second link resets the password once and a second use is `LINK_INVALID`; `--url ftp://x` exits 1.
+The token never appeared in the API's log.
+
+**The API as a Vercel function.** `server/api/index.js` was loaded by a small Node server that hands every path to
+it, as `server/vercel.json`'s rewrite does, with `NODE_ENV=production`, a fresh 64-character `JWT_SECRET` and
+`CLIENT_URL=https://weeklyview.example.app`: `/api/health` 200; bootstrap `available: true` → sign-up 201 → `false`;
+wrong password `INVALID_CREDENTIALS`; sign-in 200; `/api/auth/me` 401 without a token and 200 with one; `/api/users`
+200 for the owner; `/api/nowhere` and `/` → `404 ROUTE_NOT_FOUND`. CORS: preflight from the configured origin → 204
+with `Access-Control-Allow-Origin` = that origin and `authorization` allowed; any other origin gets the configured
+origin back, so browsers refuse it (checked in Chromium: a page on `127.0.0.1:4180` couldn't read the API; the page
+on the configured origin could). Helmet headers present. An unreachable database → 500 envelope "The service could
+not reach its database…", and the log names the error class only, never the string. **Production refuses to
+start** (exit 1, "Invalid environment configuration") with no `JWT_SECRET`, a 12-character one, no `MONGODB_URI`, no
+`CLIENT_URL`, `CLIENT_URL=weeklyview.vercel.app` (not a URL), or `NODE_ENV=prod`.
+
+**The website under `client/vercel.json`.** The production build was served by a script applying `vercel.json`
+exactly (a real file wins, otherwise the rewrite to `/index.html`; the headers on every path), against the API
+function above with `CLIENT_URL` set to it: `/`, `/demo`, `/signin`, `/signup`, `/review`, `/reports/2026-W42` all
+200 `text/html` with `Referrer-Policy: no-referrer`. In Chromium, a refresh on `/demo`, `/signin`, `/signup` stays
+there; `/review` signed out → `/signin`; signed in (through the UI, across origins) a refresh on `/review` and
+`/users` stays there.
+
+**End-to-end walkthroughs** (`development_approach_doc.md`), headless Chromium, real API and Vite dev server, sample
+data, 1440×900 unless noted:
+- *Admin* (Sanduni): added a holiday on Thu 15 Oct → on the team table that day turned to a holiday for everyone
+  who hadn't posted it (posted days stay posted), then removed it. Invited `kasun@example.com` and copied the link
+  (clipboard). Changed Ayesha's email; issued and copied her reset link. Removed Malith and re-invited him; re-invited
+  Chamari (removed 23 Sep) and accepted. Lakmal's profile (seeded gap) lists W38 then W41: W39–W40 aren't counted;
+  Chamari's lists W38 then W43.
+- *Member* (Kasun, from the invite link): on that Sunday, This week showed "Your first week starts Mon 19 Oct." /
+  "You joined on Sun 18 Oct, after this week's working days…" with no `Go to that week` (1440 light and, for the
+  re-joined Malith, 360 dark); the used invite link then shows the expired state. **Setup step, as in S4:** his join
+  date was moved back to 5 Oct in the local database and two projects assigned, since someone who joins on a Sunday
+  has no writable days. Then: Monday's update with two lines on two projects, each a new task → Tuesday picked
+  Monday's task, added a blocker, opened to team comments → Thu and Fri posted (Wed is a holiday); Kasun commented on
+  Imali's open update; Nadia commented on his Tuesday update, he saw it and replied; edited his comment within the
+  10 minutes, and with the browser clock moved 11 minutes the Edit and Delete buttons were gone; a reply was deleted
+  inside its window. Weekly report: Submit held until each task had a status; one note; submitted without asking →
+  Submitted, "Approval not asked". W41 (the "next week" step, run on the week before since W43 hasn't started):
+  posted, submitted asking for approval → Nadia sent it back with an overall comment → Kasun saw Needs correction and
+  the comment, edited, resubmitted → Nadia approved → Approved for Kasun, Versions rev 1 and rev 2; the "new" marker
+  on My reports and on the W41 row cleared once opened.
+- *Manager* (Nadia): dashboard for this week; the `status=draft` filter (in the URL, kept on refresh) cut the team
+  table to the two Drafts and left the four numbers unchanged; opened Ayesha's **Draft** week: daily updates, no
+  Tasks section or hours by type; commented on Monday and opened it to team comments; R&D "overdue by 7 days" → Extend
+  plan +15 days → "27 of 35 · 8 left"; the review desk opens on "Asked for approval" and doesn't list her own report;
+  sent one back, approved one that didn't ask (Kasun W42, the page reads "Read-only — you can comment, but you can't
+  edit."), saw the resubmission and approved it. "Who has posted today" can't show anything on a Sunday.
+- *Privacy by URL* (as Kasun): Imali's approved W42 shows her daily updates only — no Tasks, hours by type or overall
+  comments; `/review`, `/team`, `/users`, `/people`, `/projects`, `/holidays` each render "You don't have access to
+  this page." and those nav items aren't in the DOM. On leave (Dinesh) shows `On leave` on the team table and "On
+  leave: Dinesh K." on a member's This week; the all-holiday W36 reads `Holiday week`; the dashboard charts render
+  from the seeded data.
+
+**Demo and tour** (in-browser only; every request to the API blocked): Team member, Manager and Admin each sign in
+from the chooser with the demo bar ("Demo · you're Imali J., Member", …); the member gets the 403 state on manager
+pages, the manager and admin pages load; **0 requests** reached the API; a refresh under `/demo` returns to the
+chooser. **The whole tour, 72 of 72 steps, at 1440×900 light and at 360×780 dark**: no step lost its target; on all
+11 action steps **Do it for me** locked Back and Next while it ran, ended on its "Done." card, and two seconds later
+the step, the "Done." card and an enabled Next were still there (it waits). Screenshots of every step were taken; I
+looked at a sample from each run (invite, post, submit, review desk, send back, approve, the last step). **Jumps from
+the Tour panel:** Send it back (step 50, as Nadia), Fix and resubmit (66, as Imali), Approve (68, as Nadia), each
+with its target outlined; Do it for me after the last jump showed "Done.".
+
+**Landing page** (sign-up open on a second local API with an empty in-memory database; closed on the sample one;
+1440 light and 360 dark): open → `Create your account` first and no sign-in line; closed → the demo pill, "No account
+needed. Nothing is saved." and "Already on a team? **Sign in**"; header and footer wordmarks are text only. Clicking
+the hero link moves to `/signup` or `/signin` client-side; there, 0 elements use Bricolage, a landing colour or a
+border radius, `html.landing-active` is gone and the heading is Chivo; "Back to home", browser Back and Forward:
+**one** full page load in the whole round trip.
+
+**Auth pages** at 1440×900 and 360×780, light and dark: sign in (open: "No team here yet? Create the owner
+account"; closed: not shown), create account, sign-up closed, a real invite, a reset link, an expired link, and the
+recovery screen (the sign-up request reached the server and its answer was dropped → "Your account may already
+have been created." → Sign in). "← Back to home" on every one; the brand panel with the sample card from 1024 px and
+none at 360; no sideways scroll anywhere. Looked at all of them. **The loop and the grid**, sampled every 2.6 s: the
+bar took 5 positions and the day layers stepped Mon → Tue → Wed → Thu → Thursday posted, the grid drifted
+(`wv-grid-drift`); the entrance uses `wv-auth-rise`. Ayesha's reset link set her password and signed her in; reused,
+it shows the expired state.
+
+**Motion and reduced motion** (polish pass, design §8.5): on This week, the dashboard, the review desk, Team updates,
+Projects and a report, nothing is still animating 1.5 s after load; opening the status filter runs 7 short
+animations. Under `prefers-reduced-motion`: 0 elements with a transition on those six pages, 0 animations opening the
+popover, and on the auth pages no entrance, a still grid and the posted-Thursday card.
+
+**Other architecture checks** (`frontend_architecture.md` §13.2): axios only in `services/apiClient.js` and `demo/`
+(plus a comment in `lib/normalizeError.js`); no query-key literal outside `lib/queryKeys.js`; `isDemo` only in the
+documented presentation cases; no hex value in components, pages or layouts; Bricolage and the landing colours only
+in `landing.css` and `LandingPage`; no `rounded-*` class. Boot with the API down → "Starting up…" after 3 s and the
+token kept; a stale token at boot → signed out with no modal (`/team` → `/signin`); a 401 mid-edit on Account →
+"Your session expired" with the typed name kept.
+
+**Fixed in C11.** No check failed against the app. Script mistakes were mine and are not listed. One owner change:
+- **"Forgot your password?"** now reads "Ask an admin to send you a reset link. Admins: ask the owner." (was "Ask an
+  admin to create a password reset link for you. WeeklyView doesn't send emails, so the link comes from them.").
+  Recorded in `product_design_system.md` §3.12 and `docs/USER_MANUAL.md` §7. No test pinned the old text.
+
+**Docs.** `docs/DEPLOYMENT.md` §1.3 rewritten for the owner's choice (one shared `weeklyview` database, `db:empty` /
+`db:sample` from the PC switch the live site, the public sample password, a separate database once real people use
+it, with steps, and `owner:reset-link -- --url`); §2.1 gains the Function Region step and a note to keep the preset
+on **Other**; the troubleshooting rows now say what each failure looks like on Vercel (a bad environment value shows
+a 500 `FUNCTION_INVOCATION_FAILED` on the first request, not a failed deployment; a database error shows up as a CORS
+error in the browser) and on Render; Hobby's time limit is no longer quoted as a number. `CLAUDE.md`'s Hosting line,
+`tech_stack.md` §7.1–§7.5 and §8, `project_structure.md` §0.5 and §8, `docs/USER_MANUAL.md` §11 and §52 and the README
+now say the same: client and API on Vercel, Render the documented alternative. README rewritten (what WeeklyView is
+and the tour, Windows setup with `cd` + `npm install`, both `.env` files, the three commands and their warnings,
+tests never touching Atlas, demo, manual, deployment, the `0.0.0.0/0` note for Vercel).
+
+**Not verified:**
+- Anything on Vercel, Render or Atlas themselves: the rewrite and function detection were reproduced locally, not
+  on the platform; the Function Region step and the Atlas cluster card are written from the products' settings, not
+  clicked through.
+- Firefox, Safari and Edge; Windows (fonts, PowerShell commands, `copy`); real phones and touch (360 px was desktop
+  Chromium); screen readers (labels and focus were read from the DOM, not heard).
+- Widths other than 1440 and 360 this stage (earlier stages checked 1024 and others).
+- Design §13 items not re-run here and resting on earlier stages: the `@theme` scale-compile check, the dark-token
+  contrast sign-off, print, the 409 banner on approve, the offline strip, typing during a refetch, day-panel drafts,
+  a full week posted and submitted at 360 px on the real API (done at 360 only through the demo tour).
+
+### Open items for the owner (C11)
+`MASTER_PROMPT.md`'s *Known open items* that this stage ran into, all built as the documented default:
+1. ~~**`--c7` (Research & study) and the three dark chart colours** — awaiting your sign-off.~~ **Resolved (owner,
+   2026-10-18):** `--c1`, `--c4`, `--c6` (dark) and `--c7` approved as built; "needs sign-off" removed from design §0.3,
+   with matching notes in `tokens.css` and §9.3.
+2. **The "Starting up" state** — the glyph, then after 3 s one line (FA13). Seen with the API blocked. On Vercel the
+   API usually answers in 1–3 s, so most visitors never see the line.
+3. **A refresh under `/demo` returns to the chooser** (FA1) — confirmed, and it also ends the tour.
+4. **Week-thread permissions derived on the client** (G1) — comments behaved as the server allowed in every case.
+5. **"On leave" only for the current week** (G2) — "On leave: Dinesh K." on W42.
+6. **Landing CTA while the bootstrap check is pending or failed** (FA14) and **person filters at `limit: 100`** (G3)
+   were not exercised in a browser this stage (unit tests cover the first).
+
+New, found while verifying; nothing was changed for them:
+7. ~~**`components/ui/` importing from `hooks/`.**~~ **Resolved (owner, 2026-10-18):** proposal accepted;
+   `frontend_architecture.md` §13.2 now reads "no data hooks (services, query hooks, or contexts other than the demo
+   flag)", with `useMediaQuery` and `useIsDemo` allowed. Docs only. *(Was:)* `frontend_architecture.md` §13.2 says no file in `components/ui/`
+   imports from `hooks/`, but §7.4 and the `Panel` spec require `Table` and `FilterBar` to use `useMediaQuery` and
+   `SampleDataPill` to use `useIsDemo`. The code follows §7.4. Proposed: read the checklist line as "no data hooks"
+   (services, query hooks, contexts other than the demo flag) and amend it. Your call.
+8. ~~**A profile's "This week" chip for someone who joined after that week.**~~ **Resolved (owner, 2026-10-18):**
+   fixed on the client, see *C11 owner review fixes*. *(Was:)* For a person who joined on a Sunday, the
+   profile's This week block reads `Not started` for a week they weren't on the team (the API's week states have no
+   "not on the team" value; This week itself shows the first-week message). Proposed: leave as is, or hide the chip
+   when every day is `not_on_team`. Your call.
+9. ~~**The `.env.example` JWT secret passes the production check.**~~ **Resolved (owner, 2026-10-18):** production
+   now refuses it, see *C11 owner review fixes*. *(Was:)* It is 46 characters, so a host given the example
+   value would start. `docs/DEPLOYMENT.md` §1.4 says to make a new one. Proposed: leave it, or have production refuse
+   that exact placeholder (a two-line change in `env.js`). Your call.
+10. ~~**A missing asset after a redeploy**~~ **Resolved (owner, 2026-10-18):** a missing page chunk reloads the
+    page once, guarded, see *C11 owner review fixes*. *(Was:)* is answered by the SPA rewrite with `index.html` (seen locally; Vercel
+    applies the same rule). A tab left open across a deploy may then fail to load a page it hasn't opened yet until
+    it is reloaded. Not tested; noted only.
+
+### C11 owner review fixes (PR #30 review, 2026-10-18)
+Same branch and pull request ([iamSahdoon/weekly-view#30](https://github.com/iamSahdoon/weekly-view/pull/30)). All five
+review items are **resolved (owner, 2026-10-18)**:
+1. **Chart colours approved as built.** `--c1`, `--c4`, `--c6` (dark) and `--c7`: design §0.3 now reads "approved by the
+   owner as built" (and gives today's values, per §9.3's vibrancy note), the §13 checklist line names only the two
+   tokens still "needs verification" (`--hair2`, `--rule`), and `tokens.css` and its verbatim copy in §9.3 say
+   "approved". `tokens.css` had no "needs sign-off" comment to remove.
+2. **`components/ui/` and hooks.** `frontend_architecture.md` §13.2 amended: no file in `components/ui/` imports data
+   hooks (services, query hooks, or contexts other than the demo flag); `useMediaQuery` and `useIsDemo` are allowed.
+3. **Profile "This week" chip.** `lib/weekActions.js` gains `offTeamAllWeek(dayStates)`: true when every day is
+   `not_on_team`, with holidays counted as days nobody works (the case seen in C11 had a holiday on Wednesday). The
+   profile's This week block then shows the squares and **Open W…** with no status chip. Server and API unchanged.
+   `joinedAfterWeek` reuses the same rule. Tests: `weekActions.test.js` (6 cases) and a profile render in
+   `PeoplePages.test.jsx`, which fails against the old page.
+4. **Example `JWT_SECRET` refused in production.** `config/env.js` exports `EXAMPLE_JWT_SECRET` and `parseEnv`; a
+   `superRefine` refuses the example value when `NODE_ENV` is `production` with "JWT_SECRET is the example value;
+   generate a new one". Development and test still accept it. **Also fixed:** the start-up error printed
+   `z.treeifyError` through `console.error`, which shows nested objects only two levels deep, so every message read
+   `[Array]`; it now prints `z.prettifyError` (one line per setting, never its value). Tests:
+   `server/tests/foundation/env.test.js` (5): the constant matches `server/.env.example`; production refuses it with
+   that message; development and test accept it; other 32+ secrets pass and short ones don't; a real `node` process
+   with the example in production exits 1 printing the message, and in development starts. `tech_stack.md` §5's
+   snippet, `DEPLOYMENT.md` troubleshooting, the README and `project_structure.md` updated.
+5. **Stale chunks after a redeploy.** `lib/chunkReload.js` (new; `project_structure.md` updated): `lazyPage` wraps each
+   page's render-time load in `guardChunkLoad`; a chunk-load error reloads the page **once**, keeping the fallback up,
+   guarded by a `sessionStorage` timestamp (`wv.chunkReloadAt`, 30 s window); a second failure in the window reaches
+   the existing error boundary; blocked storage means no reload. `preload()` never reloads. Recorded in
+   `frontend_architecture.md` §4.1 ("A chunk missing after a redeploy"). Tests: `lib/__tests__/chunkReload.test.js`
+   (10: the error patterns, one reload then none within the window, again after it, other errors, blocked or full
+   storage, the pending promise, the rejection after the reload).
+   **In Chromium** (a production build served with `client/vercel.json`'s rules; a page chunk answered with
+   `index.html` as the rewrite would): missing once → exactly one reload, then `/signup` renders; always missing →
+   exactly one reload, then the existing error state ("This page ran into a problem.", tab "Something went wrong"), no
+   loop; the landing chunk missing on a visit to `/` → one reload, then the landing page; `/demo` with nothing missing
+   → no reload, the member's This week. No database, Atlas or `MONGODB_URI` was used.
+
+**Checks.** `npm run lint` clean; Prettier clean on every changed file. `npm test`: server 410 (5 new), client 690
+(13 new: 10 `chunkReload`, 2 `weekActions`, 1 profile render), all green.
+
+### Going live
+Follow `docs/DEPLOYMENT.md`, **Option A** (owner decision, 2026-10-18):
+1. Merge the C11 pull request into `main`.
+2. Atlas: Network Access lists `0.0.0.0/0` (§1.2); decide sample data or a fresh start and run `npm run db:sample` or
+   `npm run db:empty` from your PC (§1.3).
+3. Make a new production `JWT_SECRET` (§1.4) and have your Atlas string ready (§1.5).
+4. Vercel: the API project from `server` (§2.1), including the Function Region next to your Atlas region.
+5. Vercel: the website project from `client` with `VITE_API_BASE_URL` (§2.2).
+6. Set the API's `CLIENT_URL` to the website's address and redeploy the API (§2.3).
+7. Run the checks in §4. Once real people use it, move the live site to its own database (§1.3).
+
 ## Decisions made while building
 - S0 placeholders, replaced by later stages: `server/src/app.js` is a bare `express()` and
   `server/src/server.js` listens on a fixed 5000 with no `process.env` read (S1 adds
@@ -3309,6 +3525,9 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
+- ~~**C11, to confirm or change:** items 1 and 7–10 under *Open items for the owner (C11)*~~ **Resolved (owner, PR #30
+  review, 2026-10-18):** all five — the chart colours approved as built; the `components/ui` hook rule amended (docs
+  only); the profile chip, the example JWT secret and stale chunks fixed. See *C11 owner review fixes*.
 - ~~Guided demo tour, to confirm or change~~ **Resolved (owner, 2026-10-18):** all nine decisions accepted as
   built on the PR #28 review — the first five (no library; the Tour button in the demo bar; Imali's last week
   reset to a Draft; the tour ending on refresh; "overall comment" read as the week's comments) and, in round 2,

@@ -3,6 +3,7 @@ import {
   deriveWeekAction,
   derivePanelAction,
   joinedAfterWeek,
+  offTeamAllWeek,
 } from "../weekActions.js";
 
 // The top-bar primary action on This week (frontend_architecture.md §9.1): derived from
@@ -166,5 +167,40 @@ describe("joinedAfterWeek", () => {
     expect(
       joinedAfterWeek(week(states(...Array(5).fill("not_on_team"))), null),
     ).toBeNull();
+  });
+});
+
+// Owner decision (PR #30 review, 2026-10-18): a profile shows no status chip for a week the
+// person wasn't on the team for, rather than the API's "not_started".
+describe("offTeamAllWeek", () => {
+  it("is true when every day is not_on_team, holidays included", () => {
+    expect(offTeamAllWeek(states(...Array(5).fill("not_on_team")))).toBe(true);
+    expect(
+      offTeamAllWeek(
+        states(
+          "not_on_team",
+          "not_on_team",
+          "holiday",
+          "not_on_team",
+          "not_on_team",
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("is false when any day was the person's to post, or the week is all holidays", () => {
+    expect(
+      offTeamAllWeek(
+        states("not_on_team", "not_on_team", "missing", "posted", "posted"),
+      ),
+    ).toBe(false);
+    expect(
+      offTeamAllWeek(
+        states("not_on_team", "not_on_team", "not_on_team", "today", "future"),
+      ),
+    ).toBe(false);
+    expect(offTeamAllWeek(states(...Array(5).fill("holiday")))).toBe(false);
+    expect(offTeamAllWeek(states(...Array(5).fill("leave")))).toBe(false);
+    expect(offTeamAllWeek(undefined)).toBe(false);
   });
 });

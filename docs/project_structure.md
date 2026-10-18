@@ -53,7 +53,7 @@ consistency:
 
 | Fixed                                                                        | What breaks otherwise                                                                       |
 | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `client/` and `server/` as self-contained deployables, no cross-root imports | Render cannot see files outside its root directory; the API fails at build or runtime (§8)  |
+| `client/` and `server/` as self-contained deployables, no cross-root imports | Vercel and Render cannot see files outside a root directory; the API fails at build or runtime (§8) |
 | `app.js` exports the app; `server.js` connects and listens                   | The RBAC suite can no longer import the app without opening a port or reaching Atlas (§2.3) |
 | One rule set behind `buildReportScope` and `canReadContent`                  | A list and a single week start disagreeing about who may read a report's content, silently (§2.6) |
 | Services take an `actor` and never `req`                                     | Authorization logic leaks back into the Express layer, in two places instead of one (§2.6)  |
@@ -138,7 +138,7 @@ and the demo (§14) stopped being undeclared scope.
 ```
 weekly-report-generator/
 ├── client/                      # Vercel root directory
-├── server/                      # Render root directory
+├── server/                      # root directory of the Vercel API project (Render: Option B)
 ├── docs/                        # the planning documents, in the order they were written
 │   ├── requirments_doc.md
 │   ├── development_approach_doc.md
@@ -764,7 +764,8 @@ client/
 │   │   ├── invalidateWeek.js          # added in C3: the one invalidation helper for a week and its report (frontend_architecture §5.7)
 │   │   ├── errorToast.js              # added in C3: the error toast with `Retry` for a failed write that has no form (frontend_architecture §5.7)
 │   │   ├── submitChecklist.js         # the submit checklist from dayStates + task statuses
-│   │   ├── weekActions.js             # the top-bar primary action for a week; `joinedAfterWeek` (auth pages, 2026-10-17)
+│   │   ├── chunkReload.js             # added in the PR #30 review: reload once when a page chunk is gone after a redeploy (guarded)
+│   │   ├── weekActions.js             # the top-bar primary action for a week; `joinedAfterWeek` (auth pages, 2026-10-17); `offTeamAllWeek` (PR #30 review)
 │   │   ├── authRecovery.js            # added for the auth pages (owner report, 2026-10-17): which screen after a lost answer
 │   │   ├── reviewDeskParams.js        # added in C6: the review desk's URL spec, and the query behind "Next in review desk"
 │   │   ├── reviewOutcome.js           # added in C6: "Approved by Ruwan P. at 10:22"
@@ -780,6 +781,7 @@ client/
 │   │       ├── normalizeError.test.js # added in C1
 │   │       ├── routeParams.test.js    # added in C2
 │   │       ├── permissions.test.js    # added in C3: the week-thread gates (G1), comment window, version labels
+│   │       ├── chunkReload.test.js    # added in the PR #30 review: the one-reload guard
 │   │       ├── weekActions.test.js    # added in C4: the top-bar primary action's priority order
 │   │       ├── endLeaveCopy.test.js   # added in C4: the wording of the confirm before ending leave
 │   │       ├── submitChecklist.test.js  # added in C5: the two submit rules and their words
@@ -1025,7 +1027,8 @@ They are grouped by what they prove rather than by the file they touch:
   returning **404**, your own report absent from your review desk, the comment and
   owner rules, and list-scope/predicate parity.
 - `tests/foundation/` — added in S1: the app shell, middleware, models, indexes and utils
-  the RBAC suite stands on, so a broken foundation fails there first.
+  the RBAC suite stands on, so a broken foundation fails there first. `env.test.js` (PR #30 review)
+  checks that production refuses the example `JWT_SECRET`.
 - `tests/calendar/` — added in S3: `calendarService`'s rules (working days, expected days,
   week state, project days used) against a holiday set, so S4 and S6 build on proven ones.
 
@@ -1042,7 +1045,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. C9 adds `demo/__tests__/demoMarkers.test.js` (N1 and V4 in the demo), `lib/__tests__/clearMarkers.test.js` and `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`. The auth-pages change (owner, 2026-10-17) adds `components/auth/__tests__/AuthScreens.test.jsx`, `lib/__tests__/authRecovery.test.js` and extends the This week, `weekActions` and landing tests. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. C9 adds `demo/__tests__/demoMarkers.test.js` (N1 and V4 in the demo), `lib/__tests__/clearMarkers.test.js` and `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`. The auth-pages change (owner, 2026-10-17) adds `components/auth/__tests__/AuthScreens.test.jsx`, `lib/__tests__/authRecovery.test.js` and extends the This week, `weekActions` and landing tests. The PR #30 review adds `lib/__tests__/chunkReload.test.js` (the one-reload guard) and extends `weekActions` and the profile test. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 
@@ -1133,10 +1136,14 @@ this file is invisible to both.
 
 ## 8. Deployment fit
 
-| Platform   | Root directory | Build           | Start / output       |
-| ---------- | -------------- | --------------- | -------------------- |
-| **Vercel** | `client`       | `npm run build` | output `dist`        |
-| **Render** | `server`       | `npm install`   | `node src/server.js` |
+Owner decision (2026-10-18): **client and API on Vercel**, the API as a serverless function
+(`server/api/index.js`); Render remains the documented alternative (`docs/DEPLOYMENT.md` Option B).
+
+| Platform                        | Root directory | Build           | Start / output                                      |
+| ------------------------------- | -------------- | --------------- | --------------------------------------------------- |
+| **Vercel** (website)            | `client`       | `npm run build` | output `dist`                                       |
+| **Vercel** (API)                | `server`       | none            | `api/index.js` as a function; `vercel.json` rewrites every path to it |
+| **Render** (API, alternative)   | `server`       | `npm install`   | `node src/server.js`                                |
 
 The structure satisfies both settings because **no runtime or build-time import ever
 crosses between `client/` and `server/`**. The only cross-root read in the repo is the
@@ -1144,14 +1151,16 @@ client parity test, which runs locally and ships to neither platform.
 
 - `server.js` sits at `src/server.js`, matching the start command already recorded in
   `tech_stack.md` §7.3 and the `start` script in §9 of that document.
-- `/api/health` is mounted in `routes/index.js` and is Render's health check path.
+- `/api/health` is mounted in `routes/index.js`: the first check after a deploy, and Render's
+  health check path.
 - `client/vercel.json` holds the SPA rewrite; without it a refresh on `/review` 404s.
-- The server binds `process.env.PORT` through `env.PORT` — Render supplies it.
+- The server binds `process.env.PORT` through `env.PORT` — Render supplies it. On Vercel
+  `server.js` is not used; the function never listens.
 - Vite env vars are inlined at build time, so changing `VITE_API_BASE_URL` requires a
   redeploy, not just a settings save.
 - Both platforms redeploy only on changes inside their own root directory, which is
   why the shared vocabulary is duplicated rather than centralized (§7.1).
-- **The demo is served by Vercel alone.** It works while the Render API is asleep, which
+- **The demo is served by the website alone.** It works while the API is cold or asleep, which
   is when a visitor from the landing page is most likely to arrive.
 
 **One amendment this structure implied**, now applied: the client needs `vitest` in its

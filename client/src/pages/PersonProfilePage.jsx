@@ -33,6 +33,7 @@ import {
   formatWeekRange,
 } from "../lib/format.js";
 import { statusOf } from "../lib/statusMaps.js";
+import { offTeamAllWeek } from "../lib/weekActions.js";
 import {
   enumParam,
   limitParam,
@@ -320,7 +321,9 @@ function ThisWeek({ person, meId }) {
           {weekNumberLabel(weekKey)} · {formatWeekRange(weekKey)}
         </span>
         <UpdatesCell dayStates={week.data.dayStates} />
-        <StatusChip kind="week" value={week.data.state} />
+        {!offTeamAllWeek(week.data.dayStates) && (
+          <StatusChip kind="week" value={week.data.state} />
+        )}
       </div>
       <Button variant="secondary" size="sm" asChild>
         <Link to={personWeekHref(person._id, meId, weekKey)}>

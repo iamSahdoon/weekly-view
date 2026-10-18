@@ -72,16 +72,24 @@ export function derivePanelAction(week) {
 // "Not on the team" (or a holiday); inviting them to post today would be wrong. Returns
 // when they joined and the Monday their first week starts, or null for the usual case.
 export function joinedAfterWeek(view, joinedAt) {
-  if (!joinedAt) return null;
-  const states = WEEKDAYS.map((d) => view.dayStates[d]);
-  if (
-    !states.includes("not_on_team") ||
-    !states.every((s) => s === "not_on_team" || s === "holiday")
-  )
-    return null;
+  if (!joinedAt || !offTeamAllWeek(view.dayStates)) return null;
   const joined = new Date(joinedAt);
   const friday = addDays(weekStartOf(view.weekKey), 4);
   if (toCalendarDate(joined) <= toCalendarDate(friday)) return null;
   const firstWeek = addWeeks(weekKeyOf(joined), 1);
   return { joined, firstWeek, firstMonday: weekStartOf(firstWeek) };
+}
+
+// The person wasn't on the team for any working day of the week: every day is
+// `not_on_team`, or a holiday (which nobody works). The API's week state has no value for
+// this and reads `not_started`, so a profile shows no status chip for such a week rather
+// than "Not started" (owner decision, PR #30 review, 2026-10-18). An all-holiday week is
+// the team's Holiday week, not this.
+export function offTeamAllWeek(dayStates) {
+  if (!dayStates) return false;
+  const states = WEEKDAYS.map((d) => dayStates[d]);
+  return (
+    states.includes("not_on_team") &&
+    states.every((s) => s === "not_on_team" || s === "holiday")
+  );
 }

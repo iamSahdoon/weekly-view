@@ -48,8 +48,9 @@ pick the smallest choice that unblocks you only if it is reversible, and say so 
 - **Client:** React, Vite, react-router-dom 7 (library mode, **no loaders/actions**), TanStack
   Query, axios, react-hook-form + zod, Tailwind 4 (CSS-first `@theme`, no config file), Radix,
   Motion, Recharts, date-fns, Sonner, lucide-react.
-- **Hosting:** client on Vercel, API on Render. Two self-contained deployables: `client/` and
-  `server/`. **Nothing imports across them.**
+- **Hosting:** client and API on Vercel (API as a serverless function, `server/api/index.js`);
+  Render remains a documented alternative (`docs/DEPLOYMENT.md` Option B). Two self-contained
+  deployables: `client/` and `server/`. **Nothing imports across them.**
 
 ## Server rules
 

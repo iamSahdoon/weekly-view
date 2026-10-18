@@ -141,12 +141,12 @@
   --st-none-bg: transparent;
   --st-none-bd: #242a31;
 
-  --c1: #7b93ff; /* vivid in both themes — owner decision, C7 */
+  --c1: #7b93ff; /* vivid in both themes — owner decision, C7; approved as built (§0.3) */
   --c2: #4fb4f0;
   --c3: #52c27a;
-  --c4: #9aa7b5;
+  --c4: #9aa7b5; /* approved by the owner as built (§0.3) */
   --c5: #ff6b5e;
-  --c6: #b979e0;
+  --c6: #b979e0; /* approved by the owner as built (§0.3) */
   --c7: #f2b932; /* approved by the owner (§0.3) */
 
   --shadow-pop:
