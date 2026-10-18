@@ -779,7 +779,8 @@ Sidebar → ***People*** (`/people`). Managers and admins.
 
 **A person's profile** (click their name):
 - "On leave since …" if they're away, with the leave switch (§40).
-- **This week:** their Mon–Fri squares and the week's status, with a link to the week.
+- **This week:** their Mon–Fri squares and the week's status, with a link to the week. For
+  someone who joined after that week's working days there is no status, only the squares.
 - **Four figures** about their recent weeks.
 - **Leave history** (managers and admins): every leave period's **start, end and who set it**,
   newest first.

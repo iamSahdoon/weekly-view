@@ -71,10 +71,10 @@ chart colors. The dark theme needs more than that. These eight values are new:
 | `--acc-d` (dark)      | `#2942B8` | Hover for the above                                                                                                | —                              |
 | `--hair2` (dark)      | `#2E353D` | §3.3 gives one border value (`--d-line`); the system needs an emphasised divider                                   | **needs verification**         |
 | `--rule` (dark)       | `#39414A` | Button outlines and dashed outlines on dark                                                                        | **needs verification**         |
-| `--c1` (dark)         | `#6E86EE` | `#1C39BB` is illegible as a chart series on `--card #14171B`                                                       | **needs sign-off**             |
-| `--c4` (dark)         | `#9A9D96` | Lightened Documentation grey                                                                                       | **needs sign-off**             |
-| `--c6` (dark)         | `#9E82AB` | Lightened Other                                                                                                    | **needs sign-off**             |
-| `--c7` (both)         | `#9A7B2F` / `#D1AE63` (now `#D49A0C` / `#F2B932`, see §9.3's vibrancy note) | Research & study, the seventh task type added by the project owner. An ochre, clear of cobalt, pine and the corrections red | **approved by the owner as built, 2026-10-07** |
+| `--c1` (dark)         | `#6E86EE` (now `#7B93FF`, see §9.3's vibrancy note) | `#1C39BB` is illegible as a chart series on `--card #14171B`                                                       | **approved by the owner as built, 2026-10-18** |
+| `--c4` (dark)         | `#9A9D96` (now `#9AA7B5`) | Lightened Documentation grey                                                                                       | **approved by the owner as built, 2026-10-18** |
+| `--c6` (dark)         | `#9E82AB` (now `#B979E0`) | Lightened Other                                                                                                    | **approved by the owner as built, 2026-10-18** |
+| `--c7` (both)         | `#9A7B2F` / `#D1AE63` (now `#D49A0C` / `#F2B932`, see §9.3's vibrancy note) | Research & study, the seventh task type added by the project owner. An ochre, clear of cobalt, pine and the corrections red | **approved by the owner as built, 2026-10-07; confirmed 2026-10-18** |
 | `--st-none-bd` (dark) | `#242A31` | §3.4 specifies `--d-line`; named explicitly so the chip doesn't depend on a surface token                          | —                              |
 
 `--c3` and `--c5` use the lightened alternates the brand document already supplies
@@ -2594,12 +2594,12 @@ Inline in `<head>` before the app bundle, to prevent a theme flash.
   --st-none-bg: transparent;
   --st-none-bd: #242a31;
 
-  --c1: #7b93ff; /* vivid in both themes — owner decision, C7 */
+  --c1: #7b93ff; /* vivid in both themes — owner decision, C7; approved as built (§0.3) */
   --c2: #4fb4f0;
   --c3: #52c27a;
-  --c4: #9aa7b5;
+  --c4: #9aa7b5; /* approved by the owner as built (§0.3) */
   --c5: #ff6b5e;
-  --c6: #b979e0;
+  --c6: #b979e0; /* approved by the owner as built (§0.3) */
   --c7: #f2b932; /* approved by the owner (§0.3) */
 
   --shadow-pop:
@@ -3029,7 +3029,7 @@ Extends the landing page checklist in `brand_design_strategy.md` §12.
 - [ ] Dark theme toggles with no flash of the wrong theme on reload.
 - [ ] Every status chip is legible and distinct in both themes.
 - [ ] Border radius is 0 on every element, including avatars and chips.
-- [ ] The five §0.3 dark tokens marked "needs verification / sign-off" have been
+- [ ] The two §0.3 dark tokens marked "needs verification" (`--hair2`, `--rule`) have been
       checked against the 4.5:1 floor and approved.
 - [ ] `@theme` replaces the color, spacing, type and radius scales: `bg-indigo-500`,
       `rounded-lg`, `p-18` and `text-sm` all fail to compile.

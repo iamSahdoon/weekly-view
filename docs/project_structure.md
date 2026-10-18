@@ -764,7 +764,8 @@ client/
 │   │   ├── invalidateWeek.js          # added in C3: the one invalidation helper for a week and its report (frontend_architecture §5.7)
 │   │   ├── errorToast.js              # added in C3: the error toast with `Retry` for a failed write that has no form (frontend_architecture §5.7)
 │   │   ├── submitChecklist.js         # the submit checklist from dayStates + task statuses
-│   │   ├── weekActions.js             # the top-bar primary action for a week; `joinedAfterWeek` (auth pages, 2026-10-17)
+│   │   ├── chunkReload.js             # added in the PR #30 review: reload once when a page chunk is gone after a redeploy (guarded)
+│   │   ├── weekActions.js             # the top-bar primary action for a week; `joinedAfterWeek` (auth pages, 2026-10-17); `offTeamAllWeek` (PR #30 review)
 │   │   ├── authRecovery.js            # added for the auth pages (owner report, 2026-10-17): which screen after a lost answer
 │   │   ├── reviewDeskParams.js        # added in C6: the review desk's URL spec, and the query behind "Next in review desk"
 │   │   ├── reviewOutcome.js           # added in C6: "Approved by Ruwan P. at 10:22"
@@ -780,6 +781,7 @@ client/
 │   │       ├── normalizeError.test.js # added in C1
 │   │       ├── routeParams.test.js    # added in C2
 │   │       ├── permissions.test.js    # added in C3: the week-thread gates (G1), comment window, version labels
+│   │       ├── chunkReload.test.js    # added in the PR #30 review: the one-reload guard
 │   │       ├── weekActions.test.js    # added in C4: the top-bar primary action's priority order
 │   │       ├── endLeaveCopy.test.js   # added in C4: the wording of the confirm before ending leave
 │   │       ├── submitChecklist.test.js  # added in C5: the two submit rules and their words
@@ -1025,7 +1027,8 @@ They are grouped by what they prove rather than by the file they touch:
   returning **404**, your own report absent from your review desk, the comment and
   owner rules, and list-scope/predicate parity.
 - `tests/foundation/` — added in S1: the app shell, middleware, models, indexes and utils
-  the RBAC suite stands on, so a broken foundation fails there first.
+  the RBAC suite stands on, so a broken foundation fails there first. `env.test.js` (PR #30 review)
+  checks that production refuses the example `JWT_SECRET`.
 - `tests/calendar/` — added in S3: `calendarService`'s rules (working days, expected days,
   week state, project days used) against a holiday set, so S4 and S6 build on proven ones.
 
@@ -1042,7 +1045,7 @@ and `demo/__tests__/demoCoverage.test.js` (§3.4). C1 and C2 add small ones besi
 code they prove (`lib/`, `context/`, `routes/`, `components/shell/`); the C2 route and nav
 tests are static renders (`react-dom/server`) with no new dependency. C3 adds
 `pages/__tests__/ReportDetailPage.test.jsx`, the rows of `frontend_architecture.md` §9.4 as static
-renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. C9 adds `demo/__tests__/demoMarkers.test.js` (N1 and V4 in the demo), `lib/__tests__/clearMarkers.test.js` and `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`. The auth-pages change (owner, 2026-10-17) adds `components/auth/__tests__/AuthScreens.test.jsx`, `lib/__tests__/authRecovery.test.js` and extends the This week, `weekActions` and landing tests. E2E testing stays deferred per `tech_stack.md` §8.
+renders, and `hooks/__tests__/useReportQueries.test.js` runs the optimistic toggles' mutation options against a query client. C4 adds `pages/__tests__/ThisWeekPage.test.jsx` (the day panel's states and This week as static renders), `lib/__tests__/weekActions.test.js`, `schemas/__tests__/reportSchema.test.js` and `demo/__tests__/demoDays.test.js`. C5 adds `pages/__tests__/ReportEditPage.test.jsx` (the weekly form as static renders), `hooks/__tests__/useAutosave.test.js` (the autosave's state machine), `lib/__tests__/submitChecklist.test.js` and `demo/__tests__/demoContent.test.js`. C7 adds `pages/__tests__/TeamDashboardPage.test.jsx` (the dashboard as static renders, each block failing on its own, and a source check: no hex, no library legend or tooltip, no pie), `demo/__tests__/demoDashboard.test.js` and `lib/__tests__/{dashboardParams,dashboardData,chartTheme}.test.js`. C8 adds `routes/__tests__/routeFallbacks.test.jsx`, `components/project/__tests__/PlanFields.test.jsx` and `pages/__tests__/PeoplePages.test.jsx` (Projects, Holidays, Users, People, the profile and Account as static renders), `demo/__tests__/demoPeople.test.js` (U7, the leave history, the owner / admin rules, P2–P5, HD2–HD4, D7), `hooks/__tests__/useUserQueries.test.jsx` (a link is in no cache once its modal has read it) and `lib/__tests__/{peopleParams,passwordStrength}.test.js`, with `permissions` and `dates` tests extended. C6 adds `pages/__tests__/ReviewPages.test.jsx` (history, team updates, the review desk and the review page as static renders), `demo/__tests__/demoReview.test.js`, and `lib/__tests__/{reviewDeskParams,reviewOutcome,updatesDay}.test.js`; `useReportQueries.test.js` also covers the feed's optimistic toggles. C9 adds `demo/__tests__/demoMarkers.test.js` (N1 and V4 in the demo), `lib/__tests__/clearMarkers.test.js` and `components/shell/__tests__/{SidebarMarks,ErrorBoundary}.test.jsx`. The auth-pages change (owner, 2026-10-17) adds `components/auth/__tests__/AuthScreens.test.jsx`, `lib/__tests__/authRecovery.test.js` and extends the This week, `weekActions` and landing tests. The PR #30 review adds `lib/__tests__/chunkReload.test.js` (the one-reload guard) and extends `weekActions` and the profile test. E2E testing stays deferred per `tech_stack.md` §8.
 
 ---
 

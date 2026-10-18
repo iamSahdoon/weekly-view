@@ -366,6 +366,20 @@ chunks that matter; Vite `manualChunks` puts `recharts` and `motion` in their ow
 chunks so a change to page code doesn't invalidate them. The suspense fallback is the
 shell with a page-level skeleton — never a blank screen.
 
+**A chunk missing after a redeploy** *(owner decision, PR #30 review, 2026-10-18)*. Every deploy
+names its chunks by content hash, so a tab opened before a deploy asks for files the new one
+doesn't have, and the SPA rewrite (`client/vercel.json`) answers with `index.html`: the page's
+dynamic import fails. `lazyPage` wraps each page's render-time load in `guardChunkLoad`
+(`lib/chunkReload.js`): a chunk-load error (Chrome's "Failed to fetch dynamically imported
+module", Firefox's and Safari's equivalents, Vite's "Unable to preload CSS") **reloads the page
+once**, keeping the fallback up meanwhile, so the tab picks up the new build. The guard is a
+timestamp in `sessionStorage` (`wv.chunkReloadAt`): within 30 s of a reload no second one
+happens, and the error reaches the existing error boundary (the page's error state). Blocked
+storage means no guard, so no reload. Other errors are untouched. `preload()` (the prefetch, and
+`TransitionLink` before navigating) never reloads; a failed preload is ignored and the
+navigation's own load applies the guard. The demo's boot and the tour layer are not route
+pages and keep their own imports.
+
 ### 4.2 URL state
 
 All of design §11 rule 11 — filter, sort, pagination, week, day — through two hooks.
@@ -1605,7 +1619,9 @@ becomes a cliff.
 In addition to design §13 and `development_approach_doc.md`'s end-to-end walkthroughs:
 
 - [ ] `grep -rn "axios" client/src` matches only `services/apiClient.js` and `demo/`.
-- [ ] No file in `components/ui/` imports from `services/`, `hooks/` or `context/`.
+- [ ] No file in `components/ui/` imports data hooks: services, query hooks, or contexts other than
+      the demo flag. `useMediaQuery` (§7.4) and `useIsDemo` (the `SAMPLE DATA` pill) are allowed
+      *(owner decision, PR #30 review, 2026-10-18)*.
 - [ ] No query-key array literal appears outside `lib/queryKeys.js`.
 - [ ] No `isDemo` in a page or composed component other than the three presentation
       cases of §1.2.

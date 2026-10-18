@@ -419,6 +419,34 @@ describe("Person profile", () => {
     expect(html).toContain("Open W41");
   });
 
+  // Owner decision (PR #30 review, 2026-10-18): a week the person wasn't on the team for
+  // shows its squares and no status chip, not the API's "Not started".
+  it("shows no status chip in This week when the person wasn't on the team that week", async () => {
+    const thisWeek = (html) =>
+      html.slice(html.indexOf('aria-label="This week"')).split("</section>")[0];
+    const client = await primed();
+    expect(thisWeek(page("manager", client))).toMatch(
+      /data-status|Draft|Submitted|Not started|Approved/,
+    );
+    const week = client.getQueryData(qk.week(IMALI, THIS));
+    client.setQueryData(qk.week(IMALI, THIS), {
+      ...week,
+      state: "not_started",
+      report: null,
+      dayStates: {
+        mon: "not_on_team",
+        tue: "not_on_team",
+        wed: "holiday",
+        thu: "not_on_team",
+        fri: "not_on_team",
+      },
+    });
+    const block = thisWeek(page("manager", client));
+    expect(block).toContain('data-state="not_on_team"');
+    expect(block).not.toContain("Not started");
+    expect(block).toContain("Open W41");
+  });
+
   it("shows the leave history with each period's start, end and who set it", async () => {
     as("manager");
     await userService.setLeave(IMALI, true);

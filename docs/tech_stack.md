@@ -412,21 +412,45 @@ Fails loudly at startup, per `development_approach_doc.md`.
 import "dotenv/config";
 import { z } from "zod";
 
-const schema = z.object({
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
-  PORT: z.coerce.number().default(5000),
-  MONGODB_URI: z.string().min(1),
-  JWT_SECRET: z.string().min(32), // short secrets are a real weakness, not a style nit
-  JWT_EXPIRES_IN: z.string().default("5d"),
-  CLIENT_URL: z.string().url(),
-});
+// The JWT_SECRET placeholder in server/.env.example. It is long enough to pass the length
+// check, so production refuses it by value: a host given the example would otherwise
+// start with a secret anyone can read (owner decision, PR #30 review, 2026-10-18).
+// Development and tests may use it.
+export const EXAMPLE_JWT_SECRET =
+  "replace-with-a-32-plus-character-random-string";
 
-const parsed = schema.safeParse(process.env);
+const schema = z
+  .object({
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
+    PORT: z.coerce.number().default(5000),
+    MONGODB_URI: z.string().min(1),
+    JWT_SECRET: z.string().min(32), // short secrets are a real weakness, not a style nit
+    JWT_EXPIRES_IN: z.string().default("5d"),
+    CLIENT_URL: z.string().url(),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.NODE_ENV === "production" &&
+      value.JWT_SECRET === EXAMPLE_JWT_SECRET
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["JWT_SECRET"],
+        message: "JWT_SECRET is the example value; generate a new one",
+      });
+  });
+
+/** Parses an environment object; the module below passes process.env. */
+export function parseEnv(source) {
+  return schema.safeParse(source);
+}
+
+const parsed = parseEnv(process.env);
 if (!parsed.success) {
   console.error("Invalid environment configuration:");
-  console.error(z.treeifyError(parsed.error));
+  console.error(z.prettifyError(parsed.error));
   process.exit(1);
 }
 
@@ -436,6 +460,9 @@ export const env = parsed.data;
 Nothing in the codebase reads `process.env` directly — everything imports `env`.
 There are no fallback values for secrets: a missing `JWT_SECRET` stops the
 process instead of silently defaulting.
+In production the example `JWT_SECRET` from `server/.env.example` is refused by value, and the
+errors are printed with `z.prettifyError`, one line per setting, never with the value *(owner
+decision, PR #30 review, 2026-10-18)*.
 
 **`/server/.env.example`**
 

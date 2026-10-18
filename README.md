@@ -61,7 +61,7 @@ copy client\.env.example client\.env
 | `NODE_ENV` | `development` | `development` on your PC. `production` only on the host |
 | `PORT` | `5000` | The local API port (hosts set their own) |
 | `MONGODB_URI` | `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/weeklyview?appName=weeklyview` | Your Atlas connection string. Ask the owner; never paste it into a chat or a file in the repo |
-| `JWT_SECRET` | 64 random hex characters | Signs sign-ins. At least 32 characters; make one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `JWT_SECRET` | 64 random hex characters | Signs sign-ins. At least 32 characters, and in production never the example value; make one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `JWT_EXPIRES_IN` | `5d` | How long a sign-in lasts |
 | `CLIENT_URL` | `http://localhost:5173` | The website's exact address, for CORS (no trailing slash) |
 

@@ -2809,8 +2809,9 @@ tests never touching Atlas, demo, manual, deployment, the `0.0.0.0/0` note for V
 
 ### Open items for the owner (C11)
 `MASTER_PROMPT.md`'s *Known open items* that this stage ran into, all built as the documented default:
-1. **`--c7` (Research & study) and the three dark chart colours** — still built with the documented values, still
-   awaiting your sign-off (design §0.3). Seen on the dashboard in light and dark.
+1. ~~**`--c7` (Research & study) and the three dark chart colours** — awaiting your sign-off.~~ **Resolved (owner,
+   2026-10-18):** `--c1`, `--c4`, `--c6` (dark) and `--c7` approved as built; "needs sign-off" removed from design §0.3,
+   with matching notes in `tokens.css` and §9.3.
 2. **The "Starting up" state** — the glyph, then after 3 s one line (FA13). Seen with the API blocked. On Vercel the
    API usually answers in 1–3 s, so most visitors never see the line.
 3. **A refresh under `/demo` returns to the chooser** (FA1) — confirmed, and it also ends the tour.
@@ -2820,20 +2821,64 @@ tests never touching Atlas, demo, manual, deployment, the `0.0.0.0/0` note for V
    were not exercised in a browser this stage (unit tests cover the first).
 
 New, found while verifying; nothing was changed for them:
-7. **`components/ui/` importing from `hooks/`.** `frontend_architecture.md` §13.2 says no file in `components/ui/`
+7. ~~**`components/ui/` importing from `hooks/`.**~~ **Resolved (owner, 2026-10-18):** proposal accepted;
+   `frontend_architecture.md` §13.2 now reads "no data hooks (services, query hooks, or contexts other than the demo
+   flag)", with `useMediaQuery` and `useIsDemo` allowed. Docs only. *(Was:)* `frontend_architecture.md` §13.2 says no file in `components/ui/`
    imports from `hooks/`, but §7.4 and the `Panel` spec require `Table` and `FilterBar` to use `useMediaQuery` and
    `SampleDataPill` to use `useIsDemo`. The code follows §7.4. Proposed: read the checklist line as "no data hooks"
    (services, query hooks, contexts other than the demo flag) and amend it. Your call.
-8. **A profile's "This week" chip for someone who joined after that week.** For a person who joined on a Sunday, the
+8. ~~**A profile's "This week" chip for someone who joined after that week.**~~ **Resolved (owner, 2026-10-18):**
+   fixed on the client, see *C11 owner review fixes*. *(Was:)* For a person who joined on a Sunday, the
    profile's This week block reads `Not started` for a week they weren't on the team (the API's week states have no
    "not on the team" value; This week itself shows the first-week message). Proposed: leave as is, or hide the chip
    when every day is `not_on_team`. Your call.
-9. **The `.env.example` JWT secret passes the production check.** It is 46 characters, so a host given the example
+9. ~~**The `.env.example` JWT secret passes the production check.**~~ **Resolved (owner, 2026-10-18):** production
+   now refuses it, see *C11 owner review fixes*. *(Was:)* It is 46 characters, so a host given the example
    value would start. `docs/DEPLOYMENT.md` §1.4 says to make a new one. Proposed: leave it, or have production refuse
    that exact placeholder (a two-line change in `env.js`). Your call.
-10. **A missing asset after a redeploy** is answered by the SPA rewrite with `index.html` (seen locally; Vercel
+10. ~~**A missing asset after a redeploy**~~ **Resolved (owner, 2026-10-18):** a missing page chunk reloads the
+    page once, guarded, see *C11 owner review fixes*. *(Was:)* is answered by the SPA rewrite with `index.html` (seen locally; Vercel
     applies the same rule). A tab left open across a deploy may then fail to load a page it hasn't opened yet until
     it is reloaded. Not tested; noted only.
+
+### C11 owner review fixes (PR #30 review, 2026-10-18)
+Same branch and pull request ([iamSahdoon/weekly-view#30](https://github.com/iamSahdoon/weekly-view/pull/30)). All five
+review items are **resolved (owner, 2026-10-18)**:
+1. **Chart colours approved as built.** `--c1`, `--c4`, `--c6` (dark) and `--c7`: design §0.3 now reads "approved by the
+   owner as built" (and gives today's values, per §9.3's vibrancy note), the §13 checklist line names only the two
+   tokens still "needs verification" (`--hair2`, `--rule`), and `tokens.css` and its verbatim copy in §9.3 say
+   "approved". `tokens.css` had no "needs sign-off" comment to remove.
+2. **`components/ui/` and hooks.** `frontend_architecture.md` §13.2 amended: no file in `components/ui/` imports data
+   hooks (services, query hooks, or contexts other than the demo flag); `useMediaQuery` and `useIsDemo` are allowed.
+3. **Profile "This week" chip.** `lib/weekActions.js` gains `offTeamAllWeek(dayStates)`: true when every day is
+   `not_on_team`, with holidays counted as days nobody works (the case seen in C11 had a holiday on Wednesday). The
+   profile's This week block then shows the squares and **Open W…** with no status chip. Server and API unchanged.
+   `joinedAfterWeek` reuses the same rule. Tests: `weekActions.test.js` (6 cases) and a profile render in
+   `PeoplePages.test.jsx`, which fails against the old page.
+4. **Example `JWT_SECRET` refused in production.** `config/env.js` exports `EXAMPLE_JWT_SECRET` and `parseEnv`; a
+   `superRefine` refuses the example value when `NODE_ENV` is `production` with "JWT_SECRET is the example value;
+   generate a new one". Development and test still accept it. **Also fixed:** the start-up error printed
+   `z.treeifyError` through `console.error`, which shows nested objects only two levels deep, so every message read
+   `[Array]`; it now prints `z.prettifyError` (one line per setting, never its value). Tests:
+   `server/tests/foundation/env.test.js` (5): the constant matches `server/.env.example`; production refuses it with
+   that message; development and test accept it; other 32+ secrets pass and short ones don't; a real `node` process
+   with the example in production exits 1 printing the message, and in development starts. `tech_stack.md` §5's
+   snippet, `DEPLOYMENT.md` troubleshooting, the README and `project_structure.md` updated.
+5. **Stale chunks after a redeploy.** `lib/chunkReload.js` (new; `project_structure.md` updated): `lazyPage` wraps each
+   page's render-time load in `guardChunkLoad`; a chunk-load error reloads the page **once**, keeping the fallback up,
+   guarded by a `sessionStorage` timestamp (`wv.chunkReloadAt`, 30 s window); a second failure in the window reaches
+   the existing error boundary; blocked storage means no reload. `preload()` never reloads. Recorded in
+   `frontend_architecture.md` §4.1 ("A chunk missing after a redeploy"). Tests: `lib/__tests__/chunkReload.test.js`
+   (10: the error patterns, one reload then none within the window, again after it, other errors, blocked or full
+   storage, the pending promise, the rejection after the reload).
+   **In Chromium** (a production build served with `client/vercel.json`'s rules; a page chunk answered with
+   `index.html` as the rewrite would): missing once → exactly one reload, then `/signup` renders; always missing →
+   exactly one reload, then the existing error state ("This page ran into a problem.", tab "Something went wrong"), no
+   loop; the landing chunk missing on a visit to `/` → one reload, then the landing page; `/demo` with nothing missing
+   → no reload, the member's This week. No database, Atlas or `MONGODB_URI` was used.
+
+**Checks.** `npm run lint` clean; Prettier clean on every changed file. `npm test`: server 410 (5 new), client 690
+(13 new: 10 `chunkReload`, 2 `weekActions`, 1 profile render), all green.
 
 ### Going live
 Follow `docs/DEPLOYMENT.md`, **Option A** (owner decision, 2026-10-18):
@@ -3480,8 +3525,9 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
-- **C11, to confirm or change:** items 1 and 7–9 under *Open items for the owner (C11)* (the chart colours
-  sign-off; the `components/ui` hook rule; the profile chip for a week before someone joined; the example JWT secret).
+- ~~**C11, to confirm or change:** items 1 and 7–10 under *Open items for the owner (C11)*~~ **Resolved (owner, PR #30
+  review, 2026-10-18):** all five — the chart colours approved as built; the `components/ui` hook rule amended (docs
+  only); the profile chip, the example JWT secret and stale chunks fixed. See *C11 owner review fixes*.
 - ~~Guided demo tour, to confirm or change~~ **Resolved (owner, 2026-10-18):** all nine decisions accepted as
   built on the PR #28 review — the first five (no library; the Tour button in the demo bar; Imali's last week
   reset to a Draft; the tour ending on refresh; "overall comment" read as the week's comments) and, in round 2,
