@@ -31,7 +31,7 @@ Stage C11 (deployment) and the whole-app polish may change some screens' look, n
 4. Creating the first account (the owner)
 5. Signing in and out
 6. Joining from an invite link
-7. Forgotten password (reset links)
+7. Forgotten passwords and changing your details
 8. Your Account page (name, password, theme, leave)
 
 **Part 3 — Finding your way around**
@@ -268,15 +268,48 @@ password may already have been saved.
 Rules: an invite link works **once**, and **expires after 7 days**. If it's lost or expired, an
 admin can **re-issue** it, and the old link stops working.
 
-## 7. Forgotten password (reset links)
+## 7. Forgotten passwords and changing your details
 
-There's no self-service "forgot password", because there's no email. Instead:
+There's no self-service "forgot password", because WeeklyView doesn't send email. Someone hands
+you a link instead. Who that is depends on who you are:
 
-1. Ask an admin (or the owner) for a **password reset link** (§41).
-2. Open it (`/reset/...`) and choose a new password.
+| Your situation | What to do |
+| --- | --- |
+| **You know your password and want a new one** (everyone) | Sidebar → your name → ***Account*** → change your password (§8). No link needed. |
+| **You're a member or a manager and forgot it** | Ask any admin. They open **Users** → **⋯** → ***Password reset link*** (§41) and send you the link. |
+| **You're an admin and forgot it** | Ask the **owner**. Only the owner can issue an admin's link. |
+| **You're the owner and forgot it** | No one inside WeeklyView can help; the owner is protected. Use the recovery command below. |
 
-A reset link works **once** and **expires after 24 hours**. Resetting a password signs that
-person out of every other device.
+Whichever way you get a link: open it (`/reset/...`) and choose a new password. A reset link
+works **once** and **expires after 24 hours**; a newer link replaces an older one. Resetting a
+password signs that person out of every other device. Nobody, including the admin who issued the
+link, ever sees or sets your password.
+
+**Changing your email address.** You can't change your own email, except for the owner.
+
+| Whose email | Who changes it |
+| --- | --- |
+| A member or a manager | Ask any admin (**Users** → **⋯** → ***Edit email***). |
+| An admin | Ask the owner. |
+| The owner | The owner, for their own email. |
+
+The Account page names the owner, with an email link and their address as text. Changing an
+email signs that person out everywhere; they sign in again with the new address.
+
+**If the owner forgets their password.** This is done by whoever controls the deployment: the
+person who holds the database address (`MONGODB_URI`) in `server/.env`, normally the owner.
+
+1. On the PC that has the project and `server/.env` pointing at the live database, open a
+   terminal in the project folder.
+2. For the live site run (the `--` and the address are both needed, or the link points at
+   `http://localhost:5173`):
+   `npm run owner:reset-link -- --url https://your-site-address`
+3. It prints the owner's name and email, when the link expires and the link, once. Open it in a
+   browser and choose a new password.
+
+The link is single-use and lasts 24 hours; running the command again replaces it. The command
+sets and shows no password, changes nobody else, and can't be run from the website. Treat the
+printed link like a password.
 
 ## 8. Your Account page
 
@@ -772,7 +805,7 @@ Sidebar → ***Users*** (`/users`). Admins only. Every person, with their status
   the owner** can make someone an ***Admin***, whether by role change or by invite.
 - ***Edit email*** (**⋯**): changes a person's sign-in email; it must be unused. They're signed
   out everywhere.
-- ***Password reset link*** (**⋯**): creates a one-time link (24 hours) to send them (§7).
+- ***Password reset link*** (**⋯**): creates a one-time link (24 hours) to send them (§7). Only the owner can do this for an admin.
 - ***Mark as on leave*** / ***End leave*** (**⋯**): see §44. Ending asks for confirmation.
 - ***Remove*** (**⋯**): deactivates the account. Their history stays readable and correctly
   attributed. Removing someone also ends any leave they were on and signs them out.
@@ -784,7 +817,8 @@ Sidebar → ***Users*** (`/users`). Admins only. Every person, with their status
 ## 42. The owner and passing ownership on
 
 - **Exactly one owner**: the person who created the team (§4).
-- **The owner is protected:** no other admin can demote, remove or change the owner's email.
+- **The owner is protected:** no other admin can demote, remove or change the owner's email,
+  or issue them a reset link. If the owner forgets their password, see §7.
 - **Only the owner** can make someone an admin, and pass ownership on.
 - ***Make owner*** (**Users** → **⋯**, owner only): choose an active admin or manager. A manager
   who receives it becomes an admin. The previous owner stays an admin and loses only the
@@ -1027,6 +1061,7 @@ Use `cd` then `npm install`, **not** `npm --prefix client install` (on this PC t
 | --- | --- |
 | `npm run db:empty` | Wipes the database and inserts nothing. The first person to sign up becomes the owner. |
 | `npm run db:sample` | Wipes the database, then loads the sample team and six weeks of reports, relative to the current week. |
+| `npm run owner:reset-link -- --url <site address>` | Prints the owner a one-time password-reset link, once (§7). Changes no password; the `--` is needed before `--url`. |
 
 - **Both wipe whatever database `server\.env` points at.** Check `MONGODB_URI` before you run
   either. Neither runs when `NODE_ENV` is `production`.

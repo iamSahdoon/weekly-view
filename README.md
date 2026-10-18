@@ -60,6 +60,25 @@ npm run db:sample    # wipes everything, then loads the sample team and six week
 
 `seed` and `seed:reset` still work as older names for `db:sample`.
 
+## If the owner forgets their password
+
+The owner is protected, so no admin can reset their password, and nothing is emailed. Whoever
+holds the database string (`MONGODB_URI` in `server/.env`) can print the owner a one-time
+reset link from their own computer:
+
+```bash
+npm run owner:reset-link
+npm run owner:reset-link -- --url https://your-site.vercel.app    # a link for the live site
+```
+
+- It uses the database `server/.env` points at, and works whatever `NODE_ENV` is. Without
+  `--url` the link starts with `CLIENT_URL`; for the live site that is usually the wrong
+  address on your own PC, so pass `--url`. The `--` before it is required.
+- It prints the owner's name, email, the expiry and the link, **once**. The link works once,
+  expires in 24 hours, and replaces any earlier reset link. It changes no password by itself
+  and touches nobody else. Treat the output like a password and don't paste it anywhere shared.
+- It refuses if there is no owner yet or the database can't be reached.
+
 ## Atlas network access is `0.0.0.0/0` — on purpose
 
 Render's free instances have no static outbound IP, so there is no address to allowlist.

@@ -2637,7 +2637,37 @@ still `/favicon.ico` 404, which `main` has too.
     → **Post the update** → **Do it for me**: everything appears at once, no typing; then the same "Done."
     card, waiting for **Next**. Turn animation effects back on.
 
-### Your next steps
+### Owner request: `owner:reset-link`, a way back for a forgotten owner password (2026-10-18)
+Not a stage. The owner is protected (`requirments_doc.md` §11.2) and nothing is emailed (§11.1), so an owner
+who forgot their password was locked out for good. Owner decision: a command for whoever holds `MONGODB_URI`.
+- `npm run owner:reset-link [-- --url <site address>]` (root script forwards to `server`) runs
+  `server/src/scripts/ownerResetLink.js`: connects with `server/.env`, finds the owner, calls the existing
+  `issueResetLink` (U13) as the owner acting on themselves, and prints name, email, expiry and link **once** to the
+  terminal. No token logic is duplicated: `userService.js` only gained an optional `baseUrl` on `newLink` /
+  `issueResetLink` (default `CLIENT_URL`; the API never passes it). `--url` must be http(s), with no login, query
+  or `#`; trailing slashes are stripped. Works under any `NODE_ENV`. Refuses with a message when there is no
+  owner or the database can't be reached (the driver's error is not echoed, as it can carry the connection
+  string), and always disconnects. No endpoint, no new dependency.
+- Printing the link is the one documented exception to "never log a link token" (`tech_stack.md` §2.1,
+  `CLAUDE.md`); it is never written to a file or log.
+- **Docs:** `requirments_doc.md` §11.2/§11.3, `tech_stack.md` §2.1, `CLAUDE.md` (rule and Commands),
+  `project_structure.md` (tree, root scripts), `README.md`, `docs/DEPLOYMENT.md` (troubleshooting),
+  `docs/USER_MANUAL.md` (§7 is now "Forgotten passwords and changing your details"; §41/§42 and the commands table).
+- **Sign-in "Forgot your password?" panel:** checked, left as is. It says to ask an admin and shows no command.
+  (An admin's link really comes from the owner, §11.3; the panel's wording is the design system's and was not changed.)
+- **Tests** (`server/tests/scripts/ownerResetLink.test.js`, 16, in-memory Mongo): a valid hashed single-use 24 h reset
+  link for the owner only; the accept flow works and a second use is `LINK_INVALID`; an admin-issued link and an
+  earlier run's link both stop working; `passwordHash` and `tokenVersion` unchanged until the owner completes the
+  reset; `--url` used, validated and parsed; refuses cleanly with no owner; a bad `--url` exits 1 before connecting.
+- **By hand** (real CLI, in-memory replica set, never Atlas): root and server scripts print the block; `--url` link;
+  works with `NODE_ENV=production`; unknown flag and unreachable database (10 s) exit 1 with the plain message and no
+  connection string; no owner exits 1. Not run on Windows or against Atlas.
+
+### Your next steps (owner recovery)
+See the PR description from `claude/owner-recovery`; the Windows steps are in the session's closing message and in
+`README.md` ("If the owner forgets their password").
+
+### Your next steps (PR #28, tour)
 1. Run the checks just above, then review and merge
    [iamSahdoon/weekly-view#28](https://github.com/iamSahdoon/weekly-view/pull/28) (from `claude/demo-tour` into
    `main`). All nine tour decisions are accepted (PR #28 review, 2026-10-18); nothing on the tour is left to
@@ -3328,6 +3358,7 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
   with `npm install`; `npm ci` now succeeds.
 
 ## Departures from `docs/project_structure.md`
+- `owner:reset-link` added `server/src/scripts/ownerResetLink.js` and `server/tests/scripts/ownerResetLink.test.js`; `project_structure.md` (tree and root scripts) is updated.
 - The guided demo tour added `demo/tour/` (`TourLayer.jsx`, `TourTooltip.jsx`, `TourPanel.jsx`, `tourSteps.js`, `tourSetup.js`, `tourRobot.js`, `tourPlacement.js`, `tourBus.js`, and `tourState.js` on the PR #28 feedback) and `demo/__tests__/demoTour.test.js`; `Table` takes a `tour` prop, `Tabs` and `DropdownMenu` pass rest props through (menu items take a `tour` key); `fixtures.js` exports `CAST` and `SAMPLE_PROJECTS`, `bootDemo.js` exposes the store. `project_structure.md` (tree and §3.4) is updated.
 - The landing revamp added `components/marketing/{PrivacySection,DemoSection,StoryCaptions}.jsx` and `storySteps.js`, and removed `SidesSection.jsx` and `LimitsSection.jsx` (`LimitsSection` became `PrivacySection`); `project_structure.md` §3.1 is updated.
 - C10 added `components/ui/SampleDataPill.jsx`, `hooks/useIsDemo.js`, eight section components, `CtaPill.jsx` and `Words.jsx` in `components/marketing/`, `client/.prettierignore` and four test files (`demo/__tests__/{demoCast.test.js,demoEntry.test.jsx}`, `components/marketing/__tests__/LandingPage.test.jsx`, `styles/__tests__/landingIsolation.test.js`); `AuthPanel` takes `padding="none"`; `project_structure.md` §3.1 and §6 are updated. `DemoEntryPage`, `DemoBar`, `MarketingLayout`, `LandingPage`, `useLandingMotion` and `landing.css` were in the tree. `pages.js` names `LandingPage` and `DemoEntryPage`.

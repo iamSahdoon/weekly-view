@@ -175,6 +175,13 @@ const linkTokenExpiresAt = new Date(Date.now() + ttl * 60 * 60 * 1000);
   there is no "type a new password for this person" path to leak or misuse.
 - **Never logged.** The URL is built in the service and returned; it does not go
   through `morgan`, an error message or a toast.
+- **One exception: `npm run owner:reset-link`** (`requirments_doc.md` §11.3, owner decision).
+  The owner is protected, so an owner who forgets their password has no admin to ask. The
+  command, run by whoever holds `MONGODB_URI`, calls the same `issueResetLink` as U13 — same
+  hash, single use, 24 hours, previous link overwritten — and **prints the link once to the
+  terminal**, as the operator's equivalent of the single response an admin sees. It is
+  never written to a file or log, never stored in plain form, and not reachable over HTTP.
+  `--url` replaces `CLIENT_URL` in the link only.
 
 ### 2.2 Bootstrap signup, and the race it would otherwise have
 

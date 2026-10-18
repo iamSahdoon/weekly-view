@@ -459,6 +459,10 @@ is its **owner**. There is exactly one owner at any time.
   owner stays an admin and loses only the protection. This is how an owner who is leaving
   hands the system over without anyone needing database access.
 - Ownership is never taken, only given: no one but the current owner can move it.
+- **If the owner forgets their password** *(owner decision, 2026-10-18)*, nobody inside the
+  product can help: the owner is protected (above) and nothing is emailed (§11.1). The way
+  back is a command for **whoever controls the deployment** (the person who holds
+  `MONGODB_URI`): `npm run owner:reset-link`. See §11.3.
 
 ### 11.3 Changing an email address or a forgotten password
 
@@ -480,6 +484,27 @@ Admins act on those requests:
   password themselves. The admin never knows it.
 - **Changing an email** takes effect at once and signs the person out everywhere; they
   sign in again with the new address.
+
+**If the owner forgets their password** *(owner decision, 2026-10-18)*. The table gives
+the owner no one else to ask, and passwords are hashed, so access to the database does not
+reveal or replace one. Instead, a command-line recovery path exists for whoever controls
+the deployment, outside the product:
+
+- `npm run owner:reset-link` connects with `server/.env`, finds the current owner and issues
+  them a **normal reset link** through the same service function and token rules as an
+  admin's (SHA-256 hashed, single use, 24 hours, any previous link invalidated).
+- It prints the link **once, to the terminal**, with the owner's name and email and the
+  expiry. The link is `<CLIENT_URL>/reset/<token>`; the optional `--url <site address>` swaps
+  in the live site's address when `.env` still says `http://localhost:5173`.
+- It sets, prints and changes no password and touches no other user. It works whatever
+  `NODE_ENV` is, and refuses with a message if there is no owner or the database can't be
+  reached.
+- It is not an endpoint, and nothing in the website can start it. Printing the link is a
+  deliberate exception to "never log a link token" (`tech_stack.md` §2.1): it is shown once
+  to the operator, like the single response an admin sees, and is never written to a file or
+  a log.
+- Anyone who can run it already holds the database string, and with that they could change
+  any document anyway. The command adds no access they didn't have.
 
 ### 11.4 People who leave and come back
 

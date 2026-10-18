@@ -68,7 +68,9 @@ pick the smallest choice that unblocks you only if it is reversible, and say so 
   `timestamps: true` everywhere. `_id` is never remapped.
 - Validation puts parsed input on `req.validated` (Express 5 `req.query` is read-only).
 - **Never log, return, or cache a link token or password.** Link tokens are SHA-256 hashed,
-  single use, shown in one response only, and travel in request bodies, never URLs.
+  single use, shown in one response only, and travel in request bodies, never URLs. The one
+  exception is `npm run owner:reset-link`, which prints the owner's link once to the operator's
+  terminal (`docs/tech_stack.md` §2.1).
 
 ## Client rules
 
@@ -112,6 +114,7 @@ npm --prefix server run dev        # API on :5000
 npm --prefix client run dev        # Vite on :5173
 npm run db:sample                  # wipe the database, load the development dataset (server)
 npm run db:empty                   # wipe the database, load nothing (first sign-up becomes owner)
+npm run owner:reset-link           # print the owner a one-time reset link (server/.env's database); add `-- --url <site>`
 npm test                           # server RBAC/policy tests + client parity/demo tests
 npm run lint
 ```
