@@ -566,7 +566,7 @@ A hands-on tour of the product, reachable from the landing page without signing 
 Because the demo never touches the server or the database, it cannot go stale, cannot be
 damaged by a visitor, and needs no special accounts or permissions on the server.
 
-### 14.1 The guided tour *(owner decision, 2026-10-17)*
+### 14.1 The guided tour *(owner decision, 2026-10-17; its five choices below accepted as built on the PR #28 review, 2026-10-18)*
 
 The demo's first screen offers two ways in: **take the guided tour** (with an honest length,
 "about 15 minutes, or jump to any part") or **explore on your own** (the three perspectives,
@@ -593,6 +593,19 @@ unchanged).
   there. The panel also resumes, restarts or ends the tour.
 - **Nothing is stored.** Like the rest of the demo, a refresh returns to the first screen and
   ends the tour.
+
+**Owner decisions, accepted as built** *(PR #28 review, 2026-10-18)*:
+
+1. **No library.** The tour is built on what is already in the stack; no dependency was added
+   (`tech_stack.md` §10).
+2. **The Tour button lives in the demo bar** (an icon only on phones), not floating over the
+   page.
+3. **The story week replaces Imali's sample history.** The tour turns Imali's last week back
+   into a Draft, replacing its sample sent-back history, and the visitor recreates that
+   history themselves.
+4. **A refresh ends the tour**, and the demo data resets too.
+5. **"Overall comment"** means the managers' comments on a submitted week (§4, "Overall
+   comments on the week"), not a field on the weekly form; the tour covers it as week comments.
 
 Full specification: `product_design_system.md` §3.14 and `tech_stack.md` §6.9; the tour's
 components in `product_design_system.md` §3.14 "Guided tour", its architecture in

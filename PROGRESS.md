@@ -2414,31 +2414,29 @@ leave). Manager — 44, 49 (comment on anyone's update and week); 48 (read submi
 (review, send back, approve); 45 (open a teammate's day); 52, 58 (dashboard, profiles); 62, 63 (projects,
 plans, people); 60 (anyone's leave). Admin — 3 invite, 7 remove, 4 roles, 5 email, 6 reset link, 10 holidays.
 
-**Owner decisions to confirm or change** (all small and reversible):
-1. **No library.** Approval was given for one (driver.js); the tour's real work (steps across routes and
-   people, waiting for data, the store, sitting above the app's own Radix dialogs) is its own logic either
-   way, and the highlight, tooltip and phone sheet are a few dozen lines on the design tokens. Recorded in
-   `tech_stack.md` §10.
-2. **The launcher lives in the demo bar**, not floating: "Tour", between Switch and Start over; below 480px
-   the route icon alone, so "Sanduni B." still fits at 360px. A floating button would cover the weekly
-   form's bar and the phone's bottom sheet.
-3. **The story week is Imali's last week.** The current week can only be submitted once Friday is posted.
-   The member chapter turns last week back into a Draft, replacing the sample's sent-back history of that
-   week; the visitor then makes that history themselves.
-4. **Moving through the tour prepares each step's data.** Going **Back** from "Edit a posted day" to "Post the
+**Owner decisions, accepted as built** *(PR #28 review, 2026-10-18)*. Stated the same way in
+`requirments_doc.md` §14.1, `frontend_architecture.md` §11.6 and `product_design_system.md` §3.14 "Guided
+tour"; the first also in `tech_stack.md` §10. No code changed for them.
+1. **No library.** The tour is built on what is already in the stack; no dependency was added
+   (`tech_stack.md` §10).
+2. **The Tour button lives in the demo bar** (an icon only on phones), not floating over the page.
+3. **The story week replaces Imali's sample history.** The tour turns Imali's last week back into a Draft,
+   replacing its sample sent-back history, and the visitor recreates that history themselves.
+4. **A refresh ends the tour**, and the demo data resets too. Within a page's life, Exit or Esc keeps
+   **Resume at step N**, and **Switch** pauses the tour.
+5. **"Overall comment"** means the managers' comments on a submitted week (`requirments_doc.md` §4, "Overall
+   comments on the week"), not a field on the weekly form; the tour covers it as week comments (step 38 for
+   Imali, step 49 for Nadia).
+
+**Still to confirm or change** (smaller and reversible; not part of the PR #28 review):
+1. **Moving through the tour prepares each step's data.** Going **Back** from "Edit a posted day" to "Post the
    update" takes the posted day off again, and a jump can reset the story week; the step needs that state.
-5. **The dim doesn't block the page.** The visitor can use the highlighted element and anything else; if a
+2. **The dim doesn't block the page.** The visitor can use the highlighted element and anything else; if a
    step's target goes away, the card says "This part of the screen has closed." with **Show it again**.
-6. **A refresh ends the tour**, with the store it was telling the story of. I recommend keeping it: resuming
-   would point at a week that no longer exists. Within a page's life, Exit or Esc keeps **Resume at step N**,
-   and **Switch** pauses the tour.
-7. **"Overall comment" and the weekly form.** The form has no field by that name: overall comments are the
-   comments on a week (step 38 for Imali, step 49 for Nadia); the form's own text is achievements (step 29),
-   plans for next week, notes and links.
-8. **Seven features are left out**, each because it can't happen honestly in a browser-only demo: the landing
+3. **Seven features are left out**, each because it can't happen honestly in a browser-only demo: the landing
    page, sign-up, the session-expiry window, the "Starting up" screen, the offline strip, the error toast with
    Retry, the stale-version banner (`NOT_IN_TOUR`).
-9. **The first screen's lead line** is now "Take the guided tour, or look around on your own."; the original
+4. **The first screen's lead line** is now "Take the guided tour, or look around on your own."; the original
    line sits under "Explore on your own" with the three choices, unchanged.
 
 **Checks.** `npm run lint` clean; Prettier clean on every changed file. `npm test`: server 389, client 670
@@ -2517,7 +2515,8 @@ console's one error in every run is `/favicon.ico` 404, which `main` has too.
 
 ### Your next steps
 1. Review and merge [iamSahdoon/weekly-view#28](https://github.com/iamSahdoon/weekly-view/pull/28) (from
-   `claude/demo-tour` into `main`) after the checks above; say which of the nine decisions to change.
+   `claude/demo-tour` into `main`) after the checks above. The five decisions are accepted (PR #28 review,
+   2026-10-18); say if any of the four still to confirm should change.
 2. Next session prompt, unchanged by this work: "Read `CLAUDE.md` and `PROGRESS.md`, then do stage C11
    (verification, deployment, README) from `MASTER_PROMPT.md`."
 
@@ -3155,11 +3154,12 @@ corners, hairlines, existing tokens, no hex in components). Recorded as an owner
     (title, then count, then the switch) and the work lines stack.
 
 ## Open questions for the owner
-- **Guided demo tour, to confirm or change** (see *Owner request: guided demo tour*): the nine decisions — no
-  library; the Tour button in the demo bar; Imali's last week as the story week, reset to a Draft; steps
-  re-preparing their data on Back and jumps; a dim that doesn't block the page; the tour ending on refresh
-  (recommended); "overall comment" read as the week's comments; seven features left out; the first screen's
-  new lead line.
+- **Guided demo tour, to confirm or change** (see *Owner request: guided demo tour*): four smaller decisions —
+  steps re-preparing their data on Back and jumps; a dim that doesn't block the page; seven features left
+  out; the first screen's new lead line. ~~No library; the Tour button in the demo bar; Imali's last week
+  reset to a Draft; the tour ending on refresh; "overall comment" read as the week's comments~~ **Resolved
+  (owner, PR #28 review, 2026-10-18):** all five accepted as built; recorded as owner decisions in
+  `requirments_doc.md` §14.1, `frontend_architecture.md` §11.6 and `product_design_system.md` §3.14.
 - **Auth pages round six — a committed browser test?** The client suite has no DOM, so the "landing → `/signin`
   client-side, computed styles use app tokens only" check runs in Chromium by script, not in `npm test`. Making it a
   committed test needs a new dev dependency (`@playwright/test`, or jsdom, which cannot compute real styles).

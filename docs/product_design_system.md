@@ -1197,6 +1197,15 @@ hard-coded sample data in the browser (`requirments_doc.md` §14, `tech_stack.md
 
 #### Guided tour *(owner decision, 2026-10-17; `requirments_doc.md` §14.1)*
 
+> **Owner decisions, accepted as built** *(PR #28 review, 2026-10-18)*: (1) **no library** —
+> the tour is built on what is already in the stack, no dependency added; (2) **the Tour button
+> lives in the demo bar** (an icon only on phones), not floating over the page; (3) **the story
+> week replaces Imali's sample history** — the tour turns Imali's last week back into a Draft,
+> replacing its sample sent-back history, and the visitor recreates that history themselves;
+> (4) **a refresh ends the tour**, and the demo data resets too; (5) **"overall comment"** means
+> the managers' comments on a submitted week (`requirments_doc.md` §4), not a field on the
+> weekly form, and the tour covers it as week comments.
+
 An overlay on the real demo pages, never a change to them. Everything is cobalt on cool
 neutrals in the app's fonts, square, hairline, tokens only; the tooltip and the panel are
 floating layers, so they — and only they — carry `--shadow-pop`. Both themes are designed: every
@@ -1211,7 +1220,7 @@ colour below is a token that changes with `[data-theme="dark"]`.
   **Jump to a part**. Then an `h2` (Chivo 20px) **Explore on your own**, the original line "Pick
   who you'd like to be. Everything works, nothing is saved." and the three role choices,
   unchanged.
-- **The launcher.** A text button **Tour** with a 13px route icon in the demo bar, between
+- **The launcher** *(owner decision 2)*. A text button **Tour** with a 13px route icon in the demo bar, between
   `Switch`'s group and `Start over`, in the bar's own button style (`--d-text`, `--d-hover`).
   It lives in the bar so it never covers a page's actions; below 480px it is the icon alone
   (its name stays for screen readers) so the bar still fits "Sanduni B." at 360px.

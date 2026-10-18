@@ -1469,12 +1469,21 @@ service gains an endpoint the demo doesn't answer — which is what keeps the de
 `requirments_doc.md` §14.1 is the experience and design §3.14 "Guided tour" the look; this is
 the mechanism. **No page knows the tour exists.**
 
+**Owner decisions, accepted as built** *(PR #28 review, 2026-10-18; `requirments_doc.md` §14.1)*:
+(1) **no library** — the tour is built on what is already in the stack, no dependency added;
+(2) **the Tour button lives in the demo bar** (an icon only on phones), not floating over the
+page; (3) **the story week replaces Imali's sample history** — the tour turns Imali's last week
+back into a Draft, replacing its sample sent-back history, and the visitor recreates that history
+themselves; (4) **a refresh ends the tour**, and the demo data resets too; (5) **"overall
+comment"** means the managers' comments on a submitted week (`requirments_doc.md` §4), not a
+field on the weekly form, and the tour covers it as week comments. How each is built is below.
+
 | Part | Where | What it does |
 | --- | --- | --- |
 | Mount | `layouts/RootLayout.jsx` | Under `/demo` only (`useIsDemo()`), loads `demo/tour/TourLayer.jsx` with a dynamic `import()` and renders it. RootLayout is above the session layout, so the layer outlives a change of person; the real app never downloads the chunk, and the landing chunk never contains it |
-| Requests | `demo/tour/tourBus.js`; a DOM event | The chooser (`requestTour`) and the demo bar's **Tour** button (a `weeklyview:tour` `CustomEvent`, so the main bundle imports no tour code) ask for "start" or "panel". A request made while the layer is still loading waits for it |
+| Requests | `demo/tour/tourBus.js`; a DOM event | The chooser (`requestTour`) and the demo bar's **Tour** button (owner decision 2: in the bar, an icon only on phones; a `weeklyview:tour` `CustomEvent`, so the main bundle imports no tour code) ask for "start" or "panel". A request made while the layer is still loading waits for it |
 | The script | `demo/tour/tourSteps.js` | Data: chapters, steps (who, audience, route, target, the setup it needs, the manual features it covers, an optional action), `NOT_IN_TOUR`, `CAPABILITIES`, `tourMinutes()` |
-| Setup helpers | `demo/tour/tourSetup.js` | Pure functions on the store (`prepare(store, names)`): the story week to Draft / Submitted / Needs correction / resubmitted / Approved, a day Imali can post, one to edit, Ayesha's day open to the team… Real actions go through the demo's own route handlers as the person who would do them (`matchRoute`), so versions, comments and the desk come out exactly as clicks would leave them. Idempotent: a state already reached is left alone |
+| Setup helpers | `demo/tour/tourSetup.js` | Pure functions on the store (`prepare(store, names)`): the story week — Imali's last week (owner decision 3: turned back into a Draft, replacing its sample sent-back history) — to Draft / Submitted / Needs correction / resubmitted / Approved, a day Imali can post, one to edit, Ayesha's day open to the team… Real actions go through the demo's own route handlers as the person who would do them (`matchRoute`), so versions, comments and the desk come out exactly as clicks would leave them. Idempotent: a state already reached is left alone |
 | Do it for me | `demo/tour/tourRobot.js` | Drives the real controls: clicks, Radix menus (pointerdown), React-controlled inputs (the prototype's value setter, then `input`/`change`), the task combobox. Fills only what the visitor left empty |
 | Placement | `demo/tour/tourPlacement.js` | Pure geometry: the tooltip beside the highlight, the scroll that leaves room below it, the phone sheet's side and scroll, the highlight clipped to the open area |
 | Layer | `demo/tour/TourLayer.jsx`, `TourTooltip.jsx`, `TourPanel.jsx` | The controller and what it draws, portalled to `<body>` in a `[data-tour-layer]` element |
@@ -1499,8 +1508,8 @@ tooltip, which stops `pointerdown` and `focusin` at itself (a page's Radix dialo
 would otherwise close or pull focus back) and is kept free of the `aria-hidden` a page dialog
 puts on the rest of `<body>`. Reduced motion: scrolling is instant, the fade is cut by §8.3.
 
-**Persistence.** None. A refresh under `/demo` returns to the chooser (§11.1) and the tour
-ends with the store it was telling the story of; resuming would point at a week that no
+**Persistence.** None (owner decision 4). A refresh under `/demo` returns to the chooser
+(§11.1): the tour ends, and the demo data resets too; resuming would point at a week that no
 longer exists. Within a page's life the panel offers **Resume at step N** after Exit or Esc,
 and **Switch** in the demo bar pauses the tour.
 ---

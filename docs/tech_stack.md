@@ -1023,7 +1023,8 @@ is never loaded by the app or the demo (`landingIsolation.test.js` asserts both)
 stays `motion` (§1.2). GSAP is free under its "Standard 'no charge' license" (gsap.com/standard-license).
 anime.js was considered and not added.
 
-**Owner decision (guided demo tour, 2026-10-17): no dependency added.** The owner approved one small,
+**Owner decision (guided demo tour, 2026-10-17; accepted as built on the PR #28 review, 2026-10-18): no
+library — the tour is built on what is already in the stack, no dependency added.** The owner approved one small,
 MIT-licensed tour library (driver.js was the candidate). It was not needed: the tour's steps span route
 changes and changes of person, wait for data to load, act on the demo store and must sit above the
 app's own Radix dialogs — all of it the tour's own logic either way — and the highlight, the tooltip and
