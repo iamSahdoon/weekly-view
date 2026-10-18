@@ -8,6 +8,8 @@ import { AUDIENCES, CHAPTERS, PERSONAS, STEPS } from "./tourSteps.js";
 // card beside the highlighted element on a wide screen, a sheet across the bottom (or
 // top) of a phone. A labelled, non-modal dialog: the chapter, who the feature is for,
 // the title, one or two sentences, what to press, and Back · Do it for me · Next · Exit.
+// Once a step's action is done it says what changed ("Done. …") and offers Back and Next;
+// while the action is under way Back, Next and Do it for me wait, and Exit still works.
 // It sits above the page's own dialogs and menus, so pointer and focus events that start
 // in it stop here — they would otherwise close a menu the step is about, or be pulled
 // back by a dialog's focus trap.
@@ -19,8 +21,9 @@ export const TourTooltip = forwardRef(function TourTooltip(
     step,
     index,
     phase,
-    done,
-    doing,
+    outcome,
+    locked,
+    running,
     doError,
     sheet,
     style,
@@ -47,8 +50,8 @@ export const TourTooltip = forwardRef(function TourTooltip(
   const chapterIndex = CHAPTERS.findIndex((c) => c.id === step.chapter);
   const chapter = CHAPTERS[chapterIndex];
   const away = phase === "missing" || phase === "lost";
-  const view = done && step.action?.done ? step.action.done : step;
-  const waiting = step.action && !done && !away;
+  const view = outcome ?? step;
+  const waiting = step.action && !outcome && !away;
   const titleId = `tour-title-${step.id}`;
   const bodyId = `tour-body-${step.id}`;
 
@@ -56,7 +59,9 @@ export const TourTooltip = forwardRef(function TourTooltip(
   // reaches the highlighted element, so it can be used from the keyboard.
   const onKeyDown = (event) => {
     if (event.target.closest("a, textarea, input")) return;
-    if (event.key === "ArrowRight") {
+    if (locked && event.key.startsWith("Arrow")) {
+      event.preventDefault();
+    } else if (event.key === "ArrowRight") {
       event.preventDefault();
       if (!step.finish) onNext();
     } else if (event.key === "ArrowLeft" && index > 0) {
@@ -121,7 +126,7 @@ export const TourTooltip = forwardRef(function TourTooltip(
 
       <div className="flex flex-col gap-6">
         <h2 id={titleId} className="font-display text-panel font-bold text-ink">
-          {view.title ?? step.title}
+          {view.title}
         </h2>
         <p id={bodyId} className="text-base text-body">
           {view.body}
@@ -139,7 +144,9 @@ export const TourTooltip = forwardRef(function TourTooltip(
               aria-hidden="true"
               className="inline-block size-[6px] shrink-0 bg-acc"
             />
-            {step.action.hint}
+            {running
+              ? "Doing it now. Watch the outlined part."
+              : step.action.hint}
           </p>
         )}
         {doError && (
@@ -155,7 +162,12 @@ export const TourTooltip = forwardRef(function TourTooltip(
         </span>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-8">
           {index > 0 && (
-            <Button variant="ghost" size="sm" onClick={onBack}>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={locked}
+              onClick={onBack}
+            >
               Back
             </Button>
           )}
@@ -183,13 +195,14 @@ export const TourTooltip = forwardRef(function TourTooltip(
                 <Button
                   variant="secondary"
                   size="sm"
-                  loading={doing}
+                  loading={running}
+                  disabled={locked}
                   onClick={onDoIt}
                 >
                   Do it for me
                 </Button>
               )}
-              <Button size="sm" disabled={doing} onClick={onNext}>
+              <Button size="sm" disabled={locked} onClick={onNext}>
                 Next
               </Button>
             </>

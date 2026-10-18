@@ -5,6 +5,7 @@ import { matchRoute } from "../demoRoutes.js";
 import { createDemoStore } from "../demoStore.js";
 import { CAST } from "../fixtures.js";
 import {
+  clipBelow,
   clipToOpenArea,
   padRect,
   placeTooltip,
@@ -18,6 +19,7 @@ import {
   prepare,
   tourContext,
 } from "../tour/tourSetup.js";
+import { INITIAL, reducer } from "../tour/tourState.js";
 import {
   AUDIENCES,
   CAPABILITIES,
@@ -30,9 +32,10 @@ import {
 
 // The guided demo tour (owner request, 2026-10-17): every feature of the manual's index
 // and every role capability of the requirements has a step (or a stated reason it has
-// none); every step points at a `data-tour` target that exists; the setup helpers put the
-// store in the state each step needs; the placement maths; and the tour's code reaching
-// the real app only as a dynamic import.
+// none); every step points at a `data-tour` target that exists; an action never moves the
+// tour on (owner feedback on PR #28, 2026-10-18); the setup helpers put the store in the
+// state each step needs; the placement maths; and the tour's code reaching the real app
+// only as a dynamic import.
 
 const doc = (name) =>
   readFileSync(new URL(`../../../../docs/${name}`, import.meta.url), "utf8");
@@ -194,13 +197,15 @@ describe("the steps", () => {
   });
 
   it("speak the product's language: sentence case, no exclamation marks, no pronouns", () => {
+    const ctx = { ...tourContext(createDemoStore()), memo: { day: "tue" } };
+    const text = (value) => (typeof value === "function" ? value(ctx) : value);
     for (const step of STEPS) {
       const texts = [
         step.title,
         step.body,
         step.action?.hint,
-        step.action?.done?.title,
-        step.action?.done?.body,
+        text(step.action?.done?.title),
+        text(step.action?.done?.body),
       ].filter(Boolean);
       for (const text of texts) {
         expect(text, step.id).not.toContain("!");
@@ -224,6 +229,96 @@ describe("the steps", () => {
     const seconds = (STEPS.length - actions) * 9 + actions * 30;
     expect(tourMinutes()).toBe(Math.round(seconds / 60));
     expect(tourMinutes()).toBeGreaterThanOrEqual(10);
+  });
+});
+
+// ---------------------------------------------------------------- actions
+
+describe("an action step (owner feedback on PR #28)", () => {
+  const actions = STEPS.filter((step) => step.action);
+  const ctx = { ...tourContext(createDemoStore()), memo: { day: "tue" } };
+  const text = (value) => (typeof value === "function" ? value(ctx) : value);
+
+  it("says what changed once it's done, and where", () => {
+    expect(actions).toHaveLength(11);
+    for (const { id, action } of actions) {
+      expect(action.done, id).toBeDefined();
+      expect(text(action.done.title).length, id).toBeGreaterThan(0);
+      expect(text(action.done.body), id).toMatch(/^Done\. /);
+      expect(text(action.done.body).length, id).toBeLessThan(220);
+      expect(action.done.target, id).toBeDefined();
+    }
+    const post = STEPS.find((s) => s.id === "post").action.done;
+    expect(text(post.body)).toBe(
+      "Done. Imali’s Tuesday update is posted, and its square on the strip is now filled.",
+    );
+    expect(text(post.target)).toBe(
+      '[data-tour="strip-day"][data-tour-id="tue"]',
+    );
+  });
+
+  const index = STEPS.findIndex((s) => s.id === "post");
+  const shown = (state) =>
+    reducer(state, { type: "phase", run: state.run, phase: "shown" });
+  const atPost = () => shown(reducer(INITIAL, { type: "start", index }));
+
+  it("stays on its step after Do it for me, until Next", () => {
+    let state = atPost();
+    state = reducer(state, { type: "do", run: state.run });
+    expect(state.outcome).toBe("doing");
+    state = reducer(state, { type: "happened", run: state.run });
+    state = reducer(state, { type: "done", run: state.run });
+    expect(state).toMatchObject({ index, outcome: "done", phase: "shown" });
+    state = reducer(state, { type: "go", index: index + 1 });
+    expect(state).toMatchObject({ index: index + 1, outcome: null });
+  });
+
+  it("stays on its step when the visitor does it, until Next", () => {
+    let state = atPost();
+    const run = state.run;
+    state = reducer(state, { type: "happened", run });
+    expect(state).toMatchObject({ index, outcome: "doing" });
+    state = reducer(state, { type: "done", run });
+    expect(state).toMatchObject({ index, outcome: "done" });
+    // Nothing but the visitor moves the tour: no other action changes the step.
+    for (const type of ["do", "happened", "done", "failed", "phase", "panel"]) {
+      expect(reducer(state, { type, run, phase: "shown" }).index).toBe(index);
+    }
+  });
+
+  it("holds Back, Next and a second press while it runs; Exit still works", () => {
+    let state = atPost();
+    state = reducer(state, { type: "do", run: state.run });
+    expect(reducer(state, { type: "go", index: index + 1 })).toBe(state);
+    expect(reducer(state, { type: "go", index: index - 1 })).toBe(state);
+    expect(reducer(state, { type: "do", run: state.run })).toBe(state);
+    expect(reducer(state, { type: "exit", keep: true })).toMatchObject({
+      mode: "off",
+      outcome: null,
+      resume: index,
+    });
+  });
+
+  it("ignores what a step it has left reports, and lets the visitor try again after a failure", () => {
+    let state = atPost();
+    const old = state.run;
+    state = reducer(state, { type: "do", run: old });
+    state = reducer(state, { type: "failed", run: old });
+    expect(state.outcome).toBeNull();
+    state = reducer(state, { type: "go", index: index + 1 });
+    expect(reducer(state, { type: "done", run: old })).toBe(state);
+    expect(reducer(state, { type: "happened", run: old })).toBe(state);
+  });
+
+  it("is moved on only by Back and Next in the layer: no timer, no watcher", () => {
+    const layer = readFileSync(
+      new URL("../tour/TourLayer.jsx", import.meta.url),
+      "utf8",
+    );
+    expect(layer.match(/type: "go"/g)).toHaveLength(1); // the `go` helper
+    expect(layer.match(/\bgo\(/g)).toHaveLength(2); // Back and Next
+    expect(layer).toContain("onBack={() => go(state.index - 1)}");
+    expect(layer).toContain("onNext={() => go(state.index + 1)}");
   });
 });
 
@@ -497,6 +592,19 @@ describe("where the tooltip goes", () => {
     expect(
       withinView({ top: -5, left: 0, width: 1440, height: 950 }, view),
     ).toEqual({ top: 1, left: 1, width: 1438, height: 898 });
+  });
+
+  it("never draws a scrolled target's outline across the sticky bars", () => {
+    const section = { top: 20, left: 510, width: 904, height: 500 };
+    expect(clipBelow(section, 98)).toEqual({
+      top: 98,
+      left: 510,
+      width: 904,
+      height: 422,
+    });
+    const below = { top: 120, left: 0, width: 10, height: 10 };
+    expect(clipBelow(below, 98)).toBe(below);
+    expect(clipBelow(null, 98)).toBeNull();
   });
 
   it("scrolls a target up to make room below it, when both fit", () => {

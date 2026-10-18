@@ -18,6 +18,7 @@ import { demo } from "../bootDemo.js";
 import { PERSPECTIVES } from "../fixtures.js";
 import { TOUR_EVENT, onTourRequest } from "./tourBus.js";
 import {
+  clipBelow,
   clipToOpenArea,
   padRect,
   placeTooltip,
@@ -25,8 +26,9 @@ import {
   roomBelow,
   withinView,
 } from "./tourPlacement.js";
-import { closePageLayers, robot } from "./tourRobot.js";
+import { closePageLayers, createRobot } from "./tourRobot.js";
 import { prepare, tourContext } from "./tourSetup.js";
+import { INITIAL, reducer } from "./tourState.js";
 import { AUDIENCES, STEPS } from "./tourSteps.js";
 import { TourPanel } from "./TourPanel.jsx";
 import { TourTooltip } from "./TourTooltip.jsx";
@@ -36,70 +38,16 @@ import { TourTooltip } from "./TourTooltip.jsx";
 // For each step it prepares the demo store (tourSetup), becomes the step's person through
 // the chooser's own sign-in, navigates, waits for the `[data-tour]` target to appear,
 // scrolls it into view and draws a dimmed backdrop with a cutout, a cobalt outline and the
-// tooltip. A step that waits for the visitor watches the store (or the screen) and moves
-// on once the action happened. Nothing is stored: a refresh ends the tour with the demo.
+// tooltip. On a step with an action, the visitor acts or presses "Do it for me", which
+// does it visibly (tourRobot); either way, once the result is on screen the card says what
+// changed, the outline moves to it, and the step waits for Next (tourState). Nothing is
+// stored: a refresh ends the tour with the demo.
 
 const SEEK_MS = 6000; // a target that hasn't appeared by then: centred, "Skip this step"
 const LOST_MS = 1500; // a target gone that long: "This part of the screen has closed."
-const SETTLE_MS = 700; // after an action, so its result is seen before the next step
 const SLOW_MS = 400; // a step still opening after this says so
-
-const INITIAL = {
-  mode: "off", // "off" | "on"
-  index: 0,
-  run: 0, // bumped every time a step (re)starts
-  phase: "idle", // "moving" | "shown" | "missing" | "lost"
-  panel: false,
-  resume: null,
-  visited: [],
-};
-
-function reducer(state, action) {
-  switch (action.type) {
-    case "start":
-      return {
-        ...state,
-        mode: "on",
-        index: action.index,
-        run: state.run + 1,
-        phase: "moving",
-        panel: false,
-        resume: null,
-      };
-    case "go":
-      return action.index >= STEPS.length
-        ? { ...state, mode: "off", phase: "idle", resume: null }
-        : {
-            ...state,
-            index: Math.max(0, action.index),
-            run: state.run + 1,
-            phase: "moving",
-          };
-    case "retry":
-      return { ...state, run: state.run + 1, phase: "moving" };
-    case "phase": {
-      if (action.run !== state.run) return state;
-      const id = STEPS[state.index].id;
-      const visited =
-        action.phase === "shown" && !state.visited.includes(id)
-          ? [...state.visited, id]
-          : state.visited;
-      return { ...state, phase: action.phase, visited };
-    }
-    case "exit":
-      return {
-        ...state,
-        mode: "off",
-        phase: "idle",
-        panel: false,
-        resume: action.keep ? state.index : null,
-      };
-    case "panel":
-      return { ...state, panel: action.open };
-    default:
-      return state;
-  }
-}
+const RESULT_MS = 4000; // an action's result not on screen by then: say "Done" anyway
+const SAVED_MS = 4000; // "Do it for me" pressed the button, but nothing saved by then
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const resolve = (value, ctx) =>
@@ -191,14 +139,14 @@ export default function TourLayer() {
 
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const [rect, setRect] = useState(null);
+  const [targetKey, setTargetKey] = useState(0); // bumped when the outline moves
   const [tipSize, setTipSize] = useState(null);
   const [sheetSide, setSheetSide] = useState("bottom");
   const [view, setView] = useState(() => ({
     width: window.innerWidth,
     height: window.innerHeight,
   }));
-  const [done, setDone] = useState(false);
-  const [doing, setDoing] = useState(false);
+  const [running, setRunning] = useState(false); // "Do it for me" is working
   const [doError, setDoError] = useState(null);
   const [slow, setSlow] = useState(false);
   const [announcement, setAnnouncement] = useState("");
@@ -206,19 +154,31 @@ export default function TourLayer() {
 
   const tipRef = useRef(null);
   const elRef = useRef(null);
+  const areaRef = useRef(null); // the part "Do it for me" is changing
+  const pinnedRef = useRef(false); // the outlined element doesn't scroll with the page
   const runRef = useRef(0);
-  const completing = useRef(false);
+  const outcomeRef = useRef(null);
   const extra = useRef({ memo: {}, since: 0 });
   const returnFocus = useRef(null);
   const userRef = useRef(user);
   const pathRef = useRef("");
+  // The router's navigate changes with every pathname, so the step reads it from a ref:
+  // a page that moves on by itself (a submitted report opens its week) must not restart
+  // the step it belongs to.
+  const navigateRef = useRef(navigate);
+  const becomeRef = useRef(become);
   useEffect(() => {
     userRef.current = user;
     pathRef.current = location.pathname + location.search;
+    outcomeRef.current = state.outcome;
+    navigateRef.current = navigate;
+    becomeRef.current = become;
   });
 
   const step = STEPS[state.index];
   const on = state.mode === "on";
+  const locked = state.outcome === "doing";
+  const finished = state.outcome === "done";
 
   const context = useCallback(
     () => ({
@@ -242,10 +202,12 @@ export default function TourLayer() {
         ? panelOpener.current
         : active;
     }
+    runRef.current = 0; // "Do it for me" stops now, not on the next render
     dispatch({ type: "start", index });
   }, []);
 
   const leave = useCallback((keep) => {
+    runRef.current = 0;
     dispatch({ type: "exit", keep });
     const back = returnFocus.current;
     returnFocus.current = null;
@@ -291,11 +253,10 @@ export default function TourLayer() {
 
     (async () => {
       elRef.current = null;
-      completing.current = false;
+      areaRef.current = null;
       setRect(null);
       setSheetSide("bottom");
-      setDone(false);
-      setDoing(false);
+      setRunning(false);
       setDoError(null);
       if (!current.keepLayers) await closePageLayers();
       if (!alive()) return;
@@ -305,7 +266,7 @@ export default function TourLayer() {
       if (!alive()) return;
       if (userRef.current?._id !== PERSPECTIVES[current.as]) {
         try {
-          await become(current.as);
+          await becomeRef.current(current.as);
         } catch {
           // The target won't appear; the step says so and offers to skip.
         }
@@ -313,7 +274,7 @@ export default function TourLayer() {
       }
       const ctx = context();
       const route = resolve(current.route, ctx);
-      if (pathRef.current !== route) navigate(route);
+      if (pathRef.current !== route) navigateRef.current(route);
       extra.current = {
         memo: current.action?.remember?.(ctx) ?? {},
         since: Date.now(),
@@ -337,43 +298,47 @@ export default function TourLayer() {
         return;
       }
       elRef.current = el;
+      pinnedRef.current = pinned(el);
       dispatch({ type: "phase", run, phase: "shown" });
     })();
 
-    return () => clearTimeout(slowTimer);
-  }, [
-    state.mode,
-    state.run,
-    state.index,
-    queryClient,
-    become,
-    navigate,
-    context,
-  ]);
+    return () => {
+      clearTimeout(slowTimer);
+      // Left (Next, Back, a jump, Exit): "Do it for me" stops at its next move.
+      runRef.current = 0;
+    };
+  }, [state.mode, state.run, state.index, queryClient, context]);
 
   // Follow the target every frame while it is shown: it scrolls, it re-renders, a
-  // dialog animates in. Gone for a while (and its action not done) → "lost".
+  // dialog animates in. The outline goes to the first of these on screen: an action's
+  // result once it is done; the part "Do it for me" is changing; the step's own target;
+  // while an action is under way, its result (the page may have moved on to it). Gone
+  // for a while, with no action under way → "lost".
   const settled = ["shown", "missing", "lost"].includes(state.phase);
   useEffect(() => {
     if (!on || state.phase !== "shown") return undefined;
     const run = state.run;
-    const selectors = () =>
-      asList(
-        resolve(
-          done && step.action?.done ? step.action.done.target : step.target,
-          context(),
-        ),
-      );
+    const selectors = () => {
+      const ctx = context();
+      const own = asList(resolve(step.target, ctx));
+      if (!step.action) return own;
+      const result = asList(resolve(step.action.done.target, ctx));
+      if (finished) return [...result, ...own];
+      const area = areaRef.current ? [areaRef.current] : [];
+      return outcomeRef.current === "doing"
+        ? [...area, ...own, ...result]
+        : [...area, ...own];
+    };
     let frame;
     let lostAt = null;
     const tick = () => {
-      // Re-find the target when it is gone or is no longer what the step points at
-      // (an action's outcome moves the highlight).
-      const wanted = selectors();
-      let el = elRef.current;
-      if (!shown(el) || !wanted.some((selector) => el.matches(selector))) {
-        el = findTarget(wanted);
+      const el = findTarget(selectors());
+      if (el !== elRef.current) {
         elRef.current = el;
+        if (el) {
+          pinnedRef.current = pinned(el);
+          setTargetKey((key) => key + 1);
+        }
       }
       if (el) {
         lostAt = null;
@@ -391,7 +356,7 @@ export default function TourLayer() {
       } else {
         setRect(null);
         lostAt ??= Date.now();
-        if (Date.now() - lostAt > LOST_MS && !completing.current) {
+        if (Date.now() - lostAt > LOST_MS && outcomeRef.current === null) {
           dispatch({ type: "phase", run, phase: "lost" });
           return;
         }
@@ -400,53 +365,68 @@ export default function TourLayer() {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [on, state.phase, state.run, step, done, context]);
+  }, [on, state.phase, state.run, step, finished, context]);
 
-  // A step that waits for the visitor: watch for the action, then move on (or, with
-  // `done`, stay and point at what it produced).
+  // A step with an action: watch for it — the visitor's or "Do it for me"'s. Once it has
+  // happened, wait until it has saved and the screen has caught up (nothing fetching or
+  // saving, its result on screen), then the card says what changed. The step stays;
+  // only Next moves the tour on.
   useEffect(() => {
     const action = step.action;
-    if (!on || !action || done || !["shown", "lost"].includes(state.phase)) {
+    if (
+      !on ||
+      !action ||
+      finished ||
+      !["shown", "lost"].includes(state.phase)
+    ) {
       return undefined;
     }
     const run = state.run;
-    let advance;
+    let happenedAt = null;
     const timer = setInterval(() => {
-      if (!action.until(context())) return;
-      clearInterval(timer);
-      completing.current = true;
-      if (action.done) {
-        elRef.current = null;
-        setDone(true);
-        if (state.phase === "lost")
-          dispatch({ type: "phase", run, phase: "shown" });
-      } else {
-        advance = setTimeout(() => {
-          if (runRef.current === run)
-            dispatch({ type: "go", index: state.index + 1 });
-        }, SETTLE_MS);
+      const ctx = context();
+      if (happenedAt === null) {
+        if (!action.until(ctx)) return;
+        happenedAt = Date.now();
+        dispatch({ type: "happened", run });
       }
-    }, 250);
-    return () => {
-      clearInterval(timer);
-      clearTimeout(advance);
-    };
-  }, [on, step, done, state.phase, state.run, state.index, context]);
+      const onScreen =
+        findTarget(asList(resolve(action.done.target, ctx))) &&
+        queryClient.isFetching() === 0 &&
+        queryClient.isMutating() === 0;
+      if (onScreen || Date.now() - happenedAt > RESULT_MS) {
+        clearInterval(timer);
+        dispatch({ type: "done", run });
+      }
+    }, 150);
+    return () => clearInterval(timer);
+  }, [on, step, finished, state.phase, state.run, queryClient, context]);
 
   // Someone pressed Switch in the demo bar: the tour pauses where it was.
   useEffect(() => {
     if (on && settled && !user) leave(true);
   }, [on, settled, user, leave]);
 
-  // The tooltip takes focus when its step opens, unless the visitor is already in it
-  // (pressing Next): then the live region reads the new step instead.
+  // What the card says once the action is done: its title and body may read the store
+  // (which day was posted).
+  const outcome = finished
+    ? {
+        title: resolve(step.action.done.title, context()),
+        body: resolve(step.action.done.body, context()),
+      }
+    : null;
+
+  // The tooltip takes focus when its step opens, and when an action's result comes in,
+  // unless the visitor is already in it (pressing Next): then the live region reads it.
   useEffect(() => {
     if (!on || !settled) return;
     const tip = tipRef.current;
     if (!tip) return;
     if (tip.contains(document.activeElement)) {
       setAnnouncement(
-        `Step ${state.index + 1} of ${STEPS.length}, ${AUDIENCES[step.audience]}. ${step.title}. ${step.body}`,
+        outcome
+          ? `${outcome.title}. ${outcome.body}`
+          : `Step ${state.index + 1} of ${STEPS.length}, ${AUDIENCES[step.audience]}. ${step.title}. ${step.body}`,
       );
     } else {
       setAnnouncement("");
@@ -454,7 +434,7 @@ export default function TourLayer() {
     }
     // Once per step, phase and outcome, not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [on, settled, state.run, state.phase, done]);
+  }, [on, settled, state.run, state.phase, finished]);
 
   // Esc ends the tour — unless it closed one of the page's own dialogs or menus first.
   useEffect(() => {
@@ -494,10 +474,12 @@ export default function TourLayer() {
     const observer = new ResizeObserver(measure);
     observer.observe(tip);
     return () => observer.disconnect();
-  }, [showTip, state.run, done, phone]);
+  }, [showTip, state.run, finished, phone]);
 
-  // Once the tooltip's size is known, bring the target into view. On a phone, clear of
-  // the sheet, which goes to the bottom unless it would cover the target there. On a
+  // Once the tooltip's size is known, and again whenever the outline moves (to the part
+  // "Do it for me" is changing, or to an action's result), bring the target into view.
+  // On a phone, clear of the sheet, which goes to the bottom unless it would cover the
+  // target there. On a
   // wide screen, when the tooltip has no room below the target, scroll the target up so
   // the two sit one above the other: the tooltip then never covers what the visitor is
   // about to use.
@@ -534,9 +516,9 @@ export default function TourLayer() {
         );
     if (delta == null) reveal(el, { behavior });
     else if (delta !== 0) window.scrollBy({ top: delta, behavior });
-    // Once per step, outcome and size; following the scroll is the frame loop's job.
+    // Once per step, target and size; following the scroll is the frame loop's job.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phone, state.run, state.phase, tipSize?.height, done]);
+  }, [phone, state.run, state.phase, tipSize?.height, targetKey]);
 
   // A page dialog marks everything outside it aria-hidden; the tour must stay readable.
   useEffect(() => {
@@ -555,18 +537,42 @@ export default function TourLayer() {
 
   // ---------------------------------------------------------------- doing it for them
 
+  // Visibly, at a pace the visitor can follow (all at once under reduced motion), with
+  // the outline on the part being changed. Back, Next and "Do it for me" wait until it is
+  // done; Exit doesn't. A second press while it works does nothing.
   const doIt = async () => {
+    if (outcomeRef.current !== null || state.phase !== "shown") return;
+    outcomeRef.current = "doing";
     const run = state.run;
-    setDoing(true);
+    const alive = () => runRef.current === run;
+    dispatch({ type: "do", run });
+    setRunning(true);
     setDoError(null);
+    const robot = createRobot({
+      alive,
+      reduced,
+      onArea: (target) => {
+        areaRef.current = target;
+      },
+    });
     try {
       await step.action.doIt(robot, context());
+      // The button is pressed; wait for the save itself (the watcher above then waits
+      // for the screen).
+      const pressed = Date.now();
+      while (!step.action.until(context())) {
+        if (!alive()) return;
+        if (Date.now() - pressed > SAVED_MS) throw new Error("not-saved");
+        await sleep(100);
+      }
     } catch {
-      if (runRef.current === run) {
+      if (alive()) {
+        areaRef.current = null;
+        dispatch({ type: "failed", run });
         setDoError("That didn’t work here. Try it yourself, or press Next.");
       }
     } finally {
-      if (runRef.current === run) setDoing(false);
+      if (alive()) setRunning(false);
     }
   };
 
@@ -592,7 +598,7 @@ export default function TourLayer() {
     state.phase === "shown" && rect
       ? withinView(
           clipToOpenArea(
-            padRect(rect),
+            clipBelow(padRect(rect), pinnedRef.current ? 0 : safeTop()),
             phone
               ? {
                   side: sheetSide,
@@ -650,13 +656,14 @@ export default function TourLayer() {
       )}
       {showTip && (
         <TourTooltip
-          key={`${state.run}:${done}`}
+          key={`${state.run}:${finished}`}
           ref={tipRef}
           step={step}
           index={state.index}
           phase={state.phase}
-          done={done}
-          doing={doing}
+          outcome={outcome}
+          locked={locked}
+          running={running}
           doError={doError}
           sheet={phone ? sheetSide : null}
           style={tipStyle}

@@ -1,3 +1,4 @@
+import { WEEKDAY_LABELS } from "../../lib/constants.js";
 import {
   TOUR_TEXT,
   commentsSince,
@@ -20,9 +21,12 @@ import {
 //               bar), or (ctx) => either. Absent on nothing: every step points at something.
 //   prepare     the demo-store setup helpers it needs (tourSetup.js), run on arrival
 //   features    the USER_MANUAL feature-index entries it explains (the coverage test)
-//   action      a step that waits for the visitor: `until(ctx)` says it happened, `doIt`
-//               does it for them, `hint` says what to press; `done` keeps the step open
-//               on what the action produced instead of moving on by itself
+//   action      a step the visitor can act on: `hint` says what to press, `until(ctx)` says
+//               it happened, `doIt(robot, ctx)` does it for them, visibly ("Do it for me",
+//               tourRobot.js), and `done` is what the card says once the result is on
+//               screen — `title`, `body` (text or (ctx) => text, starting "Done.") and the
+//               `target` the highlight moves to. The step then waits for Next: an action
+//               never moves the tour on (owner feedback on PR #28, 2026-10-18)
 //   side        the side of its target the tooltip tries first (it falls back to any other)
 //   keepLayers  its target is inside a dialog the previous step opened, so don't close it
 //
@@ -75,11 +79,18 @@ const card = (id) => `[data-tour="team-update"][data-tour-id="${id}"]`;
 const dayCard = (weekday) =>
   `[data-tour="day-card"][data-tour-id="${weekday}"]`;
 
-// The weekly form's fields, filled in for the visitor where they are still empty.
+const DIALOG = '[role="dialog"][data-state="open"]';
+
+// The weekly form's task statuses, chosen for the visitor where they are still empty —
+// one after another, a little faster when there are many.
 async function fillForm(r) {
-  for (const select of document.querySelectorAll("select[data-task-status]")) {
-    await r.choose(select, "in_progress");
-  }
+  const empty = [
+    ...document.querySelectorAll("select[data-task-status]"),
+  ].filter((select) => select.value === "");
+  if (empty.length === 0) return;
+  await r.area('[data-tour="form-tasks"]');
+  const pause = Math.min(300, 1200 / empty.length);
+  for (const select of empty) await r.choose(select, "in_progress", { pause });
 }
 
 export const STEPS = [
@@ -124,6 +135,7 @@ export const STEPS = [
         if (!document.getElementById("invite-form")) {
           await r.click('[data-tour="invite-person"]');
         }
+        await r.area(DIALOG);
         await r.fill(
           '#invite-form input[type="email"]',
           freeInviteEmail(ctx.store),
@@ -132,7 +144,7 @@ export const STEPS = [
       },
       done: {
         title: "The link is shown once",
-        body: "It works once and expires after 7 days. In the real product you’d copy it and send it to the person.",
+        body: "Done. The invite link is ready, and this is the only time it’s shown. It works once and expires after 7 days; in the real product you’d copy it and send it to the person.",
         target: '[data-tour="link-block"]',
       },
     },
@@ -177,12 +189,14 @@ export const STEPS = [
       until: () => Boolean(document.querySelector('[data-tour="link-block"]')),
       async doIt(r, ctx) {
         await r.press(userMenu(ctx.ids.ruwan));
+        await r.area('[role="menu"][data-state="open"]');
         await r.click('[data-tour="menu-reset"]');
+        await r.area(DIALOG);
         await r.click('[data-tour="issue-link"]');
       },
       done: {
         title: "A one-time reset link",
-        body: "It works once and expires after 24 hours. Setting a new password with it signs Ruwan out of every other device.",
+        body: "Done. Ruwan’s reset link is ready, and this is the only time it’s shown. It works once and expires after 24 hours; setting a new password with it signs Ruwan out of every other device.",
         target: '[data-tour="link-block"]',
       },
     },
@@ -355,6 +369,13 @@ export const STEPS = [
         await r.fill('[data-tour="work-line"] input[type="number"]', "4");
         await r.click('[data-tour="day-post"]');
       },
+      done: {
+        title: "Posted",
+        body: (ctx) =>
+          `Done. Imali’s ${WEEKDAY_LABELS[ctx.memo.day]} update is posted, and its square on the strip is now filled.`,
+        target: (ctx) =>
+          `[data-tour="strip-day"][data-tour-id="${ctx.memo.day}"]`,
+      },
     },
   },
   {
@@ -430,11 +451,17 @@ export const STEPS = [
         ) > 0,
       async doIt(r, ctx) {
         const root = await r.waitFor(card(ctx.ids.ayesha));
+        await r.area(`${card(ctx.ids.ayesha)} [data-tour="day-comments"]`);
         if (!root.querySelector("textarea")) {
           await r.click('[data-tour="comment-start"]', { root });
         }
         await r.fill("textarea", TOUR_TEXT.teamComment, { root });
         await r.click('form button[type="submit"]', { root });
+      },
+      done: {
+        title: "Comment posted",
+        body: "Done. Imali’s comment is under Ayesha’s update, where Ayesha and the team can read it.",
+        target: (ctx) => `${card(ctx.ids.ayesha)} [data-tour="day-comments"]`,
       },
     },
   },
@@ -480,11 +507,17 @@ export const STEPS = [
         ) > 0,
       async doIt(r, ctx) {
         const root = await r.waitFor(dayCard(ctx.replyDay));
+        await r.area(`${dayCard(ctx.replyDay)} [data-tour="day-comments"]`);
         if (!root.querySelector("textarea")) {
           await r.click('[data-tour="reply"]', { root });
         }
         await r.fill("textarea", TOUR_TEXT.reply, { root });
         await r.click('form button[type="submit"]', { root });
+      },
+      done: {
+        title: "Reply posted",
+        body: "Done. Imali’s reply sits under Nadia’s question, so the conversation stays in one place.",
+        target: (ctx) => `${dayCard(ctx.replyDay)} [data-tour="day-comments"]`,
       },
     },
   },
@@ -587,8 +620,14 @@ export const STEPS = [
       until: (ctx) => storyIs(ctx, "submitted"),
       async doIt(r) {
         await fillForm(r);
+        await r.area('[data-tour="sticky-bar"]');
         await r.tick('[data-tour="ask-approval"] input');
         await r.click('[data-tour="submit"]');
+      },
+      done: {
+        title: "Handed in",
+        body: "Done. Imali’s report is submitted: its status now reads Submitted, and it’s waiting on Nadia’s review desk.",
+        target: '[data-tour="week-status"]',
       },
     },
   },
@@ -598,7 +637,7 @@ export const STEPS = [
     audience: "everyone",
     as: "member",
     title: "Submitted",
-    body: "The status says Submitted, and Approval asked. Managers can now read the whole report; teammates still see only the days.",
+    body: "Submitted, with Approval asked, means a manager decides next. Managers can now read the whole report; teammates still see only the days.",
     route: story,
     target: '[data-tour="week-status"]',
     prepare: ["storySubmitted"],
@@ -734,11 +773,17 @@ export const STEPS = [
         ) > 0,
       async doIt(r, ctx) {
         const root = await r.waitFor(card(ctx.ids.ruwan));
+        await r.area(`${card(ctx.ids.ruwan)} [data-tour="day-comments"]`);
         if (!root.querySelector("textarea")) {
           await r.click('[data-tour="comment-start"]', { root });
         }
         await r.fill("textarea", TOUR_TEXT.managerComment, { root });
         await r.click('form button[type="submit"]', { root });
+      },
+      done: {
+        title: "Comment posted",
+        body: "Done. Nadia’s comment is under Ruwan’s update, and Ruwan can reply to it there.",
+        target: (ctx) => `${card(ctx.ids.ruwan)} [data-tour="day-comments"]`,
       },
     },
   },
@@ -784,6 +829,11 @@ export const STEPS = [
         await r.click(
           `[data-tour="review-desk"] a[href$="/review/${ctx.storyId}"]`,
         );
+      },
+      done: {
+        title: "Imali’s report is open",
+        body: "Done. The whole week is here to read, with the review panel to decide on it.",
+        target: '[data-tour="review-heading"]',
       },
     },
   },
@@ -832,7 +882,13 @@ export const STEPS = [
           await r.fill(text, TOUR_TEXT.sendBack);
         }
         await r.click('[data-tour="send-back"]');
+        await r.area(DIALOG);
         await r.click('[data-tour="confirm-action"]');
+      },
+      done: {
+        title: "Sent back",
+        body: "Done. Imali’s report is sent back. The panel says so, and the report reads Needs correction until Imali resubmits.",
+        target: '[data-tour="review-panel"]',
       },
     },
   },
@@ -1027,12 +1083,19 @@ export const STEPS = [
       until: (ctx) => storyIs(ctx, "submitted", 2),
       async doIt(r) {
         await fillForm(r);
+        await r.area('[data-tour="form-notes"]');
         await r.fill(
           '[data-tour="form-notes"] textarea',
           TOUR_TEXT.resubmitNote,
         );
+        await r.area('[data-tour="sticky-bar"]');
         await r.tick('[data-tour="ask-approval"] input');
         await r.click('[data-tour="submit"]');
+      },
+      done: {
+        title: "Resubmitted",
+        body: "Done. Imali’s report reads Submitted again, as a new version, and it’s back on Nadia’s review desk.",
+        target: '[data-tour="week-status"]',
       },
     },
   },
@@ -1066,6 +1129,11 @@ export const STEPS = [
       until: (ctx) => storyIs(ctx, "approved"),
       async doIt(r) {
         await r.click('[data-tour="approve"]');
+      },
+      done: {
+        title: "Approved",
+        body: "Done. Imali’s report is approved: its status now reads Approved.",
+        target: '[data-tour="review-status"]',
       },
     },
   },

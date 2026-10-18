@@ -1227,13 +1227,14 @@ colour below is a token that changes with `[data-theme="dark"]`.
 - **The highlight.** The page is dimmed with `--backdrop` everywhere except a cutout around the
   target, grown by 6px, with a 2px `--acc` outline. Both are `pointer-events: none`: the visitor
   can always use the highlighted element (and the rest of the page). The cutout follows the
-  target as the page scrolls; it never animates between steps.
+  target as the page scrolls; it never animates between steps. A target that scrolls with the
+  page is outlined only below the sticky bars at the top, never across them.
 - **The tooltip.** `--card`, 1px `--hair2`, `--shadow-pop`, 360px wide, 20px padding, 11px
   between parts. Top row: the chapter in `--mut` caption (`01` in mono, as a form eyebrow, then
   the chapter's name) and the audience label — **Everyone**, **Managers and admins** or **Admins
   only** — in the role chip's style (11px, `--tint`, 1px `--hair`); on the right a ghost
   **Exit ×**. Then the title (Chivo 17px), one or two sentences (14px `--body`) and, on a step
-  that waits for an action, what to press, led by a 6px `--acc` square. Bottom row: "Step 12 of
+  with an action, what to press, led by a 6px `--acc` square. Bottom row: "Step 12 of
   72 · Team member" (12px `--mut`, tabular figures) and the buttons, small: ghost **Back**,
   secondary **Do it for me** (action steps only), primary **Next**. The last step offers
   secondary **Create your account** (a plain link to the real `/signup`) and primary **Explore
@@ -1241,6 +1242,23 @@ colour below is a token that changes with `[data-theme="dark"]`.
   the middle of the screen, adds "This part of the screen didn't appear." and offers **Try
   again** and **Skip this step**; a target that disappears mid-step reads "This part of the
   screen has closed." with **Show it again**.
+- **An action step** *(owner feedback on PR #28, 2026-10-18)*. The visitor can do the action
+  or press **Do it for me**; either way the tour **never moves on by itself**.
+  - **Do it for me works visibly.** It fills the real fields one after another — text typed
+    quickly, a choice, a tick or a press after a 300ms pause — then presses the real button:
+    about 1–3 seconds in all. The outline moves to the part being changed (the invite window,
+    the ⋯ menu, the Tasks section, then the action bar). While it works the card's line reads
+    "Doing it now. Watch the outlined part.", **Do it for me** shows its spinner and **Back**,
+    **Next** and **Do it for me** are disabled; **Exit** still works and stops it at once. A
+    second press does nothing.
+  - **Then the card says what changed.** Once the action has saved and the screen shows it, the
+    card fades in again with a short title and a "Done. …" sentence about the visible result
+    ("Done. Imali's Friday update is posted, and its square on the strip is now filled."), and
+    the outline moves to that result — the filled square, the link, the new comment, the status,
+    the sent-back panel. The line and **Do it for me** go; **Back** and **Next** remain, and the
+    step waits for **Next**. The same happens when the visitor does the action.
+  - **Reduced motion:** everything is filled at once, with no typing and no pauses; then the
+    same "Done." card, waiting for **Next**.
 - **Placement (wide screens).** Beside the highlight, never on it: below, above, right or left,
   the first with room, centred on it and kept 12px inside the viewport and below the demo bar.
   When there is no room below, the page scrolls the target up so the two sit one above the
@@ -1260,8 +1278,9 @@ colour below is a token that changes with `[data-theme="dark"]`.
   rows: the step number (`--mut`), the title and "As Imali J." under it, a check when seen, a
   chevron that moves 2px on hover; the current step has the nav's `--acc-l` fill and 2px bar.
 - **Accessibility.** The tooltip is a labelled, non-modal dialog (`aria-labelledby` the title,
-  `aria-describedby` the body) and takes focus when its step opens; when focus is already in it
-  (pressing Next) a polite live region reads the new step. ← → move between steps, Tab from the
+  `aria-describedby` the body) and takes focus when its step opens, and again when an action's
+  "Done." card comes in; when focus is already in it (pressing Next) a polite live region reads
+  the new step. While **Do it for me** works, ← → do nothing. ← → move between steps, Tab from the
   last button reaches the highlighted element, Esc ends the tour (after closing the page's own
   open dialog or menu). Focus returns to where it was, or to **Tour**. The panel is a Radix
   dialog: focus is trapped, Esc closes it. The tooltip stays operable above the page's dialogs
@@ -2350,6 +2369,9 @@ Nothing else in the product is excused from the list above.
 - **Entries 36–37 (guided tour)** are caused by the visitor (Next, Back, a jump, finishing an
   action). The tour scrolls the page to its target smoothly — or instantly under reduced
   motion — and never animates the highlight; under reduced motion 36–37 are cut to 1ms by §8.3.
+  **Do it for me**'s pace (typing, the short pauses) is not an animation but the tour working
+  the real page where the visitor can follow it; under reduced motion it fills everything at
+  once (§3.14 "Guided tour").
 - **Reduced motion:** 23–25 jump; 26 is a fade with no travel (`useReducedMotion`); 27–29 and
   31 are cut to 1ms by §8.3; 30 stays — it is colour only, and a gentle cross-fade is kinder
   than a full-screen brightness jump (Apple's guidance, the owner's reference).

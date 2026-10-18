@@ -586,7 +586,10 @@ unchanged).
   client test fails when a feature gains no step.
 - **Steps point at the real screens.** A step highlights a real element and explains it in one
   or two sentences; where an action makes sense the tour waits for the visitor to do it (post
-  a day, submit, send back…) and offers **Do it for me**, which presses the real buttons.
+  a day, submit, send back…) and offers **Do it for me**, which does it visibly on the real
+  screen: the fields filled one after another, then the real button pressed. Either way, the
+  step then says what changed and **waits for Next** — the tour never moves on by itself
+  *(owner feedback on PR #28, 2026-10-18)*.
 - **Jump to any part.** A **Tour** button in the demo bar opens a panel listing every step,
   grouped by who can use it; choosing one switches to the right person, prepares the data that
   step needs (a submitted report waiting to be sent back, a sent-back report to fix…) and starts

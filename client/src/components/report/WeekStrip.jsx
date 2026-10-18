@@ -75,6 +75,8 @@ export function WeekStrip({
             ref={(node) => (refs.current[weekday] = node)}
             type="button"
             role="tab"
+            data-tour="strip-day"
+            data-tour-id={weekday}
             aria-selected={isSelected}
             aria-controls={isSelected ? panelId : undefined}
             aria-disabled={canSelect ? undefined : true}

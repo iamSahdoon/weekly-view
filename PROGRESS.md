@@ -2491,9 +2491,10 @@ console's one error in every run is `/favicon.ico` 404, which `main` has too.
    part; on **Invite a person** press **Do it for me**: the invite window opens, fills in and shows the link,
    and the card now points at it ("The link is shown once").
 5. Keep going into Imali's part. On **Post the update**, fill in the line yourself (task, type, what you did,
-   hours) and press **Post update**: the tour moves on by itself.
+   hours) and press **Post update**: the card says "Done. …" and waits for **Next** *(changed on the PR #28
+   feedback, below)*.
 6. On **Submit**, press **Do it for me**: every task gets a status, Ask for approval is ticked, the report is
-   submitted and the card shows "Submitted".
+   submitted and the card shows "Handed in", pointing at the Submitted status.
 7. In Nadia's part, **The review desk** shows Imali's report waiting. On **Send it back**, write a reason of
    10+ characters, press **Send back** and confirm.
 8. In "Back to Imali", **Fix and resubmit**, then (as Nadia) **Approve**; the next card shows Imali's row
@@ -2513,10 +2514,122 @@ console's one error in every run is `/favicon.ico` 404, which `main` has too.
     http://localhost:4173/ and F12 → Network → JS: no `TourLayer` or `tourSteps` file loads until you open
     `/demo`.
 
+### Owner feedback on PR #28: "Do it for me" shows the result and waits (2026-10-18)
+Same branch and pull request ([iamSahdoon/weekly-view#28](https://github.com/iamSahdoon/weekly-view/pull/28)).
+Before, **Do it for me** did the action at once and the tour jumped to the next step, so the visitor never saw
+what happened. Now, on all 11 action steps:
+1. **It works visibly.** The fields are filled one after another — text typed quickly (about 0.65 s a field),
+   a choice, a tick or a press after a 300 ms pause — then the real button is pressed. The outline moves to the
+   part being changed (the invite window, the ⋯ menu then the reset window, the Tasks section then the action
+   bar, the notes, the confirm window).
+2. **It stays on the step.** Once the action has saved and the screen shows it (nothing fetching or saving, the
+   result on screen), the card fades in again with a short title and a "Done. …" sentence, and the outline
+   moves to the result.
+3. **It waits for Next.** Nothing moves the tour but Back, Next, a jump or Exit — the same when the visitor
+   does the action by hand.
+4. **While it runs**, Back, Next and Do it for me are disabled and ← → do nothing; Exit still works and stops it
+   at once. A second press (even two in the same moment) does nothing.
+5. **Reduced motion:** everything is filled at once, with no typing and no pauses; then the same "Done." card.
+
+| Step | Done card | Outline moves to | Robot (1440 / 360) |
+| --- | --- | --- | --- |
+| 3 Invite a person | The link is shown once — "Done. The invite link is ready, and this is the only time it's shown…" | the link | 2.2–2.5 s |
+| 6 Issue a password-reset link | A one-time reset link — "Done. Ruwan's reset link is ready…" | the link | 2.2–2.7 s |
+| 19 Post the update | Posted — "Done. Imali's Friday update is posted, and its square on the strip is now filled." (the day is named) | that day's square on the strip | 2.0–2.1 s |
+| 24 Comment on a teammate's day | Comment posted — "Done. Imali's comment is under Ayesha's update…" | Ayesha's comments | 1.8–1.9 s |
+| 26 Reply to a comment | Reply posted — "Done. Imali's reply sits under Nadia's question…" | that day's comments | 1.8–1.9 s |
+| 34 Submit | Handed in — "Done. Imali's report is submitted: its status now reads Submitted…" | the Status block | 2.6–2.7 s |
+| 44 Comment on anyone's update | Comment posted — "Done. Nadia's comment is under Ruwan's update…" | Ruwan's comments | 1.8–1.9 s |
+| 47 Open Imali's report | Imali's report is open — "Done. The whole week is here to read…" | the report's heading | 0.5–1.0 s |
+| 50 Send it back | Sent back — "Done. Imali's report is sent back. The panel says so…" | the panel ("Sent back by Nadia F.") | 1.8–1.9 s |
+| 66 Fix and resubmit | Resubmitted — "Done. Imali's report reads Submitted again, as a new version…" | the Status block | 2.4–2.6 s |
+| 68 Approve | Approved — "Done. Imali's report is approved: its status now reads Approved." | the Status block | 0.5–0.6 s |
+
+Robot times are from the press to the save, measured in headless Chromium; the "Done." card follows 0.1–0.8 s
+later, once the screen has caught up. With reduced motion: 0.25–1.2 s.
+
+**What changed in the code.** `demo/tour/tourState.js` (new; `project_structure.md` updated): the tour's
+reducer, pure and tested, with an action's `outcome` (`null` → `doing` → `done`); only Back, Next, a jump and
+Exit move the tour. `tourRobot.js`: `createRobot({ alive, reduced, onArea })` — typing, pauses, `area()`,
+reduced motion, and a stop the moment the step is left. `tourSteps.js`: every action has a `done` (title, a
+"Done." body, the result's target) and names the areas it changes; "Submitted"'s body no longer repeats the
+Submit card. `TourLayer.jsx` and `TourTooltip.jsx`: the done state, the held controls, the outline following
+the robot, and a scrolled target's outline clipped below the sticky bars (`clipBelow` in `tourPlacement.js`).
+Three inert targets added: `strip-day` (each square of the week strip, with `data-tour-id` = the weekday),
+`review-heading` and `review-status` on the review page. No server code, API, dependency or page logic changed.
+
+**Found and fixed while looking:** the router's `navigate` changes with every pathname, and the step's effect
+depended on it, so a page that moved on by itself (a submitted report opening its week) restarted the step and
+navigated back — it is now read from a ref; for a frame after the action the outline jumped back to the Invite
+button; while Submit worked down the Tasks section the outline was drawn across the demo bar and the top bar;
+during a page change (Submit, Resubmit, Open report) the outline briefly had nothing to show — it now falls back
+to the result; on the heavy weekly form typing ran slow (Resubmit took 3.5 s), so a key press now catches up;
+Exit stopped the robot one render late (three more characters typed) — it now stops in the same tick.
+
+**Docs.** `product_design_system.md` §3.14 "Guided tour" (a new "An action step" entry; the highlight's clip;
+accessibility; the note under motion entries 36–37), `frontend_architecture.md` §11.6 (the robot, the new
+state row, "Running a step"), `docs/USER_MANUAL.md` "The guided tour" (Controls), `requirments_doc.md` §14.1
+(one sentence: the step says what changed and waits for Next — the owner's rule, so the requirement and the
+build agree) and `project_structure.md` (the tree).
+
+**Checks.** `npm run lint` clean; Prettier clean on every changed client file. `npm test`: server 389, client
+677 (7 new in `demoTour.test.js`: every action step has a "Done." card and a result target; the step stays
+after Do it for me and after the visitor's own action, until Next; Back, Next and a second press are held while
+it runs, Exit is not; a step that was left can't report; nothing in the layer moves the tour but Back and Next;
+the outline clip). `demoCoverage.test.js` green and unchanged. `vite build` OK: the main bundle is unchanged
+(937.30 kB) and holds no robot code; the landing chunk is unchanged (192.83 kB); `TourLayer` is 23.1 kB (was
+21.2), `tourSteps` 35.2 kB (was 32.8).
+
+**Looked at in headless Chromium** (in-memory demo only — no database, no Atlas, no `MONGODB_URI`; Saturday
+18 Oct 2026). The whole tour, pressing **Do it for me** on every action step and Next elsewhere, at 1440×900
+light and dark and 360×780 light and dark, with a picture of each action step before, during and done. For all
+44 (11 steps × 4): Back, Next and Do it for me disabled 120 ms after the press, Exit enabled, the "Doing it
+now" line shown; the card turned to "Done. …"; the outline sat on the result (matched to the element); three
+seconds later the step, the message and an enabled Next were all still there. I looked at every done picture
+in all four runs, and the during pictures at 1440 light. The same tour under reduced motion at 1440 light and
+360 dark: one input event per text field (no typing), the same done cards, no auto-advance. By hand, at 1440
+light: the invite, a comment, opening Imali's report and Approve each show their done card and wait; ← → while
+the robot runs leave the step where it is; Exit during **Send it back** closes the tour with the reason
+half-typed and nothing sent (still Submitted). Two presses of Do it for me in the same moment made one invite.
+
+**Not verified:** Firefox and Safari; real phones and touch; screen readers (the focus move to the done card
+and the live region were checked in the DOM, not heard); Windows font rendering; widths other than 1440 and
+360; the hosted Vercel build. The double-press check ran on the invite at 1440 only. The console's one error is
+still `/favicon.ico` 404, which `main` has too.
+
+**Owner: how to check "Do it for me"** (Windows; nothing needs the database)
+1. In a terminal at the repo root: `git fetch origin`, `git checkout claude/demo-tour`, `git pull`.
+2. `npm --prefix client install`, then `npm --prefix client run dev`.
+3. In Chrome open http://localhost:5173/demo, click **Take the guided tour**, and press **Next** to step 3,
+   **Invite a person**.
+4. Press **Do it for me** and watch: the invite window opens with a blue outline, the email is typed in, then
+   **Create invite link** is pressed. While it works, **Back**, **Do it for me** and **Next** are greyed out and
+   the card says "Doing it now. Watch the outlined part."; **Exit** stays usable.
+5. The card turns to **The link is shown once** — "Done. The invite link is ready…" — with the outline on the
+   link. Wait: it does not move on. Press **Next**.
+6. Click **Tour** in the demo bar → **Post the update**. Press **Do it for me**: the task, type, what you did
+   and hours fill in one after another, then **Post update**. The card says "Done. Imali's … update is posted,
+   and its square on the strip is now filled.", and the outline is on that day's square, now solid blue.
+7. Press **Back**, then **Next** to return to **Post the update**, and this time fill the line in yourself and
+   press **Post update**: the same "Done." card appears and waits for **Next**.
+8. **Tour** → **Submit** → **Do it for me**: the outline goes to the Tasks section while each status is chosen,
+   then to the bar at the bottom while **Ask for approval** is ticked and **Submit** pressed; the week page
+   opens and the card says **Handed in**, outlining the Submitted status.
+9. **Tour** → **Send it back** → **Do it for me**, and press **Exit** straight away, while the reason is being
+   typed (it takes under a second): the tour closes, the reason stays half-typed, and nothing is sent back.
+10. Phone width: F12 → Ctrl+Shift+M → Responsive → **360** wide, reload, start the tour and repeat step 4: the
+    card is a sheet that stays clear of the outlined result.
+11. Dark: choose a perspective, your name → **Appearance** → Dark, then **Tour** → **Approve** → **Do it for
+    me**: the card says "Done. Imali's report is approved…", outlining the green Approved status.
+12. Reduced motion (Windows Settings → Accessibility → Visual effects → Animation effects off): reload, **Tour**
+    → **Post the update** → **Do it for me**: everything appears at once, no typing; then the same "Done."
+    card, waiting for **Next**. Turn animation effects back on.
+
 ### Your next steps
-1. Review and merge [iamSahdoon/weekly-view#28](https://github.com/iamSahdoon/weekly-view/pull/28) (from
-   `claude/demo-tour` into `main`) after the checks above. The five decisions are accepted (PR #28 review,
-   2026-10-18); say if any of the four still to confirm should change.
+1. Run the checks just above, then review and merge
+   [iamSahdoon/weekly-view#28](https://github.com/iamSahdoon/weekly-view/pull/28) (from `claude/demo-tour` into
+   `main`). The five decisions are accepted (PR #28 review, 2026-10-18); say if any of the four still to confirm
+   should change.
 2. Next session prompt, unchanged by this work: "Read `CLAUDE.md` and `PROGRESS.md`, then do stage C11
    (verification, deployment, README) from `MASTER_PROMPT.md`."
 

@@ -1484,7 +1484,8 @@ field on the weekly form, and the tour covers it as week comments. How each is b
 | Requests | `demo/tour/tourBus.js`; a DOM event | The chooser (`requestTour`) and the demo bar's **Tour** button (owner decision 2: in the bar, an icon only on phones; a `weeklyview:tour` `CustomEvent`, so the main bundle imports no tour code) ask for "start" or "panel". A request made while the layer is still loading waits for it |
 | The script | `demo/tour/tourSteps.js` | Data: chapters, steps (who, audience, route, target, the setup it needs, the manual features it covers, an optional action), `NOT_IN_TOUR`, `CAPABILITIES`, `tourMinutes()` |
 | Setup helpers | `demo/tour/tourSetup.js` | Pure functions on the store (`prepare(store, names)`): the story week — Imali's last week (owner decision 3: turned back into a Draft, replacing its sample sent-back history) — to Draft / Submitted / Needs correction / resubmitted / Approved, a day Imali can post, one to edit, Ayesha's day open to the team… Real actions go through the demo's own route handlers as the person who would do them (`matchRoute`), so versions, comments and the desk come out exactly as clicks would leave them. Idempotent: a state already reached is left alone |
-| Do it for me | `demo/tour/tourRobot.js` | Drives the real controls: clicks, Radix menus (pointerdown), React-controlled inputs (the prototype's value setter, then `input`/`change`), the task combobox. Fills only what the visitor left empty |
+| Do it for me | `demo/tour/tourRobot.js` | `createRobot({ alive, reduced, onArea })` drives the real controls, visibly *(owner feedback on PR #28, 2026-10-18)*: clicks, Radix menus (pointerdown), React-controlled inputs (the prototype's value setter, then `input`/`change`), the task combobox. Text is typed in about 0.65 s per field (a key press catches up when a heavy form re-renders slowly); a choice, a tick or a press waits 300 ms first; `area(selector)` moves the outline to the part about to change. Reduced motion: every value at once, no typing, no pauses. It checks `alive()` before every move and stops (`Cancelled`) once the step is left. Fills only what the visitor left empty |
+| State | `demo/tour/tourState.js` | The pure reducer: the step, its phase, and its action's `outcome` — `null` → `"doing"` (Do it for me running, or the action happened and its result is on its way) → `"done"`. Only `go` (Back, Next), `start` (a jump) and `exit` move the tour; `go` is ignored while `"doing"`, as is a second `do` |
 | Placement | `demo/tour/tourPlacement.js` | Pure geometry: the tooltip beside the highlight, the scroll that leaves room below it, the phone sheet's side and scroll, the highlight clipped to the open area |
 | Layer | `demo/tour/TourLayer.jsx`, `TourTooltip.jsx`, `TourPanel.jsx` | The controller and what it draws, portalled to `<body>` in a `[data-tour-layer]` element |
 
@@ -1496,8 +1497,18 @@ person) → `navigate(route)` → wait for the router to arrive and the target t
 (up to 6 s, polled every 100 ms: data loads first) → show. A target is a `[data-tour="…"]`
 selector, or a list tried in order (the wide layout's element, then the phone's). While a
 step is shown, a frame loop follows the target's rect (it re-finds it after a re-render) and
-a 250 ms poll asks the step's `until(ctx)` — usually a store predicate — whether the action
-happened; then it moves on after 700 ms, or stays and points at the result (`done`).
+a 150 ms poll asks the step's `until(ctx)` — usually a store predicate — whether the action
+happened. It never moves the tour on *(owner feedback on PR #28, 2026-10-18)*: the action —
+the visitor's, or **Do it for me**'s — sets the outcome to `"doing"` (Back, Next and Do it for
+me disabled, Exit live); once nothing is fetching or saving (`isFetching`, `isMutating`) and
+the step's `done.target` is on screen (or after 4 s), it becomes `"done"`: the card shows the
+step's `done` title and "Done. …" body, the outline moves to the result, and the step waits
+for Next. While an action is under way the outline follows, in order, the robot's `area`, the
+step's target, then the result (a submitted form opens its week page); a target that scrolls
+with the page is clipped below the sticky bars. The router's `navigate` (which changes with
+every pathname) and the sign-in are read from refs, so a page moving on by itself never
+restarts its step. Every action step has a `done`; `demoTour.test.js` checks that, and that
+nothing but Back and Next dispatches a move.
 
 **Rules it keeps.** Pages never branch on the demo: components carry inert `data-tour`
 attributes (and `data-tour-id` where a row is meant), nothing else; `demoTour.test.js` checks

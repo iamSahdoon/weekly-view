@@ -917,8 +917,14 @@ any part.
   explained once, in the part for the lowest role that has it: a manager can do everything a
   member can, so posting a day is shown once, as Imali.
 - **Controls:** ***Back***, ***Next***, ***Exit***, and ***Do it for me*** where a step needs an
-  action (post a day, submit, send back…). Where it makes sense the tour waits for you to do it
-  yourself and moves on once you have. You can always use the highlighted part of the screen.
+  action (post a day, submit, send back…). You can do it yourself, or press ***Do it for me***
+  and watch: the tour fills the fields one after another, then presses the real button, with
+  the outline on the part it is changing (about 1–3 seconds; with reduced motion turned on,
+  everything is filled at once). While it works, ***Back***, ***Next*** and ***Do it for me***
+  wait; ***Exit*** still works. Either way, once the result is on screen the card says what
+  changed — for example "Done. Imali's Friday update is posted, and its square on the strip is
+  now filled." — the outline moves to that result, and the tour waits for ***Next***. It never
+  moves on by itself. You can always use the highlighted part of the screen.
 - **Keyboard:** ← and → move between steps; Tab from the card's last button reaches the
   highlighted part; Esc ends the tour (when a window of the app is open, the first Esc closes
   that window). Focus goes back to where it was, or to ***Tour***.

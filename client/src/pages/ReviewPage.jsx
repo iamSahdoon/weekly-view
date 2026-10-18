@@ -122,7 +122,10 @@ function ReviewedWeek({ week, back, deskSearch }) {
           <div className="flex min-w-0 flex-col gap-24">
             <ReadOnlyStrip own={own} />
             <div className="flex min-w-0 flex-col gap-44">
-              <header className="flex flex-col gap-6">
+              <header
+                data-tour="review-heading"
+                className="flex flex-col gap-6"
+              >
                 <p className="font-mono text-caption text-mut">
                   W{number} · {formatWeekRange(week.weekKey)}
                   {report.revisionNumber > 0 &&
@@ -167,7 +170,7 @@ function ReviewedWeek({ week, back, deskSearch }) {
               <RailBlock label="Person">
                 <ReviewPersonBlock author={report.author} projects={projects} />
               </RailBlock>
-              <RailBlock label="Status">
+              <RailBlock label="Status" tour="review-status">
                 <ReviewStatusBlock report={report} />
               </RailBlock>
               {readable && (

@@ -667,7 +667,8 @@ client/
 │   │   │   ├── TourPanel.jsx          # the jump panel: every step grouped by Everyone / Managers and admins / Admins only; resume, start again, end
 │   │   │   ├── tourSteps.js           # the script: chapters, steps, NOT_IN_TOUR, CAPABILITIES, tourMinutes()
 │   │   │   ├── tourSetup.js           # demo-store setup helpers (`prepare`) and what the steps wait for — through the demo's own handlers
-│   │   │   ├── tourRobot.js           # "Do it for me": drives the real controls; closes the page's dialogs between steps
+│   │   │   ├── tourRobot.js           # "Do it for me": drives the real controls visibly (typed, paced; at once under reduced motion); closes the page's dialogs between steps
+│   │   │   ├── tourState.js           # added on the PR #28 feedback (2026-10-18): the pure reducer — step, phase, an action's outcome; only Back, Next, a jump and Exit move the tour
 │   │   │   ├── tourPlacement.js       # pure geometry: tooltip side, room below, the phone sheet, the clipped highlight
 │   │   │   └── tourBus.js             # the chooser's start / panel requests, kept until the layer has loaded
 │   │   └── __tests__/

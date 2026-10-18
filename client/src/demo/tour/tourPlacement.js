@@ -154,6 +154,18 @@ export function clipToOpenArea(target, sheet, view) {
 }
 
 /**
+ * The part of a highlight below the sticky bars at the top (the demo bar and the top
+ * bar). A target that scrolls with the page — a tall form section "Do it for me" is
+ * working down — passes under them, and its outline must not be drawn across them.
+ */
+export function clipBelow(target, top) {
+  if (!target || target.top >= top) return target;
+  const bottom = target.top + target.height;
+  if (bottom <= top) return target;
+  return { ...target, top, height: bottom - top };
+}
+
+/**
  * How far to scroll a highlight (on a wide screen) so the tooltip fits below it: 0 when
  * it is on screen with room below already; otherwise the distance that puts it near the
  * top of the open area, below the sticky bars. Null when the two can't fit together —
