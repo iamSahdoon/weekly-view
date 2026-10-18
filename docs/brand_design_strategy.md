@@ -538,6 +538,16 @@ sees the real thing.
     leaving): the hero plays, the stories pin, and "Back to home" starts at the top (browser Back restores the
     scroll). Without view transitions the landing page fades in on its own (`l-page-in`, 260ms); under reduced
     motion nothing animates.
+15. **Owner decision (landing phone fix, 2026-10-18): the manager's dashboard mock-up keeps its Updates squares on
+    phones.** Below 520px the mock-up's team table hid the Updates column (the Mon–Fri squares) while the squares'
+    legend stayed under it: a key for squares that were not there. Now, at every width, the table keeps **Person,
+    Updates and Status**. Below 520px the Blocker column gives way to a small `--l-st-corr-*` chip under the
+    person's name ("Blocker · Tue", the same chip as the column's, shown only when there is a blocker), the
+    avatars are already hidden, and cell padding shrinks (to 8px) before the 10px squares do; nothing scrolls
+    sideways at 360px. **Rule, in every layout: the squares' legend is shown only where the Updates column is
+    shown** — never hide one without the other (`landing.css`, the 520px block; guarded in
+    `LandingPage.test.jsx`). The hero's laptop mock-up is one scaled picture, so its squares and legend shrink
+    together and need no rule of their own. Landing tokens only, scoped to `.landing`; the app is unchanged.
 
 ### 6.1 Job of the page
 

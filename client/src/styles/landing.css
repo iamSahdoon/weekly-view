@@ -538,6 +538,7 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .mtbl th{text-align:left;font-size:12px;line-height:18px;font-weight:600;color:var(--l-u-mut);padding:9px 16px;background:var(--l-u-tint);border-bottom:1px solid var(--l-u-hair);white-space:nowrap}
 .landing .mtbl td{padding:0 16px;height:44px;border-bottom:1px solid var(--l-u-hair);white-space:nowrap}
 .landing .mtbl td.nm{font-weight:600}
+.landing .mtbl .nm-blk{display:none}
 .landing .mtbl .r{text-align:right}
 .landing .mtbl tbody tr{transition:opacity .22s linear,transform .5s var(--l-ease-m)}
 .landing .mtbl tbody tr.leaving{opacity:0;transform:translate3d(-12px,0,0)}
@@ -705,11 +706,15 @@ html.landing-active{-webkit-text-size-adjust:100%;scroll-padding-top:92px;scroll
 .landing .mtbl .c-u{width:26%}
 .landing .mtbl .c-b{width:17%}
 .landing .mtbl .c-s{width:27%}}
-@media (max-width:520px){.landing .mtbl th:nth-child(2),.landing .mtbl td:nth-child(2){display:none}
-.landing .mtbl .c-p{width:32%}.landing .mtbl .c-b{width:20%}.landing .mtbl .c-s{width:48%}
+/* Below 520px the table is Person, Updates, Status. The squares are the dashboard's at-a-glance
+   signal and stay; the Blocker column gives way to a chip under the name, and padding gives
+   before the squares do. The legend belongs to the squares: never hide one without the other. */
+@media (max-width:520px){.landing .mtbl th:nth-child(5),.landing .mtbl td:nth-child(5){display:none}
+.landing .mtbl .nm-blk{display:flex;width:max-content;margin-top:3px}
+.landing .mtbl .c-p{width:34%}.landing .mtbl .c-u{width:25%}.landing .mtbl .c-s{width:41%}
 .landing .mtbl .ups i{width:10px;height:10px}
 .landing .mtbl .ups{gap:2px}
-.landing .mtbl td,.landing .mtbl th{padding-left:10px;padding-right:10px}
+.landing .mtbl td,.landing .mtbl th{padding-left:8px;padding-right:8px}
 .landing .mmet div{padding:12px 14px}
 .landing .mmet b{font-size:24px}
 .landing .mfilt{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr}
