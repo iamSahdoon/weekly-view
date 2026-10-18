@@ -238,6 +238,8 @@ spirit. The **demo** never needs the server, so it's always instant.
 | "Starting up" for a minute (Option B) | The Render server was asleep | Normal on the free plan; it wakes by itself |
 | Website calls `http://localhost:5000` | `VITE_API_BASE_URL` wasn't set when the site was built | Set it on the website project, then **redeploy** |
 | You can't sign up ("sign-up is closed") | An account already exists in that database | Sign in, or ask the owner for an invite |
+| The owner forgot their password | The owner is protected, so no admin can reset it, and WeeklyView sends no email | On the PC that holds `server/.env` with the live `MONGODB_URI`, run `npm run owner:reset-link -- --url https://your-site-address` (the `--` is required). It prints a one-time link for the owner, once. Send it to the owner or open it yourself. See the README |
+| Another member or admin forgot theirs | — | An admin issues a reset link from **Users** (the owner, for an admin) |
 
 **Where to look:** Vercel → project → **Logs** (or **Deployments → a deployment → Functions /
 Runtime Logs**); Render → service → **Logs**. Logs never contain passwords, tokens or the database

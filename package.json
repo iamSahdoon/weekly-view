@@ -6,6 +6,7 @@
     "dev:server": "npm --prefix server run dev",
     "db:empty": "npm --prefix server run db:empty",
     "db:sample": "npm --prefix server run db:sample",
+    "owner:reset-link": "npm --prefix server run owner:reset-link --",
     "seed": "npm --prefix server run db:sample",
     "test": "npm --prefix server run test && npm --prefix client run test",
     "lint": "npm --prefix client run lint && npm --prefix server run lint"

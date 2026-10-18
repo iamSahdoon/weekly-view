@@ -47,7 +47,7 @@ export function hashLinkToken(raw) {
 
 // The one path for invites, re-issues and resets (tech_stack.md §2.1). The raw token
 // leaves this module only inside `linkUrl`, in the response that issues it.
-function newLink(purpose) {
+function newLink(purpose, baseUrl = env.CLIENT_URL) {
   const raw = randomBytes(32).toString("base64url"); // 256 bits; never stored
   const expiresAt = new Date(Date.now() + LINK_TTL_HOURS[purpose] * HOUR);
   return {
@@ -56,7 +56,7 @@ function newLink(purpose) {
       linkTokenPurpose: purpose,
       linkTokenExpiresAt: expiresAt,
     },
-    linkUrl: `${env.CLIENT_URL.replace(/\/+$/, "")}/${purpose}/${raw}`,
+    linkUrl: `${baseUrl.replace(/\/+$/, "")}/${purpose}/${raw}`,
     expiresAt,
   };
 }
@@ -517,11 +517,15 @@ export async function changeEmail(actor, userId, email) {
   return loadUserItem(target._id);
 }
 
-/** U13 — a 24-hour reset link; the admin never sets or sees a password. */
-export async function issueResetLink(actor, userId) {
+/**
+ * U13 — a 24-hour reset link; the admin never sets or sees a password. `baseUrl`
+ * overrides CLIENT_URL for the owner:reset-link command (requirments_doc.md §11.3);
+ * the API never passes it.
+ */
+export async function issueResetLink(actor, userId, { baseUrl } = {}) {
   const target = await loadForDetails(actor, userId);
   if (target.status !== "active") throw stateChanged(target.status);
-  const link = newLink("reset");
+  const link = newLink("reset", baseUrl);
   const updated = await User.updateOne(
     { _id: target._id, status: "active" },
     { $set: link.fields },

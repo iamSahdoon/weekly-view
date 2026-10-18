@@ -253,6 +253,8 @@ server/
 │   │   ├── appError.js                # exports the AppError class
 │   │   ├── paginate.js                # page/limit parsing + the meta block for list endpoints
 │   │   └── weeks.js                   # ISO week keys ↔ dates over date-fns; no holidays, no people
+│   ├── scripts/
+│   │   └── ownerResetLink.js          # added with owner:reset-link: the operator's way back for a forgotten owner password (requirments_doc.md §11.3) — a command, no endpoint
 │   ├── seed/
 │   │   ├── index.js                   # npm run db:sample / db:empty — development and tests only (seed / seed:reset are aliases)
 │   │   └── seedData.js                # the fixed deterministic arrays (no faker), relative to the current week
@@ -277,6 +279,8 @@ server/
 │   ├── policy/
 │   │   ├── reportPolicy.test.js       # pure-function unit tests, no HTTP, no DB
 │   │   └── submitRules.test.js
+│   ├── scripts/                       # added with owner:reset-link
+│   │   └── ownerResetLink.test.js     # a valid single-use link for the owner only; old links die; no password changes; --url; no owner
 │   ├── seed/                          # added in S6
 │   │   └── seed.test.js               # the dataset is deterministic, relative to the week, and holds every state — read through the API
 │   ├── calendar/                      # added in S3 (§6)
@@ -1112,6 +1116,7 @@ Yes, but only as a script shim — no dependencies, **no npm workspaces**:
     "dev:server": "npm --prefix server run dev",
     "db:empty": "npm --prefix server run db:empty",
     "db:sample": "npm --prefix server run db:sample",
+    "owner:reset-link": "npm --prefix server run owner:reset-link --",
     "seed": "npm --prefix server run db:sample",
     "test": "npm --prefix server run test && npm --prefix client run test",
     "lint": "npm --prefix client run lint && npm --prefix server run lint"
