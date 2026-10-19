@@ -1094,7 +1094,8 @@ Sample accounts, all with the password `weekly-view-dev`:
 | nadia@example.com, ruwan@example.com | Managers |
 | imali, tharindu, ayesha, dinesh, malith @example.com | Members |
 
-**Checks:** `npm test` (server and client tests), `npm run lint`.
+**Checks:** `npm test` (server and client tests), `npm run lint`. What the tests cover, and how to run a single
+file or test, is in `docs/TESTING.md`.
 
 **Tips:**
 - To see the landing page, use a **private window** (a remembered sign-in skips it).

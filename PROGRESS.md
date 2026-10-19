@@ -2926,6 +2926,20 @@ review items are **resolved (owner, 2026-10-18)**:
 **Checks.** `npm run lint` clean; Prettier clean on every changed file. `npm test`: server 410 (5 new), client 690
 (13 new: 10 `chunkReload`, 2 `weekActions`, 1 profile render), all green.
 
+### Docs: testing guide (owner request, 2026-10-19)
+Branch `claude/testing-doc`. Not a stage; docs only, no code or test changed. New file `docs/TESTING.md`: what the suites
+protect, the test types with real examples, how the in-memory database and helpers work, expected results by area,
+running on Windows (PowerShell), adding a test, and what is not covered. Linked from `README.md` (beside `npm test`),
+`USER_MANUAL.md` §52 and `project_structure.md` (§1 tree, §6).
+- **Counts from a full run:** server 415 tests in 21 files (rbac 257, foundation 60, policy 37, seed 25, scripts 21,
+  calendar 15); client 692 in 52 files (demo 238, lib 159, pages 102, styles 51, marketing 44, auth 29 …); 1,107 in
+  total. `npm test` and `npm run lint` both passed. Only the in-memory database was used.
+- The guide uses the real error code `SELF_REVIEW_FORBIDDEN` for "a manager approves their own report" (the request
+  said `FORBIDDEN_OWN_REPORT`, which is not in `api_specification.md` §1.9).
+- **Noticed, not changed (docs only):** `project_structure.md` §2.2's `tests/` row and `tech_stack.md` §8 still say
+  component tests are deferred, while the client has had static-render component and page tests since C1/C2
+  (`project_structure.md` §6 says so). The "bundle split" tests check which source files import which, not a build.
+
 ### Going live
 Follow `docs/DEPLOYMENT.md`, **Option A** (owner decision, 2026-10-18):
 1. Merge the C11 pull request into `main`.

@@ -92,6 +92,9 @@ npm run lint
 
 **The tests never touch Atlas.** They start their own in-memory MongoDB and ignore `MONGODB_URI`.
 
+**Testing:** what the suites cover, how to run one file or one test, and how to add a test are in
+[`docs/TESTING.md`](docs/TESTING.md).
+
 ## Database commands
 
 Run from the project folder. They use the database that `server/.env` points at.
